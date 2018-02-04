@@ -4,7 +4,7 @@ import argparse
 import time
 from math import pi
 
-from numpy import matlib as np
+# from numpy import matlib as np
 from . vrep_interface import VrepInterface
 from . dxl_interface import DxlInterface
 from . dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28
