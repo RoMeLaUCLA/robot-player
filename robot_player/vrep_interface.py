@@ -13,6 +13,14 @@ __status__ = "Prototype"
 from . vrep import vrep
 import numpy
 
+def sign(x):
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    else:
+        return 0
+
 class VrepInterface(object):
     """
     The VrepInterface is the main way of interacting with a simulation.
@@ -223,7 +231,7 @@ class VrepInterface(object):
             if numpy.sign(joint_effort)*numpy.sign(c) <0:
                 j['joint_target_velocity'] = -1 * j['joint_target_velocity']
                 vrep.simxSetJointTargetVelocity(self._sim_Client_ID, j['sim_handle'], j['joint_target_velocity'], vrep.simx_opmode_blocking)
-            vrep.simxSetJointForce(self._sim_Client_ID, j['sim_handle'], numpy.abs(c), vrep.simx_opmode_blocking)
+            vrep.simxSetJointForce(self._sim_Client_ID, j['sim_handle'], abs(c), vrep.simx_opmode_blocking)
 
         if send == True:
             self.send_command()
