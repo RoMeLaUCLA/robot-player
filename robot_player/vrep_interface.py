@@ -13,14 +13,6 @@ __status__ = "Prototype"
 from . vrep import vrep
 import numpy
 
-def sign(x):
-    if x > 0:
-        return 1
-    elif x < 0:
-        return -1
-    else:
-        return 0
-
 class VrepInterface(object):
     """
     The VrepInterface is the main way of interacting with a simulation.
@@ -224,11 +216,11 @@ class VrepInterface(object):
     def set_joint_effort(self, joints, commands, send=True):
         for j, c in zip(joints, commands):
             # set joint speed
-            joint_effort = self.get_joint_effort([j],send)
+            joint_effort = self.get_joint_effort([j],send)[0] # get the value in the list
 
             # if either the sign of the joint effort or the direction of the command change,
             # flip the sign of the target velocity
-            if numpy.sign(joint_effort)*numpy.sign(c) <0:
+            if sign(joint_effort)*sign(c) <0:
                 j['joint_target_velocity'] = -1 * j['joint_target_velocity']
                 vrep.simxSetJointTargetVelocity(self._sim_Client_ID, j['sim_handle'], j['joint_target_velocity'], vrep.simx_opmode_blocking)
             vrep.simxSetJointForce(self._sim_Client_ID, j['sim_handle'], abs(c), vrep.simx_opmode_blocking)
@@ -350,6 +342,13 @@ class VrepInterface(object):
         #     raise Exception("ERROR in {}: returnCode = {}".format(__name__, returnCode))
         return forceVector,torqueVector
 
+def sign(x):
+    if x > 0:
+        return 1
+    elif x < 0:
+        return -1
+    else:
+        return 0
 
 class SimulationConfigOffError(Exception):
     '''If there is a problem with a configuration in the simulation'''
