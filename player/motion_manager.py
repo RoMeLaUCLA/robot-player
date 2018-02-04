@@ -1,0 +1,260 @@
+from __future__ import division
+
+import argparse
+import time
+from math import pi
+
+from numpy import matlib as np
+from vrep_interface import VrepInterface
+from dxl_interface import DxlDevice, DxlInterface
+from rf.util.mathfcn import wrap_between_pi_and_neg_pi
+import argparse
+
+
+class MotionManager(object):
+    """
+    Class to abstract commands made to a robot in simulation or in real life.
+    The Motion Manager only uses one player at a time.
+
+    This class wraps Interface classes such as the DxlInterface or VrepInterface
+
+    """
+    def __init__(self, Device):
+        self.device = Device
+        self.sim = False
+        self.dxl = False
+        self.player = None
+        if isinstance(Device, VrepInterface):
+            self.sim = True
+            self.player='vrep'
+        if isinstance(self.device, DxlDevice) or isinstance(self.device, DxlInterface):
+            self.dxl = True
+            self.player='dxl'
+
+    def __enter__(self):
+        self.initialize()
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        if isinstance(self.device, VrepInterface):
+            print("Stopping VREP simulation")
+            self.device.stop()
+
+    def initialize(self):
+        # stuff to do before starting each motion set
+        if isinstance(self.device, VrepInterface):
+            self.device.start()
+        if isinstance(self.device, DxlDevice) or isinstance(self.device, DxlInterface):
+            self.device.initialize()
+
+    ## Position ##
+    def get_current_position(self, ids):
+        # gets current position of specific joint
+        # ids is a list of ids
+        if self.player == 'vrep':
+            joints = [self.device.joint[id] for id in ids]
+            return self.device.get_current_position(joints)
+        if self.player == 'dxl':
+            raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
+
+    def get_all_current_position(self, player=None):
+        # gets current position of robot.
+
+        return self.device.get_all_current_position()
+
+    def set_command_position(self, ids, commands, send=True):
+        # ids is a list of the ids that you want to command
+        # commands is a list of the values that you want to send to the actuators
+        if self.player == 'vrep':
+            joints = [self.device.joint[id] for id in ids]
+            return self.device.set_command_position(joints, commands, send)
+        if self.player == 'dxl':
+            raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
+
+    def set_all_command_position(self, command, send=True):
+        # set command position for using positional arguments
+        # send is whether to also trigger a timestep
+        self.device.set_all_command_position(command, send)
+
+    ## Velocity ##
+    def get_joint_velocity(self, ids):
+        if self.player == 'vrep':
+            joints = [self.device.joint[id] for id in ids]
+            return self.device.get_joint_velocity(joints)
+        if self.player == 'dxl':
+            raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
+
+    def get_all_joint_velocity(self):
+        return self.device.get_all_joint_velocity()
+
+    def set_all_joint_velocity(self, commands, send=True):
+        if self.player == 'vrep':
+            self.device.set_all_joint_velocity(commands, send)
+        if self.player == 'dxl':
+            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+
+    def set_joint_velocity(self, ids, commands, send=True):
+        # ids is a list of the ids that you want to command
+        # commands is a list of the values that you want to send to the actuators
+        if self.player == 'vrep':
+            joints = [self.device.joint[id] for id in ids]
+            return self.device.set_joint_velocity(joints, commands, send)
+        if self.player == 'dxl':
+            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+
+
+    ## Effort (force/torque) ##
+    def set_joint_effort(self, ids, command, send=True):
+        if self.player == 'vrep':
+            joints = [self.device.joint[id] for id in ids]
+            self.device.set_joint_effort(joints, command, send)
+        if self.player == 'dxl':
+            raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
+
+    def set_all_joint_effort(self, command, send=True):
+        if self.player == 'vrep':
+            self.device.set_all_joint_effort(command, send)
+        elif self.player == 'dxl':
+            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+
+    def get_joint_effort(self, ids):
+        if self.player == 'vrep':
+            joints = [self.device.joint[id] for id in ids]
+            return self.device.get_joint_effort(joints)
+        elif self.player == 'dxl':
+            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+
+    def wait(self, time_to_wait):
+        # wait for a specified duration of time, in seconds. This command is blocking.
+        if isinstance(self.device, VrepInterface):
+            # timesteps to wait, rounded down to the nearest integer
+            self.device.wait(int(time_to_wait/self.device.dt))
+        if isinstance(self.device, DxlDevice) or isinstance(self.device,DxlInterface):
+            time.sleep(time_to_wait)
+
+    def torque_on(self,motor_ids):
+        # torque on all motors
+        if isinstance(self.device, DxlDevice) or isinstance(self.device,DxlInterface):
+            self.device.set_torque_enable(zip(motor_ids,[1]*len(motor_ids)))
+
+    def torque_off(self,motor_ids):
+        if isinstance(self.device, DxlDevice) or isinstance(self.device, DxlInterface):
+            self.device.set_torque_enable(zip(motor_ids,[0]*len(motor_ids)))
+
+    def advance_timestep(self):
+        if isinstance(self.device, VrepInterface):
+            # timesteps to wait, rounded down to the nearest integer
+            self.device.wait(1)
+        # if isinstance(self.device, DxlInterface):
+        #     # timesteps to wait, rounded down to the nearest integer
+        #     self.device.wait(dt)
+
+
+def to_player_angle_offset(angles, player_offset):
+    # flips joint axes around to match the player's representation. Is it's own inverse and should be called to
+    # rectify each of the joint axes.
+    """
+    :param q: angles (radians)
+    :param player_offset: a class specifying player offsets that should be customized for each robote
+    :return:
+    """
+
+    trans = player_offset.angle_trans
+    offsets = player_offset.angle_offset
+
+    return [wrap_between_pi_and_neg_pi((q +q_o)*t) for q, q_o, t in zip(angles, offsets, trans)]
+
+
+def from_player_angle_offset(angles, player_offset):
+    # flips joint axes around to match the kinematic representation.
+    # Is it's own inverse and should be called to rectify each of the joint axes.
+
+    """
+    :param q: angles (radians)
+    :param player_offset: a class specifying player offsets that should be customized for each robot
+    :return:
+    """
+
+    angles = np.asarray(angles)
+
+    trans = player_offset.angle_trans
+    offsets = player_offset.angle_offset
+
+    angles = np.asarray([q*t- q_o for q, q_o, t in zip(angles, offsets, trans)])
+    return wrap_between_pi_and_neg_pi(angles)
+
+def to_and_from_player_effort(effort, player_offset):
+    """
+    Convert efforts between player and calculation
+    :param effort: torque/force values
+    :param player_offset: 1 or -1 for each axis
+    :return:
+    """
+    trans = player_offset.angle_trans
+
+    return [e*tr for e, tr in zip(effort, trans)]
+
+
+def player_arg_parser(filename):
+    """
+    Parses command-line arguments to python interpreter.
+    This allows you to easily select between using dynamixels or simulation
+
+    :param filename:
+    :return: args, which can be checked using args.dynamixel or args.simulation
+    """
+    parser = argparse.ArgumentParser(description=filename)
+    parser.add_argument('-s', '--simulation',
+                        help='run a VREP simulation',
+                        action='store_true')
+    parser.add_argument('-d', '--dynamixel',
+                        help='use Dynamixels',
+                        action='store_true')
+    args = parser.parse_args()
+    if not args.dynamixel and not args.simulation:
+        print(
+            """
+            ERROR: You need to specify either a simulation or a robot to output your keyframes to."
+        
+            usage: python {} [-h] [-s] [-d]  
+        
+            optional arguments:
+            -h, --help        show this help message and exit
+            -s, --simulation  run a VREP simulation
+            -d, --dynamixel   use Dynamixels
+            """.format(filename))
+        quit()
+
+    if args.dynamixel and args.simulation:
+        print("ERROR: Only select either dynamixel or simulation for now.")
+        quit()
+
+    return args
+
+
+if __name__ == "__main__":
+    # test this with the vrep file L_Arm and the right arm of the Robotis Manipulator
+    Devices = []
+    dt = .01
+    VI = VrepInterface(robot_name="", dt=dt, id_list=[9, 10, 11, 12, 13, 14, 15])
+    Devices.append()
+    Devices.append(DxlDevice([9, 10, 11, 12, 13, 14, 15]))
+
+    with MotionManager(Devices) as MM:
+        MM.initialize()
+        MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
+        for i in xrange(100):
+            print MM.get_all_current_position()
+            MM.wait(dt)
+
+        MM.set_all_command_position([pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, ])
+        for i in xrange(100):
+            print MM.get_all_current_position()
+            MM.wait(dt)
+
+        MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
+        for i in xrange(100):
+            print MM.get_all_current_position()
+            MM.wait(dt)
+
+
