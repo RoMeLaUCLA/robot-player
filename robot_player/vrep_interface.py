@@ -282,9 +282,9 @@ class VrepInterface(object):
         # print "setting joint effort"
         self.set_joint_effort(self.joint, commands, send)
 
-    def get_all_joint_effort(self, commands, send=True):
+    def get_all_joint_effort(self, send=True):
 
-        return self.get_joint_effort(self.joint, commands)
+        return self.get_joint_effort(self.joint)
 
     """
     Sensor Communication functions

@@ -81,7 +81,7 @@ class MotionManager(object):
         # stuff to do before starting each motion set
         if isinstance(self.device, VrepInterface):
             self.device.start()
-        if isinstance(self.device, DxlDevice) or isinstance(self.device, DxlInterface):
+        if isinstance(self.device, DxlInterface):
             self.device.initialize()
 
     ## Position ##
@@ -158,6 +158,12 @@ class MotionManager(object):
         if self.player == 'vrep':
             joints = [self.device.joint[id] for id in ids]
             return self.device.get_joint_effort(joints)
+        elif self.player == 'dxl':
+            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+
+    def get_all_joint_effort(self):
+        if self.player == 'vrep':
+            return self.device.get_all_joint_effort()
         elif self.player == 'dxl':
             raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
