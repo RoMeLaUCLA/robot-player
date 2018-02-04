@@ -11,7 +11,6 @@ __status__ = "Prototype"
 '''
 
 from . vrep import vrep
-import numpy
 
 class VrepInterface(object):
     """
