@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='MotionManager',
+    name='RobotPlayer',
     author='Daniel Sun',
     author_email='danielsun@ucla.edu',
     version='0.1.0',
