@@ -1,6 +1,6 @@
 #!usr/bin/env python
-__author__ = "Hosik Chae"
-__email__ = "CKMagenta@gmail.com"
+__author__ = "Daniel Sun, Hosik Chae"
+__email__ = "danielsun@ucla.edu, CKMagenta@gmail.com"
 __copyright__ = "Copyright 2016 RoMeLa"
 
 __version__ = "0.0.1"
@@ -10,9 +10,8 @@ __status__ = "Prototype"
   This class is used to handle the communication between python and V-REP
 '''
 
-import vrep
+from . vrep import vrep
 import numpy
-# import Settings.RobotData as RDS
 
 class VrepInterface(object):
     """
@@ -28,9 +27,12 @@ class VrepInterface(object):
     <VREP root>/programming/remoteApiBindings/lib/lib/64Bit and <VREP root>/programming/remoteApiBindings/python/python
 
 
+
+
     """
-    # TODO: make "set" commands optionally not trigger the next simulation step
-    # TODO: make commands initialize once, then buffer the rest of
+    # TODO: make "set" commands not trigger the next simulation step automatically
+    # TODO: make joint data structure a dictionary and not a list
+
     JOINT_TYPE_REVOLUTE = 10
     JOINT_TYPE_PRISMATIC = 11
 
@@ -59,7 +61,7 @@ class VrepInterface(object):
                 self.ft_handles.append(self.get_object_handles(ft))
 
         if self._sim_Client_ID != -1:
-            print "Connected to V-REP remote API server."
+            print("Connected to V-REP remote API server.")
             # Setup synchronized simulation
             vrep.simxSynchronous(self._sim_Client_ID, True)
 
@@ -338,9 +340,6 @@ class VrepInterface(object):
         # if returnCode != vrep.simx_return_ok:
         #     raise Exception("ERROR in {}: returnCode = {}".format(__name__, returnCode))
         return forceVector,torqueVector
-
-
-
 
 
 class SimulationConfigOffError(Exception):

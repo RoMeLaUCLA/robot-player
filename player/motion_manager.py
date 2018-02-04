@@ -5,10 +5,39 @@ import time
 from math import pi
 
 from numpy import matlib as np
-from vrep_interface import VrepInterface
-from dxl_interface import DxlDevice, DxlInterface
-from rf.util.mathfcn import wrap_between_pi_and_neg_pi
-import argparse
+from . vrep_interface import VrepInterface
+from . dxl_interface import DxlInterface
+from . dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28
+
+def wrap_between_pi_and_neg_pi(angle):
+    return (angle + np.pi) % (2*np.pi) - np.pi
+
+class DxlOptions(object):
+    def __init__(self,
+                 motor_ids,
+                 motor_type,
+                 device_name="/dev/ttyUSB0",
+                 baudrate=3000000,
+                 protocol_version=2
+                 ):
+        self.motor_id = motor_ids
+        self.motor_type = motor_type
+        self.protocol_version = protocol_version
+        self.device_name = device_name
+        self.baudrate = baudrate
+        self.motor = {}
+        self.port_num = None
+        self.gw_goalpos = None
+        self.gr_prespos = None
+
+        if self.motor_type == 'MX28':
+            self.ctrl_table = MX28
+        elif self.motor_type == 'MX106':
+            self.ctrl_table = MX106
+        elif self.motor_type == 'MX106_P1':
+            self.ctrl_table = MX106_P1
+        elif self.motor_type == 'DXLPRO':
+            self.ctrl_table = DXLPRO
 
 
 class MotionManager(object):
@@ -17,7 +46,15 @@ class MotionManager(object):
     The Motion Manager only uses one player at a time.
 
     This class wraps Interface classes such as the DxlInterface or VrepInterface
+    in a consistent calling style so that converting between code for
+    simulation and hardware experiments is easy.
 
+    The MotionManager is initialized with an options class (for example
+    vrep_options or dxl_options) Initializing the options class will help
+    you set the right options for the motion manager.
+
+    After that, passing the options class to the motion manager initializes
+    it and the motion manager will take care of the rest.
     """
     def __init__(self, Device):
         self.device = Device
@@ -27,7 +64,7 @@ class MotionManager(object):
         if isinstance(Device, VrepInterface):
             self.sim = True
             self.player='vrep'
-        if isinstance(self.device, DxlDevice) or isinstance(self.device, DxlInterface):
+        if isinstance(self.device, DxlInterface):
             self.dxl = True
             self.player='dxl'
 
@@ -132,14 +169,14 @@ class MotionManager(object):
         if isinstance(self.device, DxlDevice) or isinstance(self.device,DxlInterface):
             time.sleep(time_to_wait)
 
-    def torque_on(self,motor_ids):
+    def torque_on(self,ids):
         # torque on all motors
-        if isinstance(self.device, DxlDevice) or isinstance(self.device,DxlInterface):
-            self.device.set_torque_enable(zip(motor_ids,[1]*len(motor_ids)))
+        if isinstance(self.device,DxlInterface):
+            self.device.set_torque_enable(zip(ids,[1]*len(ids)))
 
-    def torque_off(self,motor_ids):
-        if isinstance(self.device, DxlDevice) or isinstance(self.device, DxlInterface):
-            self.device.set_torque_enable(zip(motor_ids,[0]*len(motor_ids)))
+    def torque_off(self,ids):
+        if isinstance(self.device, DxlInterface):
+            self.device.set_torque_enable(zip(ids,[0]*len(ids)))
 
     def advance_timestep(self):
         if isinstance(self.device, VrepInterface):
@@ -163,7 +200,6 @@ def to_player_angle_offset(angles, player_offset):
     offsets = player_offset.angle_offset
 
     return [wrap_between_pi_and_neg_pi((q +q_o)*t) for q, q_o, t in zip(angles, offsets, trans)]
-
 
 def from_player_angle_offset(angles, player_offset):
     # flips joint axes around to match the kinematic representation.
@@ -193,7 +229,6 @@ def to_and_from_player_effort(effort, player_offset):
     trans = player_offset.angle_trans
 
     return [e*tr for e, tr in zip(effort, trans)]
-
 
 def player_arg_parser(filename):
     """
@@ -232,29 +267,29 @@ def player_arg_parser(filename):
     return args
 
 
-if __name__ == "__main__":
-    # test this with the vrep file L_Arm and the right arm of the Robotis Manipulator
-    Devices = []
-    dt = .01
-    VI = VrepInterface(robot_name="", dt=dt, id_list=[9, 10, 11, 12, 13, 14, 15])
-    Devices.append()
-    Devices.append(DxlDevice([9, 10, 11, 12, 13, 14, 15]))
-
-    with MotionManager(Devices) as MM:
-        MM.initialize()
-        MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
-        for i in xrange(100):
-            print MM.get_all_current_position()
-            MM.wait(dt)
-
-        MM.set_all_command_position([pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, ])
-        for i in xrange(100):
-            print MM.get_all_current_position()
-            MM.wait(dt)
-
-        MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
-        for i in xrange(100):
-            print MM.get_all_current_position()
-            MM.wait(dt)
+# if __name__ == "__main__":
+#     # test this with the vrep file L_Arm and the right arm of the Robotis Manipulator
+#     Devices = []
+#     dt = .01
+#     VI = VrepInterface(robot_name="", dt=dt, id_list=[9, 10, 11, 12, 13, 14, 15])
+#     Devices.append()
+#     Devices.append(DxlDevice([9, 10, 11, 12, 13, 14, 15]))
+#
+#     with MotionManager(Devices) as MM:
+#         MM.initialize()
+#         MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
+#         for i in xrange(100):
+#             print MM.get_all_current_position()
+#             MM.wait(dt)
+#
+#         MM.set_all_command_position([pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, ])
+#         for i in xrange(100):
+#             print MM.get_all_current_position()
+#             MM.wait(dt)
+#
+#         MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
+#         for i in xrange(100):
+#             print MM.get_all_current_position()
+#             MM.wait(dt)
 
 
