@@ -89,26 +89,23 @@ class MotionManager(object):
         # gets current position of specific joint
         # ids is a list of ids
         if self.player == 'vrep':
-            joints = [self.device.joint[id] for id in ids]
-            return self.device.get_current_position(joints)
+            return self.device.get_current_position(ids)
         if self.player == 'dxl':
             raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
 
-    def get_all_current_position(self, player=None):
-        # gets current position of robot.
-
+    def get_all_current_position(self):
+        # gets current position of robot
         return self.device.get_all_current_position()
 
-    def set_command_position(self, ids, commands, send=True):
+    def set_command_position(self, ids, commands, send=False):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
         if self.player == 'vrep':
-            joints = [self.device.joint[id] for id in ids]
-            return self.device.set_command_position(joints, commands, send)
+            return self.device.set_command_position(ids, commands, send)
         if self.player == 'dxl':
             raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
 
-    def set_all_command_position(self, command, send=True):
+    def set_all_command_position(self, command, send=False):
         # set command position for using positional arguments
         # send is whether to also trigger a timestep
         self.device.set_all_command_position(command, send)
@@ -116,8 +113,7 @@ class MotionManager(object):
     ## Velocity ##
     def get_joint_velocity(self, ids):
         if self.player == 'vrep':
-            joints = [self.device.joint[id] for id in ids]
-            return self.device.get_joint_velocity(joints)
+            return self.device.get_joint_velocity(ids)
         if self.player == 'dxl':
             raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
 
@@ -134,8 +130,7 @@ class MotionManager(object):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
         if self.player == 'vrep':
-            joints = [self.device.joint[id] for id in ids]
-            return self.device.set_joint_velocity(joints, commands, send)
+            self.device.set_joint_velocity(ids, commands, send)
         if self.player == 'dxl':
             raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
@@ -143,8 +138,7 @@ class MotionManager(object):
     ## Effort (force/torque) ##
     def set_joint_effort(self, ids, command, send=True):
         if self.player == 'vrep':
-            joints = [self.device.joint[id] for id in ids]
-            self.device.set_joint_effort(joints, command, send)
+            self.device.set_joint_effort(ids, command, send)
         if self.player == 'dxl':
             raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
 
@@ -183,6 +177,12 @@ class MotionManager(object):
     def torque_off(self,ids):
         if isinstance(self.device, DxlInterface):
             self.device.set_torque_enable(zip(ids,[0]*len(ids)))
+
+    def set_joint_ctrl_loop(self, ids, commands):
+        self.device.set_joint_ctrl_loop(ids, commands)
+
+    def get_joint_ctrl_loop(self, ids):
+        return self.device.get_joint_ctrl_loop(ids)
 
     def advance_timestep(self):
         if isinstance(self.device, VrepInterface):
