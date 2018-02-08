@@ -108,8 +108,10 @@ class MotionManager(object):
     def set_all_command_position(self, command, send=False):
         # set command position for using positional arguments
         # send is whether to also trigger a timestep
-        self.device.set_all_command_position(command, send)
-
+        if self.player == 'vrep':
+            return self.device.set_command_position(ids, commands, send)
+        if self.player == 'dxl':
+            self.device.set_all_command_position(command)
     ## Velocity ##
     def get_joint_velocity(self, ids):
         if self.player == 'vrep':
@@ -166,7 +168,7 @@ class MotionManager(object):
         if isinstance(self.device, VrepInterface):
             # timesteps to wait, rounded down to the nearest integer
             self.device.wait(int(time_to_wait/self.device.dt))
-        if isinstance(self.device, DxlDevice) or isinstance(self.device,DxlInterface):
+        if isinstance(self.device,DxlInterface):
             time.sleep(time_to_wait)
 
     def torque_on(self,ids):

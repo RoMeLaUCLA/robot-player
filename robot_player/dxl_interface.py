@@ -307,6 +307,13 @@ class DxlInterface(object):
 
         return pos_data
 
+def rad2pos(rad, resolution):
+    return int(round(rad * resolution / (2 * 3.1415926)))
+
+
+def pos2rad(pos, resolution):
+    return pos * (2 * 3.1415926) / resolution
+
 if __name__ == "__main__":
     # tests if things work on R arm manipulator
     motor_id = [9, 10, 11, 12, 13, 14, 15]
