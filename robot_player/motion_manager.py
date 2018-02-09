@@ -109,7 +109,7 @@ class MotionManager(object):
         # set command position for using positional arguments
         # send is whether to also trigger a timestep
         if self.player == 'vrep':
-            return self.device.set_command_position(ids, commands, send)
+            return self.device.set_all_command_position(command, send)
         if self.player == 'dxl':
             self.device.set_all_command_position(command)
     ## Velocity ##

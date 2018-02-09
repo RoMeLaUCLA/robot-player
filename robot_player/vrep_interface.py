@@ -39,13 +39,13 @@ class VrepInterface(object):
 
 
     # On initialization pass in the timestep that both the python script and V-REP will be synced to
-    def __init__(self, motor_id, dt, robot_name=None, gyroscope=False, accelerometer=False, ft_sensor_names=None):
+    def __init__(self, motor_id, dt, joint_prefix=None, gyroscope=False, accelerometer=False, ft_sensor_names=None):
         vrep.simxFinish(-1)
         self._sim_Client_ID = vrep.simxStart('127.0.0.1', 19997, True, True, 5000, 1)
-        if robot_name is None:
+        if joint_prefix is None:
             self.joint_prefix = "joint"
         else:
-            self.joint_prefix = robot_name
+            self.joint_prefix = joint_prefix
         self.motor_id = motor_id
         self.opmode = vrep.simx_opmode_blocking # I think this will make things better TODO: replace all opmodes with this
         self.revolute_joint_torque_control_max_speed = 1000000  # rad/s
