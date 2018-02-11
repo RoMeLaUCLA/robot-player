@@ -6,7 +6,6 @@ motor_id = [1,2]
 dt = .01
 
 with MotionManager(motor_id, dt, VrepOptions(joint_prefix="joint")) as mm:
-    mm.initialize()
 
     for i in range(100):
         assert(mm.get_current_position([1,2]) == mm.get_all_current_position())

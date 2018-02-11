@@ -9,4 +9,4 @@ __status__ = "Prototype"
 
 from . motion_manager import MotionManager
 from . vrep_interface import VrepInterface, VrepOptions
-from . dxl_interface import DxlInterface, DxlPort
+from . dxl_interface import DxlInterface, DxlOptions
