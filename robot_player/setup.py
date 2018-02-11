@@ -4,6 +4,6 @@ setup(
     name='RobotPlayer',
     author='Daniel Sun',
     author_email='danielsun@ucla.edu',
-    version='0.1.0',
+    version='0.0.1.dev1',
     packages = find_packages(),
 )
