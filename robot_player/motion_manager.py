@@ -4,7 +4,7 @@ import argparse
 import time
 from math import pi
 
-# from numpy import matlib as np
+from numpy import matlib as np
 from . vrep_interface import VrepInterface
 from . dxl_interface import DxlInterface
 from . dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28
@@ -112,6 +112,7 @@ class MotionManager(object):
             return self.device.set_all_command_position(command, send)
         if self.player == 'dxl':
             self.device.set_all_command_position(command)
+
     ## Velocity ##
     def get_joint_velocity(self, ids):
         if self.player == 'vrep':
@@ -122,17 +123,17 @@ class MotionManager(object):
     def get_all_joint_velocity(self):
         return self.device.get_all_joint_velocity()
 
-    def set_all_joint_velocity(self, commands, send=True):
-        if self.player == 'vrep':
-            self.device.set_all_joint_velocity(commands, send)
-        if self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
-
     def set_joint_velocity(self, ids, commands, send=True):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
         if self.player == 'vrep':
             self.device.set_joint_velocity(ids, commands, send)
+        if self.player == 'dxl':
+            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+
+    def set_all_joint_velocity(self, commands, send=True):
+        if self.player == 'vrep':
+            self.device.set_all_joint_velocity(commands, send)
         if self.player == 'dxl':
             raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
@@ -152,8 +153,7 @@ class MotionManager(object):
 
     def get_joint_effort(self, ids):
         if self.player == 'vrep':
-            joints = [self.device.joint[id] for id in ids]
-            return self.device.get_joint_effort(joints)
+            return self.device.get_joint_effort(ids)
         elif self.player == 'dxl':
             raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
@@ -172,11 +172,12 @@ class MotionManager(object):
             time.sleep(time_to_wait)
 
     def torque_on(self,ids):
-        # torque on all motors
+        # torque on all motors, dxl specific
         if isinstance(self.device,DxlInterface):
             self.device.set_torque_enable(zip(ids,[1]*len(ids)))
 
     def torque_off(self,ids):
+        # torque off all motors, dxl specific
         if isinstance(self.device, DxlInterface):
             self.device.set_torque_enable(zip(ids,[0]*len(ids)))
 
