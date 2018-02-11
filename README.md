@@ -205,24 +205,24 @@ The DxlInterface is a class to talk to multiple dynamixel chains, abstracted as 
 ### Initialization
 Specify the options for each usb port like this:
 ```python
-device_opts = [{'device_name':"/dev/ttyUSB0",
-                'motor_id':[1],
-                'motor_type':'DXLPRO'},
-               {'device_name':"/dev/ttyUSB1",
-                'motor_id':[2],
-                'motor_type':'DXLPRO'} ]
+device_opts = DxlOptions(motor_ids =[(1,2,3,4,5,6), (7,8,9,10,11,12),(19,20)],
+                         motor_types=['DXLPRO','DXLPRO','MX106')],
+                         ports = ["/dev/ttyUSB0", "/dev/ttyUSB1", "/dev/ttyUSB2"],
+                         baudrate=3000000,
+                         protocol_version=2
+                         )
 ```
 
-This device automatically multiplexes calls to the devices to make it seem like multiple devices
-are one contiguous device.
+This device automatically multiplexes calls to the individual ports to make it seem like multiple ports are one contiguous device.
 
-when you write to the motors, they will be written all at once, using the syncwrite or syncread commands.
+When you write to the motors, they will be written all at once, using the syncwrite or syncread commands.
 The order of the motors is implicit- the order that you initialized the motors in.
 First by device, then by the order that you listed the motors.
 
+
 ```python
-device1 = id:[1,2,3,4,5]
-device2 = id:[6,7,8,9,10]
+# device1 ids: [1,2,3,4,5]
+# device2 ids: [6,7,8,9,10]
 DI.set_all_command_position([1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5])
 ```
 
