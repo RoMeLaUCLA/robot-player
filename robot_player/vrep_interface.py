@@ -134,9 +134,12 @@ class VrepInterface(object):
         return self._sim_joint_handles
 
     def get_joint_data_structure(self, motor_ids):
-        # Creates a joint data structure, common thing to do before starting a simulation.
-        # NOTE: Only works for simulations with a single robot.
-        # TODO: extend this to search by robot name prefixes
+        """
+        Creates a joint data structure, common thing to do before starting a simulation.
+        :param motor_ids: ids to look for
+        :return: dictionary that has joint data. keys are the motor_ids that match the names of joints in the
+        simulation.
+        """
 
         # get joint names and handles
         joint_names_and_handles = self.get_joint_handles()
@@ -167,13 +170,16 @@ class VrepInterface(object):
         joint_data = []
         for name, h in joint_names_and_handles.items():
             # update dictionary with additional info
-            joint_data_by_handle[h].update({'sim_handle': h, 'sim_name':name, 'id':int(name[len(self.joint_prefix):])})
+            joint_data_by_handle[h].update({'sim_handle': h,
+                                            'sim_name':name,
+                                            'id':int(name[len(self.joint_prefix):])})
             joint_data.append(joint_data_by_handle[h])
 
-        # filter for specified joints and sort joints to be in order
-        new_joint = [entry for entry in joint_data if entry['id'] in motor_ids] # filter for specified
-        # joints
-        new_joint.sort(key = lambda jt_dict:int(jt_dict['id'])) # sort joints to be in order
+        # filter for specified joints
+        new_joint = [entry for entry in joint_data if entry['id'] in motor_ids]
+
+        # sort joints to be in order
+        new_joint.sort(key = lambda jt_dict:int(jt_dict['id']))
 
         # setup joint velocities
         for j in new_joint:
@@ -189,9 +195,7 @@ class VrepInterface(object):
         # create dictionary that preserves order
         joint_dict = OrderedDict()
         for j in new_joint:
-            j['id']
             joint_dict[j['id']] = j
-
 
         return joint_dict
 
@@ -207,17 +211,12 @@ class VrepInterface(object):
         if send:
             self.send_command()
 
-    def set_joint_position(self,joint,commands):
-        for j,c in zip(joint,commands):
+    def set_joint_position(self, ids, commands):
+        for i,c in zip(ids,commands):
+            j = self.joint[i]
             vrep.simxSetJointPosition(self._sim_Client_ID, j['sim_handle'], c,
                                             vrep.simx_opmode_oneshot)
-        vrep.simxSynchronousTrigger(self._sim_Client_ID)
-
-    def set_limb_command(self, joint, commands, limb_num):
-        for idx in range(0,3):
-            k = (limb_num-1)*3 + 1 + idx
-            vrep.simxSetJointTargetPosition(self._sim_Client_ID, joint[k]['sim_handle'], commands[idx],
-                                            vrep.simx_opmode_oneshot)
+        # vrep.simxSynchronousTrigger(self._sim_Client_ID)
 
     def send_command(self):
         vrep.simxSynchronousTrigger(self._sim_Client_ID)
