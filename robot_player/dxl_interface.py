@@ -9,31 +9,46 @@ __status__ = "Prototype"
 
 
 import ctypes
-import time
-
 import dxl.dynamixel_functions as dynamixel
 from dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28
-
-# Settings TODO: move this to a configuration file
-# Control table address
-ADDR_PRO_TORQUE_ENABLE = DXLPRO.TORQUE_ENABLE  # Control table address is different in Dynamixel model
-ADDR_PRO_GOAL_POSITION = DXLPRO.GOAL_POSITION
-ADDR_PRO_PRESENT_POSITION = DXLPRO.PRESENT_POSITION
 
 # data Byte Length
 LEN_GOAL_POSITION = 4
 LEN_PRESENT_POSITION = 4
 
-# Protocol version
-PROTOCOL_VERSION = 2  # See which protocol version is used in the Dynamixel
-
-# Default settings
-BAUDRATE = 3000000
 # DEVICENAME = "/dev/ttyUSB0".encode('utf-8')  # Check which port is being used on your controller
 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
 
 COMM_SUCCESS = 0  # Communication Success result value
 COMM_TX_FAIL = -1001  # Communication Tx Failed
+
+class DxlOptions(object):
+    def __init__(self,
+                 motor_ids,
+                 motor_types,
+                 ports = ["/dev/ttyUSB0"],
+                 baudrate=3000000,
+                 protocol_version=2
+                 ):
+
+        """
+
+        :param motor_ids: list of list of motor ids for each port
+        :param motor_types: list of motor types for each port
+        :param ports: list of strings that specify the name of the port
+        :param baudrate: integer specifiying baudrate (eg. 3000000)
+        :param protocol_version: integer specifying protocol to use (1 or 2)
+        """
+        self.dxl_ports = []
+        self.baudrate = baudrate
+        self.protocol_version = protocol_version
+
+        # if motor_ids is just a single list, then put it inside another list for it
+        if not isinstance(motor_ids, list):
+            motor_ids = [motor_ids]
+
+        for port, ids, motor_type in zip(ports, motor_ids, motor_types):
+            self.dxl_ports.append(DxlPort(ids, motor_type, port, baudrate, protocol_version))
 
 class DxlPort(object):
     def __init__(self,
@@ -313,19 +328,3 @@ def rad2pos(rad, resolution):
 
 def pos2rad(pos, resolution):
     return pos * (2 * 3.1415926) / resolution
-
-if __name__ == "__main__":
-    # tests if things work on R arm manipulator
-    motor_id = [9, 10, 11, 12, 13, 14, 15]
-    Device = DxlDevice(motor_id)
-
-    joint_commands = [0,0,0,0,0,0,0]
-    enable = [1,1,1,1,1,1,1]
-
-    try:
-        Device.initialize()
-        Device.set_command_position(motor_id, joint_commands)
-        print Device.get_current_position(motor_id)
-        time.sleep(2)
-    finally:
-        pass

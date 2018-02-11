@@ -5,40 +5,11 @@ import time
 from math import pi
 
 from numpy import matlib as np
-from . vrep_interface import VrepInterface
-from . dxl_interface import DxlInterface
-from . dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28
+from . vrep_interface import VrepInterface, VrepOptions
+from . dxl_interface import DxlInterface, DxlOptions
 
 def wrap_between_pi_and_neg_pi(angle):
     return (angle + np.pi) % (2*np.pi) - np.pi
-
-class DxlOptions(object):
-    def __init__(self,
-                 motor_ids,
-                 motor_type,
-                 device_name="/dev/ttyUSB0",
-                 baudrate=3000000,
-                 protocol_version=2
-                 ):
-        self.motor_id = motor_ids
-        self.motor_type = motor_type
-        self.protocol_version = protocol_version
-        self.device_name = device_name
-        self.baudrate = baudrate
-        self.motor = {}
-        self.port_num = None
-        self.gw_goalpos = None
-        self.gr_prespos = None
-
-        if self.motor_type == 'MX28':
-            self.ctrl_table = MX28
-        elif self.motor_type == 'MX106':
-            self.ctrl_table = MX106
-        elif self.motor_type == 'MX106_P1':
-            self.ctrl_table = MX106_P1
-        elif self.motor_type == 'DXLPRO':
-            self.ctrl_table = DXLPRO
-
 
 class MotionManager(object):
     """
@@ -56,17 +27,33 @@ class MotionManager(object):
     After that, passing the options class to the motion manager initializes
     it and the motion manager will take care of the rest.
     """
-    def __init__(self, Device):
-        self.device = Device
+    def __init__(self, motor_ids, dt, options):
+        """
+
+        :param motor_ids: ids of motors
+        :param dt: timestep for motors or simulator to use
+        :param player: a string matching either 'vrep' or 'dxl'
+        :param options: an options class: either DxlOptions or VrepOptions that lets you specify various keyword parameters.
+        """
+
         self.sim = False
         self.dxl = False
-        self.player = None
-        if isinstance(Device, VrepInterface):
-            self.sim = True
-            self.player='vrep'
-        if isinstance(self.device, DxlInterface):
-            self.dxl = True
+        if isinstance(options, DxlOptions):
             self.player='dxl'
+        elif isinstance(options, VrepOptions):
+            self.player='vrep'
+        else:
+            raise ValueError("Options class invalid or missing. Specify either VrepOptions or DxlOptions to use as input to options parameter when instantiating MotionManager.")
+        self.motor_id = motor_ids
+        self.dt = dt
+        if self.player == "vrep":
+            self.sim = True
+            self.device = self.vrep_init(options)
+
+        elif self.player == 'dxl':
+            self.dxl = True
+            self.device = self.dxl_init(options)
+
 
     def __enter__(self):
         self.initialize()
@@ -83,6 +70,23 @@ class MotionManager(object):
             self.device.start()
         if isinstance(self.device, DxlInterface):
             self.device.initialize()
+
+    def dxl_init(self, options):
+
+        # initialize dxl interface
+        di = DxlInterface(options.baudrate, options.dxl_ports)
+        return di
+
+    def vrep_init(self, options):
+
+        # initialize vrep interface
+        vi = VrepInterface(self.motor_id,
+                           self.dt,
+                           joint_prefix=options.joint_prefix,
+                           gyroscope=options.gyroscope,
+                           accelerometer=options.accelerometer,
+                           ft_sensor_names=options.ft_sensor_names)
+        return vi
 
     ## Position ##
     def get_current_position(self, ids):

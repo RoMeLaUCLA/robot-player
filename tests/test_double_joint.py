@@ -1,18 +1,11 @@
-from robot_player import MotionManager, VrepInterface
+from robot_player import MotionManager, VrepOptions
 import numpy as np
 from time import sleep
 
 motor_id = [1,2]
 dt = .01
-vi = VrepInterface(motor_id, dt)
 
-# def allclose(x,y):
-#     if abs(a-y) < 1e-6
-#         return True
-#     else:
-#         return False
-
-with MotionManager(vi) as mm:
+with MotionManager(motor_id, dt, VrepOptions(joint_prefix="joint")) as mm:
     mm.initialize()
 
     for i in range(100):

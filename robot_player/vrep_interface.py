@@ -13,6 +13,14 @@ __status__ = "Prototype"
 from . vrep import vrep
 from collections import OrderedDict
 
+class VrepOptions(object):
+    # options class to help with creating via MotionManager
+    def __init__(self, joint_prefix=None, gyroscope=False, accelerometer=False, ft_sensor_names=None):
+        self.joint_prefix = joint_prefix
+        self.gyroscope = gyroscope
+        self.accelerometer = accelerometer
+        self.ft_sensor_names = ft_sensor_names
+
 class VrepInterface(object):
     """
     The VrepInterface is the main way of interacting with a simulation.
