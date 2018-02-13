@@ -137,7 +137,7 @@ class DxlInterface(object):
     def initialize(self):
         # get ready for motion
         for d in self.device:
-            self.set_torque_enable(zip(d.motor_id, [1]*len(d.motor_id)))
+            self.set_torque_enable(d.motor_id, [1]*len(d.motor_id))
 
     def close(self):
         for d in self.device:
@@ -231,12 +231,11 @@ class DxlInterface(object):
             print "gw_goalpos {}".format(d.gw_goalpos)
             print "gr_prespos {}".format(d.gr_prespos)
 
-    def set_torque_enable(self,total_data):
+    def set_torque_enable(self,ids, commands):
         # for each device, if an id in the table matches, set torque
-        # TODO: this should not use the total_data syntax, it should either use the implicit id format or stick with total data
         for d in self.device:
             ctrl_table_value = getattr(d.ctrl_table,"TORQUE_ENABLE")
-            for m_id, val in total_data:
+            for m_id, val in zip(ids, commands):
                 if m_id in d.motor_id:
                     dynamixel.write1ByteTxRx(d.port_num, d.protocol_version, m_id, ctrl_table_value, val)
                     dxl_comm_result = dynamixel.getLastTxRxResult(d.port_num, d.protocol_version)
@@ -273,6 +272,60 @@ class DxlInterface(object):
             dynamixel.groupSyncWriteClearParam(d.gw_goalpos)
             angles = angles[len(d.motor_id):]
 
+    def get_current_position(self, ids):
+        pos_data = []
+        # for each device,
+        for d in self.device:
+            if d.protocol_version == 2:
+                # Syncread present position
+                dynamixel.groupSyncReadTxRxPacket(d.gr_prespos)
+                dxl_comm_result = dynamixel.getLastTxRxResult(d.port_num, d.protocol_version)
+                if dxl_comm_result != COMM_SUCCESS:
+                    print(dynamixel.getTxRxResult(d.protocol_version, dxl_comm_result))
+                    return None
+
+                # Check if groupsyncread data of all dynamixels are available:
+                for m_id in (m_id for m_id in ids if m_id in d.motor_id):
+                    dxl_getdata_result = ctypes.c_ubyte(
+                        dynamixel.groupSyncReadIsAvailable(d.gr_prespos,
+                                                           m_id,
+                                                           d.ctrl_table.PRESENT_POSITION,
+                                                           LEN_PRESENT_POSITION)).value
+                    if dxl_getdata_result != 1:
+                        print("[ID:%03d] groupSyncRead getdata failed" % (m_id))
+                        quit()
+
+                        # Get present position value for (m_id)
+                    data = dynamixel.groupSyncReadGetData(d.gr_prespos, m_id,
+                                                          d.ctrl_table.PRESENT_POSITION,
+                                                          LEN_PRESENT_POSITION)
+                    res = d.motor[m_id]["resolution"]
+                    pos_data.append(pos2rad(data, res))
+            else:
+                # Bulkread present position and moving status
+                dynamixel.groupBulkReadTxRxPacket(d.group_num)
+                dxl_comm_result = dynamixel.getLastTxRxResult(d.port_num, d.protocol_version)
+                if dxl_comm_result != COMM_SUCCESS:
+                    print(dynamixel.getTxRxResult(d.protocol_version, dxl_comm_result))
+
+                for m_id in (m_id for m_id in ids if m_id in d.motor_id):
+                    # Check if groupbulkread data of Dynamixel#1 is available
+                    dxl_getdata_result = ctypes.c_ubyte(
+                        dynamixel.groupBulkReadIsAvailable(d.group_num, m_id, d.ctrl_table.PRESENT_POSITION,
+                                                           d.ctrl_table.LEN_PRESENT_POSITION)).value
+                    if dxl_getdata_result != 1:
+                        print("[ID:%03d] groupBulkRead getdata failed" % (m_id))
+                        quit()
+                        # Get Dynamixel#1 present position value
+                    data = dynamixel.groupBulkReadGetData(d.group_num, m_id, d.ctrl_table.PRESENT_POSITION,
+                                                                           d.ctrl_table.LEN_PRESENT_POSITION)
+                    res = d.motor[m_id]["resolution"]
+                    pos_data.append(pos2rad(data, res))
+
+            return pos_data
+
+
+
     def get_all_current_position(self):
         pos_data = []
         for d in self.device:
@@ -288,8 +341,10 @@ class DxlInterface(object):
                 # Check if groupsyncread data of all dynamixels are available:
                 for m_id in d.motor_id:
                     dxl_getdata_result = ctypes.c_ubyte(
-                        dynamixel.groupSyncReadIsAvailable(d.gr_prespos, m_id,
-                                                           d.ctrl_table.PRESENT_POSITION, LEN_PRESENT_POSITION)).value
+                        dynamixel.groupSyncReadIsAvailable(d.gr_prespos,
+                                                           m_id,
+                                                           d.ctrl_table.PRESENT_POSITION,
+                                                           LEN_PRESENT_POSITION)).value
                     if dxl_getdata_result != 1:
                         print("[ID:%03d] groupSyncRead getdata failed" % (m_id))
                         quit()
