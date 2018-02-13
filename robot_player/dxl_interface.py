@@ -44,7 +44,8 @@ class DxlOptions(object):
         self.protocol_version = protocol_version
 
         # if motor_ids is just a single list, then put it inside another list for it
-        if not isinstance(motor_ids, list):
+        if len(motor_ids) == 1 and not isinstance(motor_ids[0], list):
+            print "motor_ids is a single list!"
             motor_ids = [motor_ids]
 
         for port, ids, motor_type in zip(ports, motor_ids, motor_types):
@@ -168,7 +169,7 @@ class DxlInterface(object):
                     ctrl_table = MX106
                     resolution = MX106.resolution
 
-                if motor_model_no == MX106_P1.MX_106_P1:
+                elif motor_model_no == MX106_P1.MX_106_P1:
                     ctrl_table = MX106_P1
                     resolution = MX106_P1.resolution
 
