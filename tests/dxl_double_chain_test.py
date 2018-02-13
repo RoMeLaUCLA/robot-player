@@ -1,6 +1,7 @@
 from robot_player import MotionManager, DxlOptions
 from time import sleep
-
+from math import pi
+import numpy as np
 """
 test for chains of MX106 dynamixels, two plugged into each port.
 """
@@ -14,15 +15,11 @@ dopts = DxlOptions(motor_ids,
                    protocol_version=2)
 
 with MotionManager(ids, dt=.005, options=dopts) as mm:
-    assert(mm.get_current_position([1,2,3,4]) == mm.get_all_current_position())
-    mm.set_command_position([1,2], [1,1])
-    mm.wait(2)
 
-    mm.set_command_position([3,4], [-1,-1])
-    mm.wait(2)
-
-    mm.set_command_position([1,3],[0,0])
-    mm.wait(2)
-
-    mm.set_command_position([2,4], [0,0])
-    mm.wait(2)
+    # checking that the set_all/get_all position commands work
+    position_list = [[pi,pi,pi,pi], [1,1,2,2], [0,0,0,0], [pi,pi,pi,pi]]
+    for pl in position_list:
+        mm.set_all_command_position(pl)
+        mm.wait(2)
+        print mm.get_all_current_position()
+        assert (np.allclose(mm.get_all_current_position(), pl, atol=.05))
