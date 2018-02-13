@@ -231,6 +231,68 @@ class DxlInterface(object):
             print "gw_goalpos {}".format(d.gw_goalpos)
             print "gr_prespos {}".format(d.gr_prespos)
 
+    def setup_group_sync_write(self, parameter, parameter_data_len):
+        """
+        Set up a group sync write parameter for later use with each dxl port
+        Assign the group write ids to a DxlPort for later reference.
+        :param parameter: parameter to write to, as a string
+        :param parameter_data_len: length of data in ctrl table
+        :return:
+        """
+
+        for d in self.device:
+            print "d.port_num {}".format(d.port_num)
+            gw_id = dynamixel.groupSyncWrite(d.port_num,
+                                                    d.protocol_version,
+                                                    getattr(d.ctrl_table, parameter),
+                                                    parameter_data_len
+                                                    )
+
+            # set device to have .gw_<name of parameter> attached to it for further reference
+            setattr(d, "gw_" + parameter, gw_id)
+
+    def setup_group_sync_read(self, parameter, parameter_data_len):
+        """
+        Set up a group sync read parameter for later use with each dxl port
+        Assign the group read ids to a DxlPort data member for later reference.
+        :param parameter: parameter to read from, as a string
+        :param parameter_data_len: length of data in ctrl table
+        :return:
+        """
+
+        for d in self.device:
+            # Protocol 2.0 has sync read
+            if d.protocol_version == 2:
+                gr_id = dynamixel.groupSyncRead(d.port_num,
+                                                d.protocol_version,
+                                                getattr(d.ctrl_table, parameter),
+                                                parameter_data_len)
+                for m_id in d.motor_id:
+                    # Add parameter storage for each Dynamixel's present position value to the Syncread storage
+                    dxl_addparam_result = ctypes.c_ubyte(dynamixel.groupSyncReadAddParam(gr_id, m_id)).value
+                    if dxl_addparam_result != 1:
+                        print("[ID:%03d] groupSyncRead addparam failed" % (m_id))
+
+            # Protocol 1.0 doesn't have sync read, so use bulk read instead
+            else:
+                gr_id = dynamixel.groupBulkRead(d.port_num,
+                                                d.protocol_version,
+                                                getattr(d.ctrl_table, parameter),
+                                                parameter_data_len)
+                for m_id in d.motor_id:
+                    # Add parameter storage for each Dynamixel's present position value to the Bulkread storage
+                    dxl_addparam_result = ctypes.c_ubyte(dynamixel.groupBulkReadAddParam(
+                                                                        d.group_num,
+                                                                        m_id,
+                                                                        getattr(d.ctrl_table, parameter),
+                                                                        parameter_data_len)
+                                                                        ).value
+                    if dxl_addparam_result != 1:
+                        print("[ID:%03d] groupBulkRead addparam failed" % (m_id))
+            # set device to have .gw_<name of parameter> attached to it for further reference
+            setattr(d, "gr_" + parameter, gr_id)
+
+
     def set_torque_enable(self,ids, commands):
         # for each device, if an id in the table matches, set torque
         for d in self.device:
@@ -323,7 +385,6 @@ class DxlInterface(object):
                     pos_data.append(pos2rad(data, res))
 
             return pos_data
-
 
 
     def get_all_current_position(self):
