@@ -488,52 +488,10 @@ class DxlInterface(object):
     def get_all_current_position(self):
         pos_data = []
         for d in self.device:
-
-            if d.protocol_version == 2:
-                # Syncread present position
-                dynamixel.groupSyncReadTxRxPacket(d.gr_PRESENT_POSITION)
-                dxl_comm_result = dynamixel.getLastTxRxResult(d.port_num, d.protocol_version)
-                if dxl_comm_result != COMM_SUCCESS:
-                    print(dynamixel.getTxRxResult(d.protocol_version, dxl_comm_result))
-                    return None
-
-                # Check if groupsyncread data of all dynamixels are available:
-                for m_id in d.motor_id:
-                    dxl_getdata_result = ctypes.c_ubyte(
-                        dynamixel.groupSyncReadIsAvailable(d.gr_PRESENT_POSITION,
-                                                           m_id,
-                                                           d.ctrl_table.PRESENT_POSITION,
-                                                           LEN_PRESENT_POSITION)).value
-                    if dxl_getdata_result != 1:
-                        print("[ID:%03d] groupSyncRead getdata failed" % (m_id))
-                        quit()
-
-                        # Get present position value for (m_id)
-                    data = dynamixel.groupSyncReadGetData(d.gr_PRESENT_POSITION, m_id,
-                                                          d.ctrl_table.PRESENT_POSITION,
-                                                          LEN_PRESENT_POSITION)
-                    res = d.motor[m_id]["resolution"]
-                    pos_data.append(pos2rad(data, res))
-            else:
-                # Bulkread present position and moving status
-                dynamixel.groupBulkReadTxRxPacket(d.group_num)
-                dxl_comm_result = dynamixel.getLastTxRxResult(d.port_num, d.protocol_version)
-                if dxl_comm_result != COMM_SUCCESS:
-                    print(dynamixel.getTxRxResult(d.protocol_version, dxl_comm_result))
-
-                for m_id in d.motor_id:
-                    # Check if groupbulkread data of Dynamixel#1 is available
-                    dxl_getdata_result = ctypes.c_ubyte(
-                        dynamixel.groupBulkReadIsAvailable(d.group_num, m_id, d.ctrl_table.PRESENT_POSITION,
-                                                           d.ctrl_table.LEN_PRESENT_POSITION)).value
-                    if dxl_getdata_result != 1:
-                        print("[ID:%03d] groupBulkRead getdata failed" % (m_id))
-                        quit()
-                        # Get Dynamixel#1 present position value
-                    data = dynamixel.groupBulkReadGetData(d.group_num, m_id, d.ctrl_table.PRESENT_POSITION,
-                                                                           d.ctrl_table.LEN_PRESENT_POSITION)
-                    res = d.motor[m_id]["resolution"]
-                    pos_data.append(pos2rad(data, res))
+            data_list = self._sync_read(d, 'PRESENT_POSITION', 4, d.motor_id)
+            for m_id, data in zip(d.motor_id, data_list):
+                res = d.motor[m_id]["resolution"]
+                pos_data.append(pos2rad(data, res))
 
         return pos_data
 
