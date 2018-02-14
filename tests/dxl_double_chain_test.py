@@ -20,6 +20,7 @@ with MotionManager(ids, dt=.005, options=dopts) as mm:
     position_list = [[pi,pi,pi,pi], [1,1,2,2], [0,0,0,0], [pi,pi,pi,pi]]
     for pl in position_list:
         mm.set_all_command_position(pl)
-        mm.wait(2)
+        mm.wait(2.5)
         print mm.get_all_current_position()
+        assert (np.allclose(mm.get_current_position([1,2]) + mm.get_current_position([3,4]), mm.get_all_current_position(), atol=.05))
         assert (np.allclose(mm.get_all_current_position(), pl, atol=.05))

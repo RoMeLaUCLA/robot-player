@@ -95,7 +95,7 @@ class MotionManager(object):
         if self.player == 'vrep':
             return self.device.get_current_position(ids)
         if self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
+            return self.device.get_current_position(ids)
 
     def get_all_current_position(self):
         # gets current position of robot
