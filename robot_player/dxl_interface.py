@@ -11,6 +11,7 @@ __status__ = "Prototype"
 import ctypes
 import dxl.dynamixel_functions as dynamixel
 from dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28
+from collections import OrderedDict
 
 # data Byte Length
 LEN_GOAL_POSITION = 4
@@ -64,7 +65,7 @@ class DxlPort(object):
         self.protocol_version = protocol_version
         self.device_name = device_name
         self.baudrate = baudrate
-        self.motor = {}
+        self.motor = OrderedDict()
         self.port_num = None
         # self.gw_goalpos = None
         # self.gw_PRESENT_POSITION = None
@@ -132,7 +133,16 @@ class DxlInterface(object):
         self.setup_control_table()
         self.setup_sync_functions()
 
-    # turn on motors and set up group sync read/write
+        # match up motor ids and dxl ports
+        self.id_to_port = {}
+        for d in self.device:
+            for m_id in d.motor_id:
+                self.id_to_port[m_id] = d
+
+        print self.id_to_port
+
+
+
 
     def initialize(self):
         # get ready for motion
@@ -316,30 +326,10 @@ class DxlInterface(object):
 
     def set_all_command_position(self, angles):
         for d in self.device:
-            # print d.motor_id
-            for m_id, a in zip(d.motor_id, angles[:len(d.motor_id)]):
-
-                # convert from radians to actuator values
-                res = d.motor[m_id]["resolution"]
-                command = rad2pos(a,res)
-
-                # Add parameter storage for each Dynamixel's goal position value to the Syncwrite storage
-                dxl_addparam_result = ctypes.c_ubyte(
-                    dynamixel.groupSyncWriteAddParam(d.gw_GOAL_POSITION, m_id, command, LEN_GOAL_POSITION)).value
-                
-                if dxl_addparam_result != 1:
-                    print("[ID:%03d] groupSyncWrite addparam failed" % (m_id))
-                    quit()
-
-            # Syncwrite goal position
-            dynamixel.groupSyncWriteTxPacket(d.gw_GOAL_POSITION)
-            dxl_comm_result = dynamixel.getLastTxRxResult(d.port_num, d.protocol_version)
-            if dxl_comm_result != COMM_SUCCESS:
-                print(dynamixel.getTxRxResult(d.protocol_version, dxl_comm_result))
-
-            # Clear syncwrite parameter storage
-            dynamixel.groupSyncWriteClearParam(d.gw_GOAL_POSITION)
-            angles = angles[len(d.motor_id):]
+            res_list = [m["resolution"] for m_id, m in d.motor.items()]
+            commands = [rad2pos(a,res) for a,res in zip(angles[:len(d.motor_id)], res_list)]
+            self._sync_write(d, 'GOAL_POSITION', 4, d.motor_id, commands)
+            angles = angles[len(d.motor_id):] #TODO: this is a bad way of making the angle list be right
 
     def _sync_write(self, device, parameter, parameter_data_length, ids, commands):
         """
@@ -455,7 +445,6 @@ class DxlInterface(object):
 
 def rad2pos(rad, resolution):
     return int(round(rad * resolution / (2 * 3.1415926)))
-
 
 def pos2rad(pos, resolution):
     return pos * (2 * 3.1415926) / resolution
