@@ -105,9 +105,9 @@ class MotionManager(object):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
         if self.player == 'vrep':
-            return self.device.set_command_position(ids, commands, send)
+            self.device.set_command_position(ids, commands, send)
         if self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
+            self.device.set_command_position(ids, commands)
 
     def set_all_command_position(self, command, send=False):
         # set command position for using positional arguments

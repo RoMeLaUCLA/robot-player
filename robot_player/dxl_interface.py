@@ -305,7 +305,6 @@ class DxlInterface(object):
             res_list = [d.motor[m_id]["resolution"] for m_id in id_list]
             commands = [rad2pos(a,res) for a,res in zip(angle_list, res_list)]
             self._sync_write(d, 'GOAL_POSITION', 4, id_list, commands)
-            # angles = angles[len(d.motor_id):] #TODO: this is a bad way of making the angle list be right
 
 
     def set_all_command_position(self, angles):
@@ -315,7 +314,6 @@ class DxlInterface(object):
             res_list = [d.motor[m_id]["resolution"] for m_id in id_list]
             commands = [rad2pos(a,res) for a,res in zip(angle_list, res_list)]
             self._sync_write(d, 'GOAL_POSITION', 4, id_list, commands)
-            # angles = angles[len(d.motor_id):] #TODO: this is a bad way of making the angle list be right
 
     def _sync_write(self, device, parameter, parameter_data_length, ids, commands):
         """
