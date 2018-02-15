@@ -210,34 +210,6 @@ class DxlInterface(object):
                 print "motor_model_no:" + str(motor_model_no)
 
     def setup_sync_functions(self):
-        # for d in self.device:
-            # print "d.port_num {}".format(d.port_num)
-            # d.gw_GOAL_POSITION = dynamixel.groupSyncWrite(d.port_num, d.protocol_version, d.ctrl_table.GOAL_POSITION, d.ctrl_table.LEN_GOAL_POSITION)
-            #
-            # # Protocol 2.0 has sync read
-            # if d.protocol_version == 2:
-            #     d.gw_PRESENT_POSITION = dynamixel.groupSyncRead(d.port_num, d.protocol_version, d.ctrl_table.PRESENT_POSITION,
-            #                                            d.ctrl_table.LEN_PRESENT_POSITION)
-            #     for m_id in d.motor_id:
-            #         # Add parameter storage for each Dynamixel's present position value to the Syncread storage
-            #         dxl_addparam_result = ctypes.c_ubyte(dynamixel.groupSyncReadAddParam(d.gw_PRESENT_POSITION, m_id)).value
-            #         if dxl_addparam_result != 1:
-            #             print("[ID:%03d] groupSyncRead addparam failed" % (m_id))
-            #
-            # # Protocol 1.0 doesn't have sync read, so use bulk read instead
-            # else:
-            #     d.group_num = dynamixel.groupBulkRead(d.port_num, d.protocol_version)
-            #     d.gw_PRESENT_POSITION = dynamixel.groupBulkRead(d.port_num, d.protocol_version, d.ctrl_table.PRESENT_POSITION,
-            #                                            d.ctrl_table.LEN_PRESENT_POSITION)
-            #     for m_id in d.motor_id:
-            #         # Add parameter storage for each Dynamixel's present position value to the Bulkread storage
-            #         dxl_addparam_result = ctypes.c_ubyte(
-            #             dynamixel.groupBulkReadAddParam(d.group_num, m_id, d.ctrl_table.PRESENT_POSITION,
-            #                                             d.ctrl_table.LEN_PRESENT_POSITION)).value
-            #         if dxl_addparam_result != 1:
-            #             print("[ID:%03d] groupBulkRead addparam failed" % (m_id))
-
-            # TODO: TEST THIS
         self.setup_group_sync_write('GOAL_POSITION', 4)
         self.setup_group_sync_read('PRESENT_POSITION',4)
         self.setup_group_sync_write('GOAL_VELOCITY', 4)
@@ -326,6 +298,7 @@ class DxlInterface(object):
 
     def set_all_command_position(self, angles):
         for d in self.device:
+
             res_list = [m["resolution"] for m_id, m in d.motor.items()]
             commands = [rad2pos(a,res) for a,res in zip(angles[:len(d.motor_id)], res_list)]
             self._sync_write(d, 'GOAL_POSITION', 4, d.motor_id, commands)
@@ -338,8 +311,8 @@ class DxlInterface(object):
         :param device: one of the devices (DxlPort)
         :param parameter: string, name of ctrl table parameter
         :param parameter_data_length: length of parameter data (bytes)
-        :param ids: which ids to do this for
-        :param commands:
+        :param ids: which ids to do this for. Does no error checking to ensure ids are on the device.
+        :param commands: commands to send to device. Does no type conversion beyond Python -> C
         :return:
         """
         for m_id, command in zip(ids, commands):
@@ -368,7 +341,7 @@ class DxlInterface(object):
         :param device: which device to use.
         :param parameter: string, a name of the ctrl table parameter that you are using
         :param parameter_data_length: int, data length of the table, in bytes.
-        :param ids: which ids to use for this.
+        :param ids: which ids to use for this. Doesn't do error checks to make sure ids are actually on the device.
         :return: data, as a list, in order of the ids.
         """
 
@@ -382,7 +355,7 @@ class DxlInterface(object):
                 return None
 
             # Check if groupsyncread data of all dynamixels are available:
-            for m_id in (m_id for m_id in ids if m_id in device.motor_id):
+            for m_id in ids:
                 dxl_getdata_result = ctypes.c_ubyte(
                     dynamixel.groupSyncReadIsAvailable(getattr(device, "gr_" + parameter),
                                                        m_id,
@@ -405,8 +378,8 @@ class DxlInterface(object):
             if dxl_comm_result != COMM_SUCCESS:
                 print(dynamixel.getTxRxResult(device.protocol_version, dxl_comm_result))
 
-            for m_id in (m_id for m_id in ids if m_id in device.motor_id):
-                # Check if groupbulkread data of Dynamixel#1 is available
+            for m_id in ids:
+                # Check if groupbulkread data of Dynamixels is available
                 dxl_getdata_result = ctypes.c_ubyte(
                     dynamixel.groupBulkReadIsAvailable(getattr(device, "gr_" + parameter),
                                                        m_id,
@@ -426,7 +399,10 @@ class DxlInterface(object):
     def get_current_position(self, ids):
         pos_data = []
         for d in self.device:
-            data_list = self._sync_read(d, 'PRESENT_POSITION', 4, ids)
+            # filter out ids that are on this device
+            id_list = self.filter_ids(ids, d)
+
+            data_list = self._sync_read(d, 'PRESENT_POSITION', 4, id_list)
             for m_id, data in zip(d.motor_id, data_list):
                 res = d.motor[m_id]["resolution"]
                 pos_data.append(pos2rad(data, res))
@@ -442,6 +418,9 @@ class DxlInterface(object):
                 pos_data.append(pos2rad(data, res))
 
         return pos_data
+
+    def filter_ids(self, ids, device):
+        return [m_id for m_id in ids if self.id_to_port[m_id] == device]
 
 def rad2pos(rad, resolution):
     return int(round(rad * resolution / (2 * 3.1415926)))
