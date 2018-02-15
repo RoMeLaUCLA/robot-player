@@ -308,12 +308,7 @@ class DxlInterface(object):
 
 
     def set_all_command_position(self, angles):
-        for d in self.device:
-            id_list, angle_list = self.filter_ids_and_commands(self.motor_id, angles, d)
-            # convert radians to encoder counts
-            res_list = [d.motor[m_id]["resolution"] for m_id in id_list]
-            commands = [rad2pos(a,res) for a,res in zip(angle_list, res_list)]
-            self._sync_write(d, 'GOAL_POSITION', 4, id_list, commands)
+        self.set_command_position(self.motor_id, angles)
 
     def _sync_write(self, device, parameter, parameter_data_length, ids, commands):
         """
