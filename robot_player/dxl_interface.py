@@ -216,8 +216,9 @@ class DxlInterface(object):
         self.setup_group_sync_read('PRESENT_POSITION',4)
         self.setup_group_sync_write('GOAL_VELOCITY', 4)
         self.setup_group_sync_read('PRESENT_VELOCITY', 4)
-        self.setup_group_sync_write('GOAL_CURRENT', 4)
-        self.setup_group_sync_read('PRESENT_CURRENT', 4)
+        # DXL PROs don't have GOAL CURRENT commands, left out for now.
+        # self.setup_group_sync_write('GOAL_CURRENT', 4)
+        # self.setup_group_sync_read('PRESENT_CURRENT', 4)
         for d in self.device:
             print "gw_GOAL_POSITION {}".format(d.gw_GOAL_POSITION)
             print "gr_PRESENT_POSITION {}".format(d.gr_PRESENT_POSITION)
