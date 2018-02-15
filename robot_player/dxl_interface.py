@@ -135,9 +135,11 @@ class DxlInterface(object):
 
         # match up motor ids and dxl ports
         self.id_to_port = {}
+        self.motor_id = []
         for d in self.device:
             for m_id in d.motor_id:
                 self.id_to_port[m_id] = d
+                self.motor_id.append(m_id)
 
         print self.id_to_port
 
@@ -296,13 +298,24 @@ class DxlInterface(object):
                     elif dxl_error != 0:
                         print(dynamixel.getRxPacketError(d.protocol_version, dxl_error))
 
+    def set_command_position(self, ids, angles):
+        for d in self.device:
+            id_list, angle_list = self.filter_ids_and_commands(ids, angles, d)
+            # convert radians to encoder counts
+            res_list = [d.motor[m_id]["resolution"] for m_id in id_list]
+            commands = [rad2pos(a,res) for a,res in zip(angle_list, res_list)]
+            self._sync_write(d, 'GOAL_POSITION', 4, id_list, commands)
+            # angles = angles[len(d.motor_id):] #TODO: this is a bad way of making the angle list be right
+
+
     def set_all_command_position(self, angles):
         for d in self.device:
-
-            res_list = [m["resolution"] for m_id, m in d.motor.items()]
-            commands = [rad2pos(a,res) for a,res in zip(angles[:len(d.motor_id)], res_list)]
-            self._sync_write(d, 'GOAL_POSITION', 4, d.motor_id, commands)
-            angles = angles[len(d.motor_id):] #TODO: this is a bad way of making the angle list be right
+            id_list, angle_list = self.filter_ids_and_commands(self.motor_id, angles, d)
+            # convert radians to encoder counts
+            res_list = [d.motor[m_id]["resolution"] for m_id in id_list]
+            commands = [rad2pos(a,res) for a,res in zip(angle_list, res_list)]
+            self._sync_write(d, 'GOAL_POSITION', 4, id_list, commands)
+            # angles = angles[len(d.motor_id):] #TODO: this is a bad way of making the angle list be right
 
     def _sync_write(self, device, parameter, parameter_data_length, ids, commands):
         """
@@ -420,7 +433,25 @@ class DxlInterface(object):
         return pos_data
 
     def filter_ids(self, ids, device):
+        # filters out ids based on which ids are on the device
+        """
+
+        :param ids: motor ids to check
+        :param device: device to match
+        :return: list of devices that match this device
+        """
         return [m_id for m_id in ids if self.id_to_port[m_id] == device]
+
+    def filter_ids_and_commands(self, ids, commands, device):
+        """
+
+        :param ids: motor_ids to check
+        :param commands: commands to attach
+        :param device: device to match
+        :return: (id_list, command_list) of ids and matching commands to send
+        """
+        id_list, comm_list = zip(*[(m_id, comm) for m_id, comm in zip(ids, commands) if self.id_to_port[m_id] == device])
+        return id_list, comm_list
 
 def rad2pos(rad, resolution):
     return int(round(rad * resolution / (2 * 3.1415926)))
