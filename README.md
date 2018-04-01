@@ -193,7 +193,7 @@ qcurr = from_player_angle_offset(mm.get_all_current_position(), player_offset)
 
 # calculate desired joint angles...
 
-qdes = to_player_angle_offset(qdes,player_offset)
+q = to_player_angle_offset(qdes,player_offset)
 mm.set_all_command_position(q)
 ```
 
