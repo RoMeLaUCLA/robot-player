@@ -4,7 +4,7 @@ The Robot Player package is a small, self contained package that aims to simplif
 
 Each 'player' is a class designed to abstract the boilerplate and small details like port numbers and handles away from the user.
 
-** Currently, all that is needed is to build the C libraries ** 
+** Currently, all that is needed is to build the C libraries **
 
 
 ## Installation instructions
@@ -38,7 +38,6 @@ Here's an annotated example from test_double_joint.py:
 ```python
 from robot_player import MotionManager, VrepOptions
 import numpy as np
-from time import sleep
 
 motor_id = [1,2]
 dt = .01
@@ -104,7 +103,7 @@ We view robots as a collection of joints, with "devices" that allow us to comman
 
 MotionManagers abstract the process of managing what could be a rapidly changing interface for the underlying devices by providing a clean, uniform interface. You just need to instantiate a device options class and pass it as an argument to the MotionManager. In the snippet below, we've done just that:
 
-```python 
+```python
 from robot_player import MotionManager, VrepOptions
 
 ...
@@ -120,28 +119,27 @@ For quick setup, this is fine. However, most devices tend to have some setting u
 ```python
 from robot_player import MotionManager, VrepOptions
 import numpy as np
-from time import sleep
 
 motor_id = [1,2]
 dt = .01
 
 with MotionManager(motor_id, dt, VrepOptions(joint_prefix="joint")) as mm:
-    
-    # send commands to the device 
+
+    # send commands to the device
 ```
 
 You can look up all of the options for the VrepOptions and DxlOptions in their respective files. When possible, they are keyword arguments with default values so that you don't have to remember everything. When using MotionManager and the `with` keyword, `initialize()` is automatically called for you.
 
- ### Joint Commands 
- 
+ ### Joint Commands
+
  All joint commands have a specific structure:
- 
+
  ```python
  mm.get_current_position(ids)
  mm.set_command_position(ids, commands)
 ```
 
-`ids` is a list or tuple of values that has the joint ids to send commands to. `commands` is a list or tuple that has the joint commands to send to the motors. The units for the commands are radians, rad/s or N-m for angular rotating joints, and meters, m/s or N for prismatic joints. Unit conversion to the appropriate units for the device is automatically handled by the player interfaces. 
+`ids` is a list or tuple of values that has the joint ids to send commands to. `commands` is a list or tuple that has the joint commands to send to the motors. The units for the commands are radians, rad/s or N-m for angular rotating joints, and meters, m/s or N for prismatic joints. Unit conversion to the appropriate units for the device is automatically handled by the player interfaces.
 
 In addition to the per-id joint commands, there is also an "all" command that lets you leave out the ids command since we usually just command all of the joints anyways:
 
@@ -229,7 +227,7 @@ DI.set_all_command_position([1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5])
 The above ordering corresponds to the id order 1,2,3,4,5,6,7,8,9,10 and writes the value 1.5 radians to all of the motors.
 
 ### Dynamixel Control Table
-Each Dynamixel motor has a different control table based on which protocol (1.0 or 2.0) and which motor model (MX-28, DXLPRO, MX-106) you are using. To keep users from having to deal with this annoying difference between all of the motors, the motor model of each motor is determined at startup and an appropriate control table is selected for each motor. 
+Each Dynamixel motor has a different control table based on which protocol (1.0 or 2.0) and which motor model (MX-28, DXLPRO, MX-106) you are using. To keep users from having to deal with this annoying difference between all of the motors, the motor model of each motor is determined at startup and an appropriate control table is selected for each motor.
 
 The file that holds all of these mappings is named dxl\_control\_table.py and is (currently as of 1-13-18) located in rf/player/dynamixel_sdk/dxl_control_table.
 
@@ -305,7 +303,7 @@ class DXLPRO:
 
     up to INDIRECT_ADDRESS_256 (569)
 
-    
+
     """
 
     # =====================================================================
@@ -336,7 +334,7 @@ class DXLPRO:
     EXTERNAL_PORT_DATA_4 = 632
     INDIRECT_DATA = 634
 
-    """ 
+    """
     can do other indirect data by adding INDIRECT_DATA + 2*(address_num-1)
     eg. INDIRECT_DATA_5 = INDIRECT_DATA + 2*(5-1) = 57
 
@@ -404,7 +402,7 @@ The rest of the class is just variables with a value assigned to them. Some of t
 
     up to INDIRECT_ADDRESS_256 (569)
 
-    
+
     """
 ```
 
@@ -422,7 +420,7 @@ There's difference in the code between the EEPROM and RAM functions, but the EEP
     EXTERNAL_PORT_DATA_4 = 632
     INDIRECT_DATA = 634
 
-    """ 
+    """
     can do other indirect data by adding INDIRECT_DATA + 2*(address_num-1)
     eg. INDIRECT_DATA_5 = INDIRECT_DATA + 2*(5-1) = 57
 
