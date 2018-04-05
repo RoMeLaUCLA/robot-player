@@ -165,7 +165,7 @@ set_all_<name of parameter>(commands)
 ### Player offsets
 Occasionally, different players will have different joint offsets or the axes will be flipped. This might occur when it is conceptually easier to reason about joint angles being the same for two pairs of mirrored limbs, or when physical constraints require actuators to be flipped around.
 
-Since this is usually a fairly last-minute calculation that may or may not be needed, we avoid the overhead of doing this on every call and simply provide some helper functions to do this: `to_player angle_offset` and `from_player_angle_offset`.
+Since this is usually a fairly last-minute calculation that may or may not be needed, we avoid the overhead of doing this on every call and simply provide some helper functions to do this: `to_player_angle_offset` and `from_player_angle_offset`.
 
 The motion manager does not do any angle conversion by default, so handling of the input and output data is completely handled by the individual player interfaces.
 
