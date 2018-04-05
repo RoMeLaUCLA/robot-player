@@ -221,7 +221,7 @@ First by device, then by the order that you listed the motors.
 ```python
 # device1 ids: [1,2,3,4,5]
 # device2 ids: [6,7,8,9,10]
-DI.set_all_command_position([1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5])
+DI.set_all_command_position([1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5])
 ```
 
 The above ordering corresponds to the id order 1,2,3,4,5,6,7,8,9,10 and writes the value 1.5 radians to all of the motors.
