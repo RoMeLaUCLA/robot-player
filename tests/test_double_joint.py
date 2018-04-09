@@ -25,7 +25,7 @@ with MotionManager(motor_id, dt, VrepOptions(joint_prefix="joint")) as mm:
     assert(np.allclose(pos,[-1,-2]))
 
     # joint velocity
-    print mm.get_joint_velocity([1,2])
+    print(mm.get_joint_velocity([1,2]))
     assert(mm.get_joint_velocity([1,2]) == mm.get_all_joint_velocity())
 
     # switch to force controlled tests

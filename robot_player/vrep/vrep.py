@@ -31,7 +31,7 @@ import struct
 import sys
 import os
 import ctypes as ct
-from vrep_const import *
+from .vrep_const import  *
 
 #load library
 libsimx = None

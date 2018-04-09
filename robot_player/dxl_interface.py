@@ -9,8 +9,8 @@ __status__ = "Prototype"
 
 
 import ctypes
-import dxl.dynamixel_functions as dynamixel
-from dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28
+from .dxl import dynamixel_functions as dynamixel
+from .dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28
 from collections import OrderedDict
 
 # data Byte Length
@@ -46,7 +46,7 @@ class DxlOptions(object):
 
         # if motor_ids is just a single list, then put it inside another list for it
         if len(motor_ids) == 1 and not isinstance(motor_ids[0], list):
-            print "motor_ids is a single list!"
+            print("motor_ids is a single list!")
             motor_ids = [motor_ids]
 
         for port, ids, motor_type in zip(ports, motor_ids, motor_types):
@@ -117,7 +117,7 @@ class DxlInterface(object):
         for d in dxl_ports:
             d.port_num = dynamixel.portHandler(d.device_name)
             self.device.append(d)
-        print self.device
+        print(self.device)
 
         # initialize packet handler
         dynamixel.packetHandler()
@@ -141,7 +141,7 @@ class DxlInterface(object):
                 self.id_to_port[m_id] = d
                 self.motor_id.append(m_id)
 
-        print self.id_to_port
+        print(self.id_to_port)
 
 
 
@@ -170,7 +170,7 @@ class DxlInterface(object):
                 dxl_error = dynamixel.getLastRxPacketError(d.port_num, d.protocol_version )
                 if dxl_comm_result != COMM_SUCCESS:
                     print(dynamixel.getTxRxResult(d.protocol_version , dxl_comm_result))
-                    print "Motor id " + str(m_id) + " was not found!"
+                    print("Motor id " + str(m_id) + " was not found!")
                     continue
                 elif dxl_error != 0:
                     print(dynamixel.getRxPacketError(d.protocol_version , dxl_error))
@@ -197,7 +197,7 @@ class DxlInterface(object):
                                         DXLPRO.L54_50_S290_R,
                                         DXLPRO.L54_30_S400_R,
                                         ]:
-                    print DXLPRO
+                    print(DXLPRO)
 
                     ctrl_table = DXLPRO
                     resolution = DXLPRO.resolution[motor_model_no]
@@ -206,10 +206,10 @@ class DxlInterface(object):
                     ctrl_table = MX28
                     resolution = MX28.resolution
                 else:
-                    print "motor_model not found!"
+                    print("motor_model not found!")
                     quit()
                 d.motor[m_id] = {"model_no":motor_model_no, "ctrl_table":ctrl_table, "resolution":resolution}
-                print "motor_model_no:" + str(motor_model_no)
+                print("motor_model_no:" + str(motor_model_no))
 
     def setup_sync_functions(self):
         self.setup_group_sync_write('GOAL_POSITION', 4)
@@ -220,8 +220,8 @@ class DxlInterface(object):
         # self.setup_group_sync_write('GOAL_CURRENT', 4)
         # self.setup_group_sync_read('PRESENT_CURRENT', 4)
         for d in self.device:
-            print "gw_GOAL_POSITION {}".format(d.gw_GOAL_POSITION)
-            print "gr_PRESENT_POSITION {}".format(d.gr_PRESENT_POSITION)
+            print("gw_GOAL_POSITION {}".format(d.gw_GOAL_POSITION))
+            print("gr_PRESENT_POSITION {}".format(d.gr_PRESENT_POSITION))
 
     def setup_group_sync_write(self, parameter, parameter_data_len):
         """
@@ -233,7 +233,7 @@ class DxlInterface(object):
         """
 
         for d in self.device:
-            print "d.port_num {}".format(d.port_num)
+            print("d.port_num {}".format(d.port_num))
             gw_id = dynamixel.groupSyncWrite(d.port_num,
                                                     d.protocol_version,
                                                     getattr(d.ctrl_table, parameter),
