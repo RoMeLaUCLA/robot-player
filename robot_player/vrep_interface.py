@@ -41,6 +41,7 @@ class VrepInterface(object):
     """
     # TODO: make "set" commands not trigger the next simulation step automatically
     # TODO: make joint data structure a dictionary and not a list
+    # TODO: remove numpy dependence
 
     JOINT_TYPE_REVOLUTE = 10
     JOINT_TYPE_PRISMATIC = 11
