@@ -384,7 +384,7 @@ def simxLoadUI(clientID, uiPathAndName, options, operationMode):
     count = ct.c_int()
     uiHandles = ct.POINTER(ct.c_int)()
     if (sys.version_info[0] == 3) and (type(uiPathAndName) is str):
-        uiPathAndName=uiPathAndName.encode('utf-8')
+        uiPathAndName = uiPathAndName.encode('utf-8')
     ret = c_LoadUI(clientID, uiPathAndName, options, ct.byref(count), ct.byref(uiHandles), operationMode)
 
     handles = []
@@ -485,7 +485,7 @@ def simxAddStatusbarMessage(clientID, message, operationMode):
     """
 
     if (sys.version_info[0] == 3) and (type(message) is str):
-        message=message.encode('utf-8')
+        message = message.encode('utf-8')
     return c_AddStatusbarMessage(clientID, message, operationMode)
 
 def simxAuxiliaryConsoleOpen(clientID, title, maxLines, mode, position, size, textColor, backgroundColor, operationMode):
@@ -495,7 +495,7 @@ def simxAuxiliaryConsoleOpen(clientID, title, maxLines, mode, position, size, te
 
     consoleHandle = ct.c_int()
     if (sys.version_info[0] == 3) and (type(title) is str):
-        title=title.encode('utf-8')
+        title = title.encode('utf-8')
     if position is not None:
         c_position = (ct.c_int*2)(*position)
     else:
