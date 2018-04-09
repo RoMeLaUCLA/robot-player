@@ -79,7 +79,6 @@ class DxlPort(object):
         elif self.motor_type == 'DXLPRO':
             self.ctrl_table = DXLPRO
 
-
 class DxlInterface(object):
     """
     Class to talk to multiple dynamixel chains, abstracted as DxlPorts
@@ -142,9 +141,6 @@ class DxlInterface(object):
                 self.motor_id.append(m_id)
 
         print(self.id_to_port)
-
-
-
 
     def initialize(self):
         # get ready for motion
@@ -286,7 +282,6 @@ class DxlInterface(object):
             # set device to have .gw_<name of parameter> attached to it for further reference
             setattr(d, "gr_" + parameter, gr_id)
 
-
     def set_torque_enable(self, ids, commands):
         # for each device, if an id in the table matches, set torque
         for d in self.device:
@@ -308,7 +303,6 @@ class DxlInterface(object):
             res_list = [d.motor[m_id]["resolution"] for m_id in id_list]
             commands = [rad2pos(a, res) for a, res in zip(angle_list, res_list)]
             self._sync_write(d, 'GOAL_POSITION', 4, id_list, commands)
-
 
     def set_all_command_position(self, angles):
         self.set_command_position(self.motor_id, angles)
