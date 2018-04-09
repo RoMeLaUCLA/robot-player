@@ -22,7 +22,7 @@ def test_set_command_position():
         for pl in position_list:
             mm.set_command_position([1,2,3,4], pl)
             mm.wait(2.5)
-            print mm.get_all_current_position()
+            print(mm.get_all_current_position())
 
             get_curr_pos = mm.get_current_position([1, 2]) + mm.get_current_position([3, 4])
             get_all_curr_pos = mm.get_all_current_position()
@@ -36,7 +36,7 @@ def test_set_all_command_position():
         for pl in position_list:
             mm.set_all_command_position(pl)
             mm.wait(2.5)
-            print mm.get_all_current_position()
+            print(mm.get_all_current_position())
 
             get_curr_pos = mm.get_current_position([1, 2]) + mm.get_current_position([3, 4])
             get_all_curr_pos = mm.get_all_current_position()

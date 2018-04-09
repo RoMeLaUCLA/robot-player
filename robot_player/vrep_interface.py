@@ -98,7 +98,7 @@ class VrepInterface(object):
             self.read_accelerometer(initialize=True) #(operationMode=vrep.simx_opmode_blocking)
 
     def stop(self):
-        print "Ending communication with VREP..."
+        print("Ending communication with VREP...")
         self.print_to_statusbar("Ending communication with client " + str(self._sim_Client_ID))
         vrep.simxStopSimulation(self._sim_Client_ID, vrep.simx_opmode_blocking)
         vrep.simxFinish(-1)
@@ -107,7 +107,7 @@ class VrepInterface(object):
         vrep.simxAddStatusbarMessage(self._sim_Client_ID, msg, vrep.simx_opmode_oneshot)
 
     def wait(self, timesteps_to_wait):
-        for i in xrange(timesteps_to_wait):
+        for i in range(timesteps_to_wait):
             self.send_command()
 
     def get_object_position(self, object_handle, base_handle=-1):
@@ -194,10 +194,10 @@ class VrepInterface(object):
         # setup joint velocities
         for j in new_joint:
             if j['joint_type'] == VrepInterface.JOINT_TYPE_REVOLUTE:
-                print "revolute_joint"
+                print("revolute_joint")
                 j['joint_target_velocity'] = self.revolute_joint_torque_control_max_speed
             elif j['joint_type'] == VrepInterface.JOINT_TYPE_PRISMATIC:
-                print "prismatic_joint"
+                print("prismatic_joint")
                 j['joint_target_velocity'] = self.prismatic_joint_torque_control_max_speed
             else:
                 raise Exception("can't control a joint that isn't revolute or prismatic")
@@ -321,7 +321,7 @@ class VrepInterface(object):
         return self.get_joint_velocity(self.motor_id)
 
     def set_all_joint_effort(self, commands, send=True):
-        # print "setting joint effort"
+        # print("setting joint effort")
         self.set_joint_effort(self.motor_id, commands, send)
 
     def get_all_joint_effort(self, send=True):
