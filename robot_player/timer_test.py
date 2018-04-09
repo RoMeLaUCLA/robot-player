@@ -19,8 +19,6 @@ def drummer(freq, signal_flag, stop_flag, q):
     print("closing timer")
 
 
-
-
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
     dt = 16 # milliseconds
@@ -48,7 +46,7 @@ if __name__ == '__main__':
     for i in xrange(len(dt_list)-1):
         dt_diff.append(dt_list[i+1]-dt_list[i])
 
-    plt.plot(dt_diff[1:],'-o')
+    plt.plot(dt_diff[1:], '-o')
     plt.show()
 
 # open thread for Motion Manager.
@@ -57,4 +55,3 @@ if __name__ == '__main__':
 
 # queue listener is always listening. Every dt, it checks for the queue to have a command
     # if there is a command waiting, it runs the command and goes back to waiting.
-
