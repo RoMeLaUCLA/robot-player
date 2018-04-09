@@ -292,17 +292,17 @@ def player_arg_parser(filename):
 #         MM.initialize()
 #         MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
 #         for i in xrange(100):
-#             print MM.get_all_current_position()
+#             print(MM.get_all_current_position())
 #             MM.wait(dt)
 #
 #         MM.set_all_command_position([pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, ])
-#         for i in xrange(100):
-#             print MM.get_all_current_position()
+#         for i in range(100):
+#             print(MM.get_all_current_position())
 #             MM.wait(dt)
 #
 #         MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
-#         for i in xrange(100):
-#             print MM.get_all_current_position()
+#         for i in range(100):
+#             print(MM.get_all_current_position())
 #             MM.wait(dt)
 
 
