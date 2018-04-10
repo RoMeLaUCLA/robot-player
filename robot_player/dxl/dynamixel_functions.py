@@ -33,17 +33,27 @@
 
 # Author: Ryu Woon Jung (Leon)
 
+import platform
 import ctypes
 from ctypes import cdll
 import os.path
+
+if platform.system() == 'Darwin':
+    rel_path = "c/build/mac/libdxl_mac_c.dylib"
+elif platform.system()  == 'Windows':
+    rel_path = "c/build/win64/output/dxl_x64_c.dll"
+else:
+    rel_path = "c/build/linux64/libdxl_x64_c.so"
+
 # dxl_lib = cdll.LoadLibrary("../../c/build/win32/output/dxl_x86_c.dll")  # for windows 32bit
 # dxl_lib = cdll.LoadLibrary("../../c/build/win64/output/dxl_x64_c.dll")  # for windows 64bit
 # dxl_lib = cdll.LoadLibrary("../../c/build/linux32/libdxl_x86_c.so")     # for linux 32bit
-rel_path = "../dxl/c/build/linux64/libdxl_x64_c.so"
-dll_lib_path = os.path.abspath(os.path.join(os.path.dirname(__file__), rel_path))
-dxl_lib = cdll.LoadLibrary(dll_lib_path)     # for linux 64bit
+# dxl_lib = cdll.LoadLibrary("../../c/build/linux32/libdxl_x64_c.so")     # for linux 64bit
 # dxl_lib = cdll.LoadLibrary("../../c/build/linux_sbc/libdxl_sbc_c.so")   # for SBC linux
 # dxl_lib = cdll.LoadLibrary("../../c/build/mac/libdxl_mac_c.dylib")      # for Mac OS
+
+dll_lib_path = os.path.join(os.path.dirname(__file__), rel_path)
+dxl_lib = cdll.LoadLibrary(dll_lib_path)
 
 # port_handler
 portHandler = dxl_lib.portHandler
