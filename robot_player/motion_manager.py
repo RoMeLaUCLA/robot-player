@@ -136,6 +136,12 @@ class MotionManager(object):
     def set_joint_velocity(self, ids, commands, send=True):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
+
+        try:
+            assert(len(ids) == len(commands))
+        except AssertionError:
+            raise Exception('ERROR: ids and commands must be same length')
+
         if self.player == 'vrep':
             self.device.set_joint_velocity(ids, commands, send)
         if self.player == 'dxl':
@@ -150,6 +156,12 @@ class MotionManager(object):
 
     ## Effort (force/torque) ##
     def set_joint_effort(self, ids, command, send=True):
+
+        try:
+            assert(len(ids) == len(command))
+        except AssertionError:
+            raise Exception('ERROR: ids and commands must be same length')
+        
         if self.player == 'vrep':
             self.device.set_joint_effort(ids, command, send)
         if self.player == 'dxl':
