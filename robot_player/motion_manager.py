@@ -5,8 +5,8 @@ import time
 from math import pi
 
 from numpy import matlib as np
-from . vrep_interface import VrepInterface, VrepOptions
-from . dxl_interface import DxlInterface, DxlOptions
+from vrep_interface import VrepInterface, VrepOptions
+from dxl_interface import DxlInterface, DxlOptions
 
 def wrap_between_pi_and_neg_pi(angle):
     return (angle + np.pi) % (2*np.pi) - np.pi
@@ -104,6 +104,12 @@ class MotionManager(object):
     def set_command_position(self, ids, commands, send=False):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
+
+        try:
+            assert(len(ids) == len(commands))
+        except AssertionError:
+            raise Exception('ERROR: ids and commands must be same length')
+
         if self.player == 'vrep':
             self.device.set_command_position(ids, commands, send)
         if self.player == 'dxl':
