@@ -2,7 +2,6 @@ from __future__ import division
 
 import argparse
 import time
-from math import pi
 
 from numpy import matlib as np
 from vrep_interface import VrepInterface, VrepOptions
@@ -316,7 +315,7 @@ def player_arg_parser(filename):
 #             print MM.get_all_current_position()
 #             MM.wait(dt)
 #
-#         MM.set_all_command_position([pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, ])
+#         MM.set_all_command_position([np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, ])
 #         for i in xrange(100):
 #             print MM.get_all_current_position()
 #             MM.wait(dt)
