@@ -63,6 +63,9 @@ class MotionManager(object):
         if isinstance(self.device, VrepInterface):
             print("Stopping VREP simulation")
             self.device.stop()
+        elif isinstance(self.device, DxlInterface):
+            print("Closing DXL ports")
+            self.device.close()
 
     def initialize(self):
         # stuff to do before starting each motion set
