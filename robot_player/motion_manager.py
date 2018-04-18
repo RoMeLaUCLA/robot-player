@@ -110,7 +110,7 @@ class MotionManager(object):
         try:
             assert(len(ids) == len(commands))
         except AssertionError:
-            raise Exception('ERROR: ids and commands must be same length')
+            raise ValueError('ERROR: ids and commands must be same length')
 
         if self.player == 'vrep':
             self.device.set_command_position(ids, commands, send)
@@ -130,7 +130,7 @@ class MotionManager(object):
         if self.player == 'vrep':
             return self.device.get_joint_velocity(ids)
         if self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
+            raise ValueError("this function hasn't been implemented for DXL yet") # TODO: fix this
 
     def get_all_joint_velocity(self):
         return self.device.get_all_joint_velocity()
@@ -142,7 +142,7 @@ class MotionManager(object):
         try:
             assert(len(ids) == len(commands))
         except AssertionError:
-            raise Exception('ERROR: ids and commands must be same length')
+            raise ValueError('ERROR: ids and commands must be same length')
 
         if self.player == 'vrep':
             self.device.set_joint_velocity(ids, commands, send)
@@ -157,21 +157,21 @@ class MotionManager(object):
 
 
     ## Effort (force/torque) ##
-    def set_joint_effort(self, ids, command, send=True):
+    def set_joint_effort(self, ids, commands, send=True):
 
         try:
-            assert(len(ids) == len(command))
+            assert(len(ids) == len(commands))
         except AssertionError:
-            raise Exception('ERROR: ids and commands must be same length')
+            raise ValueError('ERROR: ids and commands must be same length')
         
         if self.player == 'vrep':
-            self.device.set_joint_effort(ids, command, send)
+            self.device.set_joint_effort(ids, commands, send)
         if self.player == 'dxl':
             raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
 
-    def set_all_joint_effort(self, command, send=True):
+    def set_all_joint_effort(self, commands, send=True):
         if self.player == 'vrep':
-            self.device.set_all_joint_effort(command, send)
+            self.device.set_all_joint_effort(commands, send)
         elif self.player == 'dxl':
             raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
