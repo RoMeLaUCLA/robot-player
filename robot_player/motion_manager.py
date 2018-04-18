@@ -31,7 +31,6 @@ class MotionManager(object):
 
         :param motor_ids: ids of motors
         :param dt: timestep for motors or simulator to use
-        :param player: a string matching either 'vrep' or 'dxl'
         :param options: an options class: either DxlOptions or VrepOptions that lets you specify various keyword parameters.
         """
 
@@ -224,7 +223,7 @@ def to_player_angle_offset(angles, player_offset):
     # flips joint axes around to match the player's representation. Is it's own inverse and should be called to
     # rectify each of the joint axes.
     """
-    :param q: angles (radians)
+    :param angles: angles (radians)
     :param player_offset: a class specifying player offsets that should be customized for each robote
     :return:
     """
@@ -239,7 +238,7 @@ def from_player_angle_offset(angles, player_offset):
     # Is it's own inverse and should be called to rectify each of the joint axes.
 
     """
-    :param q: angles (radians)
+    :param angles: angles (radians)
     :param player_offset: a class specifying player offsets that should be customized for each robot
     :return:
     """
