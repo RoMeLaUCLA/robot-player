@@ -4,8 +4,8 @@ import argparse
 import time
 
 from numpy import matlib as np
-from . vrep_interface import VrepInterface, VrepOptions
-from . dxl_interface import DxlInterface, DxlOptions
+from .vrep_interface import VrepInterface, VrepOptions
+from .dxl_interface import DxlInterface, DxlOptions
 
 def wrap_between_pi_and_neg_pi(angle):
     return (angle + np.pi) % (2*np.pi) - np.pi
@@ -37,9 +37,9 @@ class MotionManager(object):
         self.sim = False
         self.dxl = False
         if isinstance(options, DxlOptions):
-            self.player='dxl'
+            self.player = 'dxl'
         elif isinstance(options, VrepOptions):
-            self.player='vrep'
+            self.player = 'vrep'
         else:
             raise ValueError("Options class invalid or missing. Specify either VrepOptions or DxlOptions to use as input to options parameter when instantiating MotionManager.")
         self.motor_id = motor_ids
@@ -51,7 +51,6 @@ class MotionManager(object):
         elif self.player == 'dxl':
             self.dxl = True
             self.device = self.dxl_init(options)
-
 
     def __enter__(self):
         self.initialize()
@@ -129,7 +128,7 @@ class MotionManager(object):
         if self.player == 'vrep':
             return self.device.get_joint_velocity(ids)
         if self.player == 'dxl':
-            raise ValueError("this function hasn't been implemented for DXL yet") # TODO: fix this
+            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     def get_all_joint_velocity(self):
         return self.device.get_all_joint_velocity()
@@ -153,7 +152,6 @@ class MotionManager(object):
             self.device.set_all_joint_velocity(commands, send)
         if self.player == 'dxl':
             raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
-
 
     ## Effort (force/torque) ##
     def set_joint_effort(self, ids, commands, send=True):
@@ -191,18 +189,18 @@ class MotionManager(object):
         if isinstance(self.device, VrepInterface):
             # timesteps to wait, rounded down to the nearest integer
             self.device.wait(int(time_to_wait/self.device.dt))
-        if isinstance(self.device,DxlInterface):
+        if isinstance(self.device, DxlInterface):
             time.sleep(time_to_wait)
 
-    def torque_on(self,ids):
+    def torque_on(self, ids):
         # torque on all motors, dxl specific
-        if isinstance(self.device,DxlInterface):
-            self.device.set_torque_enable(zip(ids,[1]*len(ids)))
+        if isinstance(self.device, DxlInterface):
+            self.device.set_torque_enable(zip(ids, [1]*len(ids)))
 
-    def torque_off(self,ids):
+    def torque_off(self, ids):
         # torque off all motors, dxl specific
         if isinstance(self.device, DxlInterface):
-            self.device.set_torque_enable(zip(ids,[0]*len(ids)))
+            self.device.set_torque_enable(zip(ids, [0]*len(ids)))
 
     def set_joint_ctrl_loop(self, ids, commands):
         self.device.set_joint_ctrl_loop(ids, commands)
@@ -218,7 +216,6 @@ class MotionManager(object):
         #     # timesteps to wait, rounded down to the nearest integer
         #     self.device.wait(dt)
 
-
 def to_player_angle_offset(angles, player_offset):
     # flips joint axes around to match the player's representation. Is it's own inverse and should be called to
     # rectify each of the joint axes.
@@ -231,7 +228,7 @@ def to_player_angle_offset(angles, player_offset):
     trans = player_offset.angle_trans
     offsets = player_offset.angle_offset
 
-    return [wrap_between_pi_and_neg_pi((q +q_o)*t) for q, q_o, t in zip(angles, offsets, trans)]
+    return [wrap_between_pi_and_neg_pi((q + q_o)*t) for q, q_o, t in zip(angles, offsets, trans)]
 
 def from_player_angle_offset(angles, player_offset):
     # flips joint axes around to match the kinematic representation.
@@ -248,7 +245,7 @@ def from_player_angle_offset(angles, player_offset):
     trans = player_offset.angle_trans
     offsets = player_offset.angle_offset
 
-    angles = np.asarray([q*t- q_o for q, q_o, t in zip(angles, offsets, trans)])
+    angles = np.asarray([q*t - q_o for q, q_o, t in zip(angles, offsets, trans)])
     return wrap_between_pi_and_neg_pi(angles)
 
 def to_and_from_player_effort(effort, player_offset):
@@ -298,7 +295,6 @@ def player_arg_parser(filename):
 
     return args
 
-
 # if __name__ == "__main__":
 #     # test this with the vrep file L_Arm and the right arm of the Robotis Manipulator
 #     Devices = []
@@ -311,17 +307,15 @@ def player_arg_parser(filename):
 #         MM.initialize()
 #         MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
 #         for i in xrange(100):
-#             print MM.get_all_current_position()
+#             print(MM.get_all_current_position())
 #             MM.wait(dt)
 #
 #         MM.set_all_command_position([np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, ])
-#         for i in xrange(100):
-#             print MM.get_all_current_position()
+#         for i in range(100):
+#             print(MM.get_all_current_position())
 #             MM.wait(dt)
 #
 #         MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
-#         for i in xrange(100):
-#             print MM.get_all_current_position()
+#         for i in range(100):
+#             print(MM.get_all_current_position())
 #             MM.wait(dt)
-
-

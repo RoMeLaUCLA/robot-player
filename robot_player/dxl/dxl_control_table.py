@@ -154,7 +154,6 @@ class CM730:
     INST_SYNC_WRITE = 0x83
     INST_BULK_READ = 0x92
 
-
 class MX106:
     """
     Dynamixel MX-106 Control Table, Protocol 2.0
@@ -230,8 +229,6 @@ class MX106:
     PRESENT_INPUT_VOLTAGE = 144
     PRESENT_TEMPERATURE = 146
 
-
-
 class MX106_P1:
     # only implemented limited functionality since Protocol 1.0 has different names
 
@@ -299,7 +296,6 @@ class MX106_P1:
     DXL_GOAL_TORQUE_L = 71
     DXL_GOAL_TORQUE_H = 72
     DXL_GOAL_ACCELERATION = 73
-
 
 class MX28:
     """
@@ -388,7 +384,6 @@ class MX28:
     So it is obvious if you see the difference in terms of motion.
     """
 
-
 class AX12:
 
     AX_12 = 12
@@ -454,14 +449,13 @@ class DXLPRO:
     http://support.robotis.com/en/product/actuator/dynamixel_pro/dynamixelpro/control_table.htm
 
     """
-
     # model numbers can be found on Robotis' website.
     H54_200_S500_R = 54024
     H54_200_B500_R = 54152
     H54_100_S500_R = 53768
     H42_20_S300_R = 51200
     M54_60_S250_R = 46352
-    M54_40_S250_R =  46096
+    M54_40_S250_R = 46096
     M42_10_S260_R = 43288
     L54_50_S500_R = 38152
     L54_30_S500_R = 37896
@@ -471,7 +465,6 @@ class DXLPRO:
 
     # converts dynamixel counts to radians
     resolution = {H54_200_S500_R: 501922,
-
                   H54_100_S500_R: 501922,
                   H54_200_B500_R: 501922,
                   H42_20_S300_R: 303750,

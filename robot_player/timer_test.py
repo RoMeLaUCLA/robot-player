@@ -1,6 +1,6 @@
 import time
 import threading
-import Queue
+import queue
 
 stop_flag = threading.Event()
 dt_list = []
@@ -16,16 +16,14 @@ def drummer(freq, signal_flag, stop_flag, q):
         q.put(counter)
         counter += 1
 
-    print "closing timer"
-
-
+    print("closing timer")
 
 
 if __name__ == '__main__':
     from matplotlib import pyplot as plt
     dt = 16 # milliseconds
     freq = 1000.0//dt
-    q = Queue.Queue()
+    q = queue.Queue()
     control_clock_flag = threading.Event()
     stop_flag = threading.Event()
     t = threading.Thread(target=drummer, args=(freq, control_clock_flag, stop_flag, q))
@@ -40,7 +38,7 @@ if __name__ == '__main__':
         dt_list.append(time.time() - start_time)
         control_clock_flag.clear()
         counter += 1
-        print q.get()
+        print(q.get())
 
     stop_flag.set()
 
@@ -48,7 +46,7 @@ if __name__ == '__main__':
     for i in xrange(len(dt_list)-1):
         dt_diff.append(dt_list[i+1]-dt_list[i])
 
-    plt.plot(dt_diff[1:],'-o')
+    plt.plot(dt_diff[1:], '-o')
     plt.show()
 
 # open thread for Motion Manager.
@@ -57,4 +55,3 @@ if __name__ == '__main__':
 
 # queue listener is always listening. Every dt, it checks for the queue to have a command
     # if there is a command waiting, it runs the command and goes back to waiting.
-
