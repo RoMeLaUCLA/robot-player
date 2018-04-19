@@ -31,7 +31,6 @@ class MotionManager(object):
 
         :param motor_ids: ids of motors
         :param dt: timestep for motors or simulator to use
-        :param player: a string matching either 'vrep' or 'dxl'
         :param options: an options class: either DxlOptions or VrepOptions that lets you specify various keyword parameters.
         """
 
@@ -61,6 +60,9 @@ class MotionManager(object):
         if isinstance(self.device, VrepInterface):
             print("Stopping VREP simulation")
             self.device.stop()
+        elif isinstance(self.device, DxlInterface):
+            print("Closing DXL ports")
+            self.device.close()
 
     def initialize(self):
         # stuff to do before starting each motion set
@@ -102,6 +104,12 @@ class MotionManager(object):
     def set_command_position(self, ids, commands, send=False):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
+
+        try:
+            assert(len(ids) == len(commands))
+        except AssertionError:
+            raise ValueError('ERROR: ids and commands must be same length')
+
         if self.player == 'vrep':
             self.device.set_command_position(ids, commands, send)
         if self.player == 'dxl':
@@ -120,7 +128,7 @@ class MotionManager(object):
         if self.player == 'vrep':
             return self.device.get_joint_velocity(ids)
         if self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     def get_all_joint_velocity(self):
         return self.device.get_all_joint_velocity()
@@ -128,6 +136,12 @@ class MotionManager(object):
     def set_joint_velocity(self, ids, commands, send=True):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
+
+        try:
+            assert(len(ids) == len(commands))
+        except AssertionError:
+            raise ValueError('ERROR: ids and commands must be same length')
+
         if self.player == 'vrep':
             self.device.set_joint_velocity(ids, commands, send)
         if self.player == 'dxl':
@@ -140,15 +154,21 @@ class MotionManager(object):
             raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     ## Effort (force/torque) ##
-    def set_joint_effort(self, ids, command, send=True):
+    def set_joint_effort(self, ids, commands, send=True):
+
+        try:
+            assert(len(ids) == len(commands))
+        except AssertionError:
+            raise ValueError('ERROR: ids and commands must be same length')
+        
         if self.player == 'vrep':
-            self.device.set_joint_effort(ids, command, send)
+            self.device.set_joint_effort(ids, commands, send)
         if self.player == 'dxl':
             raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
 
-    def set_all_joint_effort(self, command, send=True):
+    def set_all_joint_effort(self, commands, send=True):
         if self.player == 'vrep':
-            self.device.set_all_joint_effort(command, send)
+            self.device.set_all_joint_effort(commands, send)
         elif self.player == 'dxl':
             raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
@@ -200,7 +220,7 @@ def to_player_angle_offset(angles, player_offset):
     # flips joint axes around to match the player's representation. Is it's own inverse and should be called to
     # rectify each of the joint axes.
     """
-    :param q: angles (radians)
+    :param angles: angles (radians)
     :param player_offset: a class specifying player offsets that should be customized for each robote
     :return:
     """
@@ -215,7 +235,7 @@ def from_player_angle_offset(angles, player_offset):
     # Is it's own inverse and should be called to rectify each of the joint axes.
 
     """
-    :param q: angles (radians)
+    :param angles: angles (radians)
     :param player_offset: a class specifying player offsets that should be customized for each robot
     :return:
     """
@@ -290,9 +310,9 @@ def player_arg_parser(filename):
 #             print(MM.get_all_current_position())
 #             MM.wait(dt)
 #
-#         MM.set_all_command_position([pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, pi / 10, ])
+#         MM.set_all_command_position([np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, ])
 #         for i in range(100):
-#             print(MM.get_all_current_position())
+#             print MM.get_all_current_position()
 #             MM.wait(dt)
 #
 #         MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
