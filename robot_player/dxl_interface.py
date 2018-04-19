@@ -27,7 +27,7 @@ class DxlOptions(object):
     def __init__(self,
                  motor_ids,
                  motor_types,
-                 ports = ["/dev/ttyUSB0"],
+                 ports,
                  baudrate=3000000,
                  protocol_version=2
                  ):

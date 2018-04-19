@@ -223,7 +223,7 @@ First by device, then by the order that you listed the motors.
 ```python
 # device1 ids: [1,2,3,4,5]
 # device2 ids: [6,7,8,9,10]
-DI.set_all_command_position([1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5])
+DI.set_all_command_position([1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5])
 ```
 
 The above ordering corresponds to the id order 1,2,3,4,5,6,7,8,9,10 and writes the value 1.5 radians to all of the motors.
@@ -262,7 +262,7 @@ class DXLPRO:
                   M54_60_S250_R: 125708*2,
                   M54_40_S250_R: 131593*2,
                   M42_10_S260_R: 131593*2,
-                  L54_30_S500_R: 103846*2,
+                  L54_50_S290_R: 103846*2,
                   L54_50_S500_R: 180692*2,
                   L54_30_S400_R: 144197*2,
                   L54_30_S500_R: 180692*2,
