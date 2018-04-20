@@ -9,18 +9,27 @@ def motion_manager():
 
     :return:
     """
-    yield MotionManager(motor_ids=[1, 2], dt=.01, options=VrepOptions(joint_prefix="joint"))
+    # TODO: figure out how to independently test vrep and dxl in the same test file
+    yield MotionManager(motor_ids=[1, 2], dt=.01, options=VrepOptions())
 
 class TestVrepOptions(unittest.TestCase):
 
     def run(self, result=None):
+        """
+        overrides TestCase.run() in order to add the MotionManager object as a class attribute to the TestCase, then calls the parent run method.
+
+        :param result:
+        :return:
+        """
         with motion_manager() as mm:
             self.mm = mm
             super(TestVrepOptions, self).run(result)
 
     def test_init(self):
-        self.assertEqual(self.mm.sim, True)
 
+        # using VrepOptions
+        self.assertEqual(self.mm.sim, True)
+        self.assertEqual(self.mm.dxl, False)
 
 if __name__ == '__main__':
     unittest.main()
