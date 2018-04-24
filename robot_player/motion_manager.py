@@ -128,10 +128,13 @@ class MotionManager(object):
         if self.player == 'vrep':
             return self.device.get_joint_velocity(ids)
         if self.player == 'dxl':
-            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
+            return self.device.get_current_velocity(ids)
 
     def get_all_joint_velocity(self):
-        return self.device.get_all_joint_velocity()
+        if self.player == 'vrep':
+            return self.device.get_all_joint_velocity()
+        if self.player == 'dxl':
+            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     def set_joint_velocity(self, ids, commands, send=True):
         # ids is a list of the ids that you want to command
@@ -145,13 +148,13 @@ class MotionManager(object):
         if self.player == 'vrep':
             self.device.set_joint_velocity(ids, commands, send)
         if self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+            self.device.set_joint_velocity(ids, commands)
 
     def set_all_joint_velocity(self, commands, send=True):
         if self.player == 'vrep':
             self.device.set_all_joint_velocity(commands, send)
         if self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     ## Effort (force/torque) ##
     def set_joint_effort(self, ids, commands, send=True):
@@ -164,25 +167,25 @@ class MotionManager(object):
         if self.player == 'vrep':
             self.device.set_joint_effort(ids, commands, send)
         if self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
+            self.device.set_joint_torque(ids, commands)
 
     def set_all_joint_effort(self, commands, send=True):
         if self.player == 'vrep':
             self.device.set_all_joint_effort(commands, send)
         elif self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     def get_joint_effort(self, ids):
         if self.player == 'vrep':
             return self.device.get_joint_effort(ids)
         elif self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+            self.device.get_current_torque(ids)
 
     def get_all_joint_effort(self):
         if self.player == 'vrep':
             return self.device.get_all_joint_effort()
         elif self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     def wait(self, time_to_wait):
         # wait for a specified duration of time, in seconds. This command is blocking.
