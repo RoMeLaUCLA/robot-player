@@ -307,13 +307,17 @@ class DxlInterface(object):
     def set_all_command_position(self, angles):
         self.set_command_position(self.motor_id, angles)
 
-    def set_joint_velocity(self):
-        # TODO
-        pass
+    def set_joint_velocity(self, ids, commands):
+        for d in self.device:
+            id_list, command_list = self.filter_ids_and_commands(ids, commands, d)
+            self._sync_write(d, 'GOAL_VELOCITY', 4, id_list, commands)  # TODO: check parameter_data_length of GOAL_VELOCITY
+            # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
 
-    def set_joint_torque(self):
-        # TODO
-        pass
+    def set_joint_torque(self, ids, commands):
+        for d in self.device:
+            id_list, command_list = self.filter_ids_and_commands(ids, commands, d)
+            self._sync_write(d, 'GOAL_TORQUE', 4, id_list, commands)  # TODO: check parameter_data_length of GOAL_TORQUE
+            # TODO: parameter may be different for different motors. only listed for DXLPRO
 
     def _sync_write(self, device, parameter, parameter_data_length, ids, commands):
         """
