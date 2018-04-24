@@ -307,6 +307,14 @@ class DxlInterface(object):
     def set_all_command_position(self, angles):
         self.set_command_position(self.motor_id, angles)
 
+    def set_joint_velocity(self):
+        # TODO
+        pass
+
+    def set_joint_torque(self):
+        # TODO
+        pass
+
     def _sync_write(self, device, parameter, parameter_data_length, ids, commands):
         """
         Uses sync write to write a string of data to a single port. Use this on every port.
@@ -421,6 +429,14 @@ class DxlInterface(object):
                 pos_data.append(pos2rad(data, res))
 
         return pos_data
+
+    def get_joint_velocity(self):
+        # TODO
+        pass
+
+    def get_joint_torque(self):
+        # TODO
+        pass
 
     def filter_ids(self, ids, device):
         # filters out ids based on which ids are on the device
