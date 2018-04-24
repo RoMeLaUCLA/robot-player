@@ -317,7 +317,7 @@ class DxlInterface(object):
         for d in self.device:
             id_list, command_list = self.filter_ids_and_commands(ids, commands, d)
             self._sync_write(d, 'GOAL_TORQUE', 4, id_list, commands)  # TODO: check parameter_data_length of GOAL_TORQUE
-            # TODO: parameter may be different for different motors. only listed for DXLPRO
+            # TODO: parameter may be different for different motors. only listed for DXLPRO, and I think it's called GOAL_CURRENT for MX106
 
     def _sync_write(self, device, parameter, parameter_data_length, ids, commands):
         """
@@ -434,13 +434,19 @@ class DxlInterface(object):
 
         return pos_data
 
-    def get_joint_velocity(self):
-        # TODO
-        pass
+    def get_current_velocity(self, ids):
+        vel_data = []
+        for d in self.device:
+            id_list = self.filter_ids(ids, d)
+            vel_data.append(self._sync_read(d, 'PRESENT_VELOCITY', 4, id_list))  # TODO: check parameter_data_length of PRESENT_VELOCITY
+            # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
 
-    def get_joint_torque(self):
-        # TODO
-        pass
+    def get_current_torque(self, ids):
+        torque_data = []
+        for d in self.device:
+            id_list = self.filter_ids(ids, d)
+            torque_data.append(self._sync_read(d, 'PRESENT_CURRENT', 4, id_list))  # TODO: check parameter_data_length of PRESSENT_CURRENT
+            # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
 
     def filter_ids(self, ids, device):
         # filters out ids based on which ids are on the device
