@@ -1,6 +1,9 @@
 """
 Control Table
 =================
+Tables have been coppied from Robotis documentation, with the modification that
+PWM, torque, and current in names have all been replaced with "effort". Torque
+enable was left alone.
 """
 
 class Instruction:
@@ -350,7 +353,7 @@ class MX28:
     FEEDFORWARD_2ND_GAIN = 88
     FEEDFORWARD_1ST_GAIN = 90
     BUS_WATCHDOG = 98
-    GOAL_PWM = 100
+    GOAL_EFFORT = 100
     RESERVED = 102
     GOAL_VELOCITY = 104
     PROFILE_ACCELERATION = 108
@@ -359,7 +362,7 @@ class MX28:
     REALTIME_TICK = 120
     MOVING = 122
     MOVING_STATUS = 123
-    PRESENT_PWM = 124
+    PRESENT_EFFORT = 124
     PRESENT_LOAD = 126
     PRESENT_VELOCITY = 128
     PRESENT_POSITION = 132
