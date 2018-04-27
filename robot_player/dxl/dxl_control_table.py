@@ -177,13 +177,13 @@ class MX106:
     # =====================================================================
     MODEL_NUMBER = 0
     MODEL_INFORMATION = 2
-    FIRMWARE_VERSION = 6
-    MOTOR_ID = 7
+    VERSION_OF_FIRMWARE = 6
+    ID = 7
     BAUD_RATE = 8
     RETURN_DELAY_TIME = 9
     DRIVE_MODE = 10
     OPERATING_MODE = 11
-    SECONDARY_ID = 12
+    SECONDARY_SHADOW_ID = 12
     PROTOCOL_VERSION = 13
     HOMING_OFFSET = 20
     MOVING_THRESHOLD = 24
