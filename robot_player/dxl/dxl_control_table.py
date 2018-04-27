@@ -314,6 +314,7 @@ class MX28:
     http://support.robotis.com/en/product/actuator/dynamixel/mx_series/mx-28(2.0).htm
     """
 
+    MX_28 = 31
     resolution = 4096
 
     LEN_GOAL_POSITION = 4
@@ -392,7 +393,7 @@ class MX28_P1:
     http://support.robotis.com/ko/product/actuator/dynamixel/mx_series/mx-28.htm
     http://support.robotis.com/en/product/dynamixel/communication/dxl_instruction.htm
     """
-    MX_28 = 30
+    MX_28_P1 = 30
     resolution = 4096
 
     LEN_GOAL_POSITION = 2
