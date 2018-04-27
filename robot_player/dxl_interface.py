@@ -239,16 +239,17 @@ class DxlInterface(object):
             # set device to have .gw_<name of parameter> attached to it for further reference
             setattr(d, "gw_" + parameter, gw_id)
 
-    def setup_group_sync_read(self, parameter, parameter_data_len):
+    def setup_group_sync_read(self, parameter):
         """
         Set up a group sync read parameter for later use with each dxl port
         Assign the group read ids to a DxlPort data member for later reference.
         :param parameter: parameter to read from, as a string
-        :param parameter_data_len: length of data in ctrl table
         :return:
         """
 
         for d in self.device:
+            parameter_data_len = get_parameter_data_len(d, parameter)
+
             # Protocol 2.0 has sync read
             if d.protocol_version == 2:
                 gr_id = dynamixel.groupSyncRead(d.port_num,
