@@ -171,6 +171,8 @@ class MX106:
 
     LEN_GOAL_POSITION = 4
     LEN_PRESENT_POSITION = 4
+    LEN_GOAL_VELOCITY = 4
+    LEN_PRESENT_VELOCITY = 4
 
     # =====================================================================
     # EEPROM
@@ -240,6 +242,8 @@ class MX106_P1:
 
     LEN_GOAL_POSITION = 2
     LEN_PRESENT_POSITION = 2
+    LEN_PRESENT_SPEED = 2
+    LEN_GOAL_EFFORT = 2
 
     # =====================================================================
     # EEPROM
@@ -312,6 +316,13 @@ class MX28:
 
     resolution = 4096
 
+    LEN_GOAL_POSITION = 4
+    LEN_PRESENT_POSITION = 4
+    LEN_GOAL_VELOCITY = 4
+    LEN_PRESENT_VELOCITY = 4
+    LEN_GOAL_EFFORT = 2
+    LEN_PRESENT_EFFORT = 2
+
     # =====================================================================
     # EEPROM
     # =====================================================================
@@ -383,6 +394,10 @@ class MX28_P1:
     """
     MX_28 = 30
     resolution = 4096
+
+    LEN_GOAL_POSITION = 2
+    LEN_PRESENT_POSITION = 2
+    LEN_PRESENT_SPEED = 2
 
     # =====================================================================
     # EEPROM
