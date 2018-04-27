@@ -10,7 +10,7 @@ __status__ = "Prototype"
 
 import ctypes
 from .dxl import dynamixel_functions as dynamixel
-from .dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28
+from .dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28, MX28_P1
 from collections import OrderedDict
 
 # data Byte Length
@@ -210,31 +210,29 @@ class DxlInterface(object):
                 print("motor_model_no:" + str(motor_model_no))
 
     def setup_sync_functions(self):
-        self.setup_group_sync_write('GOAL_POSITION', 4)
-        self.setup_group_sync_read('PRESENT_POSITION', 4)
-        self.setup_group_sync_write('GOAL_VELOCITY', 4)
-        self.setup_group_sync_read('PRESENT_VELOCITY', 4)
-        # DXL PROs don't have GOAL CURRENT commands, left out for now.
-        # self.setup_group_sync_write('GOAL_CURRENT', 4)
-        # self.setup_group_sync_read('PRESENT_CURRENT', 4)
+        self.setup_group_sync_write('GOAL_POSITION')
+        self.setup_group_sync_read('PRESENT_POSITION')
+        self.setup_group_sync_write('GOAL_VELOCITY')
+        self.setup_group_sync_read('PRESENT_VELOCITY')
+        self.setup_group_sync_write('GOAL_EFFORT')
+        self.setup_group_sync_read('PRESENT_EFFORT')
         for d in self.device:
             print("gw_GOAL_POSITION {}".format(d.gw_GOAL_POSITION))
             print("gr_PRESENT_POSITION {}".format(d.gr_PRESENT_POSITION))
 
-    def setup_group_sync_write(self, parameter, parameter_data_len):
+    def setup_group_sync_write(self, parameter):
         """
         Set up a group sync write parameter for later use with each dxl port
         Assign the group write ids to a DxlPort for later reference.
         :param parameter: parameter to write to, as a string
-        :param parameter_data_len: length of data in ctrl table
         :return:
         """
-
         for d in self.device:
+            parameter_data_len = get_parameter_data_len(d, parameter)  # TODO: returns 4 if parameter DNE
             print("d.port_num {}".format(d.port_num))
             gw_id = dynamixel.groupSyncWrite(d.port_num,
                                              d.protocol_version,
-                                             getattr(d.ctrl_table, parameter),
+                                             getattr(d.ctrl_table, parameter),  # TODO: fails if parameter DNE
                                              parameter_data_len
                                              )
 
@@ -474,3 +472,46 @@ def rad2pos(rad, resolution):
 
 def pos2rad(pos, resolution):
     return pos * (2 * 3.1415926) / resolution
+
+def get_parameter_data_len(d, parameter):
+    """
+    checks the model of a passed device and fetches the data length of a passed parameter.
+
+    :param d: device to check for
+    :param parameter: the parameter whose length is checked
+    :return: command length of the parameter
+    """
+    # enforce assumption that all motors on one port are the same model
+    motor_model_no = dynamixel.pingGetModelNum(d.port_num, d.protocol_version, d.motor_id[0])
+
+    parameter_data_len = 0
+    try:
+        if motor_model_no == MX106.MX_106:
+            parameter_data_len = getattr(MX106, 'LEN_{}'.format(parameter))
+        elif motor_model_no == MX106_P1.MX_106_P1:
+            parameter_data_len = getattr(MX106_P1, 'LEN_{}'.format(parameter))
+        elif motor_model_no in [DXLPRO.H54_200_S500_R,
+                                DXLPRO.H54_200_B500_R,
+                                DXLPRO.H54_100_S500_R,
+                                DXLPRO.H42_20_S300_R,
+                                DXLPRO.M54_60_S250_R,
+                                DXLPRO.M54_40_S250_R,
+                                DXLPRO.M42_10_S260_R,
+                                DXLPRO.L54_50_S500_R,
+                                DXLPRO.L54_30_S500_R,
+                                DXLPRO.L54_50_S290_R,
+                                DXLPRO.L54_30_S400_R,
+                                ]:
+            parameter_data_len = getattr(DXLPRO, 'LEN_{}'.format(parameter))
+        elif motor_model_no == MX28.MX_28:
+            parameter_data_len = getattr(MX28, 'LEN_{}'.format(parameter))
+        elif motor_model_no == MX28_P1.MX_28_P1:
+            parameter_data_len = getattr(MX28_P1, 'LEN_{}'.format(parameter))
+        else:
+            # TODO figure out a good assumption for parameter_data_length. maybe base on P1 vs P2
+            # would not always work because some P1 things are length 4 and some are length 2
+            parameter_data_len = 4
+    except AttributeError:
+        parameter_data_len = 4
+
+    return parameter_data_len
