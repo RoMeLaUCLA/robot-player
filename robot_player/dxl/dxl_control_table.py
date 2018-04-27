@@ -552,7 +552,7 @@ class DXLPRO:
                   L54_30_S500_R: 180692*2,
                   }
 
-    # byte length of certain control table values. TODO: update for control torques.
+    # byte length of certain control table values.
     LEN_GOAL_POSITION = 4
     LEN_PRESENT_POSITION = 4
 
@@ -561,8 +561,8 @@ class DXLPRO:
     # =====================================================================
     MODEL_NUMBER = 0
     MODEL_INFORMATION = 2
-    FIRMWARE_VERSION = 6
-    MOTOR_ID = 7
+    VERSION_OF_FIRMWARE = 6
+    ID = 7
     BAUD_RATE = 8
     RETURN_DELAY_TIME = 9
     OPERATING_MODE = 11
@@ -572,7 +572,7 @@ class DXLPRO:
     MAX_VOLTAGE_LIMIT = 22
     MIN_VOLTAGE_LIMIT = 24
     ACCELERATION_LIMIT = 26
-    TORQUE_LIMIT = 30
+    EFFORT_LIMIT = 30
     VELOCITY_LIMIT = 32
     MAX_POSITION_LIMIT = 36
     MIN_POSITION_LIMIT = 40
@@ -581,16 +581,12 @@ class DXLPRO:
     EXTERNAL_PORT_MODE_3 = 46
     EXTERNAL_PORT_MODE_4 = 47
     SHUTDOWN = 48
-    INDIRECT_ADDRESS = 49
-
-
+    INDIRECT_ADDRESS_1 = 49
     """
-    can do other indirect addresses by adding INDIRECT_ADDRESS + 2*(address_num-1)
-    eg. INDIRECT_ADDRESS_5 = INDIRECT_ADDRESS + 2*(5-1) = 57
+    can do other indirect addresses by adding INDIRECT_ADDRESS_1 + 2*(address_num-1)
+    e.g. INDIRECT_ADDRESS_5 = INDIRECT_ADDRESS_1 + 2*(5-1) = 57
 
     up to INDIRECT_ADDRESS_256 (569)
-
-    
     """
 
     # =====================================================================
@@ -603,32 +599,27 @@ class DXLPRO:
     VELOCITY_I_GAIN = 586
     VELOCITY_P_GAIN = 588
     POSITION_P_GAIN = 594
-    FEEDFORWARD_2ND_GAIN = 88
-    FEEDFORWARD_1ST_GAIN = 90
     GOAL_POSITION = 596
     GOAL_VELOCITY = 600
-    GOAL_TORQUE = 604
+    GOAL_EFFORT = 604
     GOAL_ACCELERATION = 606
     MOVING = 610
     PRESENT_POSITION = 611
     PRESENT_VELOCITY = 615
-    PRESENT_CURRENT = 621
+    PRESENT_EFFORT = 621
     PRESENT_INPUT_VOLTAGE = 623
     PRESENT_TEMPERATURE = 625
     EXTERNAL_PORT_DATA_1 = 626
     EXTERNAL_PORT_DATA_2 = 628
     EXTERNAL_PORT_DATA_3 = 630
     EXTERNAL_PORT_DATA_4 = 632
-    INDIRECT_DATA = 634
-
+    INDIRECT_DATA_1 = 634
     """ 
-    can do other indirect data by adding INDIRECT_DATA + 2*(address_num-1)
-    eg. INDIRECT_DATA_5 = INDIRECT_DATA + 2*(5-1) = 57
+    can do other indirect data by adding INDIRECT_DATA_1 + 2*(address_num-1)
+    e.g. INDIRECT_DATA_5 = INDIRECT_DATA_1 + 2*(5-1) = 57
 
     up to INDIRECT_DATA_256 (889)
-
     """
-
     REGISTERED_INSTRUCTION = 890
     STATUS_RETURN_LEVEL = 891
     HARDWARE_ERROR_STATUS = 892
