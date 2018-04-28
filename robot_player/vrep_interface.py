@@ -118,7 +118,7 @@ class VrepInterface(object):
         return vrep.simxSetObjectOrientation(
             self._sim_Client_ID, object_handle, base_handle, orientation, vrep.simx_opmode_oneshot)
 
-    def get_object_handles(self,object_name):
+    def get_object_handles(self, object_name):
         return vrep.simxGetObjectHandle(self._sim_Client_ID, object_name, vrep.simx_opmode_blocking)[1]
 
     """
@@ -225,6 +225,7 @@ class VrepInterface(object):
         vrep.simxSynchronousTrigger(self._sim_Client_ID)
         vrep.simxGetPingTime(self._sim_Client_ID)
 
+    # TODO: refactor
     def set_joint_effort(self, ids, commands, send=True):
         for i, c in zip(ids, commands):
             # set joint speed
@@ -241,7 +242,8 @@ class VrepInterface(object):
         if send:
             self.send_command()
 
-    def get_joint_effort(self, ids, send=True):
+    # TODO: refactor
+    def get_joint_effort(self, ids):
         effort_list = []
         for i in ids:
             j = self.joint[i]
@@ -251,6 +253,7 @@ class VrepInterface(object):
             effort_list.append(effort)
         return effort_list
 
+    # TODO: refactor
     def get_joint_velocity(self, ids):
         joint_velocity = []
         for i in ids:
@@ -262,6 +265,7 @@ class VrepInterface(object):
                 joint_velocity.append(vel)
         return joint_velocity
 
+    # TODO: refactor
     def set_joint_velocity(self, ids, commands, send=True):
         for i, c in zip(ids, commands):
             j = self.joint[i]
@@ -294,7 +298,7 @@ class VrepInterface(object):
     def set_all_command_position(self, commands, send_command=True):
         # use the built in joint data structure to write commands to all joints.
         # commands must be for joints ordered from least to greatest ie. (1,2,3 ... n)
-        self.set_command_position(self.motor_id, commands, send_command)
+        self.set_goal_position(self.motor_id, commands, send_command)
 
     def get_all_current_position(self):
         # use the built in joint data structure to read all motor positions
@@ -315,7 +319,7 @@ class VrepInterface(object):
         # print("setting joint effort")
         self.set_joint_effort(self.motor_id, commands, send)
 
-    def get_all_joint_effort(self, send=True):
+    def get_all_joint_effort(self):
 
         return self.get_joint_effort(self.joint)
 
@@ -373,7 +377,7 @@ class VrepInterface(object):
                                                                                 opmode)
         # if returnCode != vrep.simx_return_ok:
         #     raise Exception("ERROR in {}: returnCode = {}".format(__name__, returnCode))
-        return forceVector,torqueVector
+        return forceVector, torqueVector
 
 def sign(x):
     if x > 0:
