@@ -28,8 +28,7 @@ NUM2MODEL = {MX106.MX_106: MX106,
              DXLPRO.L54_50_S290_R: DXLPRO,
              DXLPRO.L54_30_S400_R: DXLPRO,
              MX28.MX_28: MX28,
-             MX28_P1.MX_28_P1: MX28_P1,
-             }
+             MX28_P1.MX_28_P1: MX28_P1}
 
 # DEVICENAME = "/dev/ttyUSB0".encode('utf-8')  # Check which port is being used on your controller
 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
@@ -187,38 +186,11 @@ class DxlInterface(object):
 
                 print("[ID:%03d] ping Succeeded. Dynamixel model number : %d" % (m_id, motor_model_no))
 
-                if motor_model_no == MX106.MX_106:
-                    ctrl_table = MX106
-                    resolution = MX106.resolution
-
-                elif motor_model_no == MX106_P1.MX_106_P1:
-                    ctrl_table = MX106_P1
-                    resolution = MX106_P1.resolution
-
-                elif motor_model_no in [DXLPRO.H54_200_S500_R,
-                                        DXLPRO.H54_200_B500_R,
-                                        DXLPRO.H54_100_S500_R,
-                                        DXLPRO.H42_20_S300_R,
-                                        DXLPRO.M54_60_S250_R,
-                                        DXLPRO.M54_40_S250_R,
-                                        DXLPRO.M42_10_S260_R,
-                                        DXLPRO.L54_50_S500_R,
-                                        DXLPRO.L54_30_S500_R,
-                                        DXLPRO.L54_50_S290_R,
-                                        DXLPRO.L54_30_S400_R,
-                                        ]:
-                    print(DXLPRO)
-
-                    ctrl_table = DXLPRO
-                    resolution = DXLPRO.resolution[motor_model_no]
-
-                elif motor_model_no == MX28.MX_28:
-                    ctrl_table = MX28
-                    resolution = MX28.resolution
-
-                else:
-                    print("motor_model not found!")
-                    quit()
+                try:
+                    ctrl_table = NUM2MODEL[motor_model_no]
+                    resolution = ctrl_table.resolution
+                except KeyError:
+                    raise TypeError('Unexpected motor type. Dynamixel model number: {}'.format(motor_model_no))
 
                 d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution}
                 print("motor_model_no:" + str(motor_model_no))
@@ -490,7 +462,8 @@ def pos2rad(pos, resolution):
 
 def get_parameter_data_len(d, parameter):
     """
-    checks the model of a passed device and fetches the data length of a passed parameter.
+    checks the model of a passed device and fetches the data length of a passed parameter. assumes that all devices on
+    the same port are the same model.
 
     :param d: device to check for
     :param parameter: the parameter whose length is checked
@@ -501,8 +474,8 @@ def get_parameter_data_len(d, parameter):
 
     try:  # to get motor model
         motor = NUM2MODEL[motor_model_no]
-    except AttributeError:
-        raise TypeError('Unexpected motor type. Model number: {}'.format(motor_model_no))
+    except KeyError:
+        raise TypeError('Unexpected motor type. Dynamixel model number: {}'.format(motor_model_no))
 
     try:  # to get command length
         parameter_data_len = getattr(motor, 'LEN_{}'.format(parameter))
