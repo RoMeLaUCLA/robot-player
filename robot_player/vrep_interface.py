@@ -208,7 +208,7 @@ class VrepInterface(object):
                                                   vrep.simx_opmode_blocking)[1] for i in ids]
         return joint_angles
 
-    def set_command_position(self, ids, commands, send=False):
+    def set_goal_position(self, ids, commands, send=False):
         for i, c in zip(ids, commands):
             vrep.simxSetJointTargetPosition(self._sim_Client_ID, self.joint[i]['sim_handle'], c,
                                             vrep.simx_opmode_oneshot)
