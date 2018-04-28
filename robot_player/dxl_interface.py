@@ -480,6 +480,6 @@ def get_parameter_data_len(d, parameter):
     try:  # to get command length
         parameter_data_len = getattr(motor, 'LEN_{}'.format(parameter))
     except AttributeError:
-        parameter_data_len = 4
+        parameter_data_len = 4  # TODO: figure out best way to assume data lengh
 
     return parameter_data_len
