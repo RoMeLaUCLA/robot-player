@@ -13,9 +13,23 @@ from .dxl import dynamixel_functions as dynamixel
 from .dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28, MX28_P1
 from collections import OrderedDict
 
-# data Byte Length
-LEN_GOAL_POSITION = 4
-LEN_PRESENT_POSITION = 4
+# conversion table. pass in the motor model number, get the object
+NUM2MODEL = {MX106.MX_106: MX106,
+             MX106_P1.MX_106_P1: MX106_P1,
+             DXLPRO.H54_200_S500_R: DXLPRO,
+             DXLPRO.H54_200_B500_R: DXLPRO,
+             DXLPRO.H54_100_S500_R: DXLPRO,
+             DXLPRO.H42_20_S300_R: DXLPRO,
+             DXLPRO.M54_60_S250_R: DXLPRO,
+             DXLPRO.M54_40_S250_R: DXLPRO,
+             DXLPRO.M42_10_S260_R: DXLPRO,
+             DXLPRO.L54_50_S500_R: DXLPRO,
+             DXLPRO.L54_30_S500_R: DXLPRO,
+             DXLPRO.L54_50_S290_R: DXLPRO,
+             DXLPRO.L54_30_S400_R: DXLPRO,
+             MX28.MX_28: MX28,
+             MX28_P1.MX_28_P1: MX28_P1,
+             }
 
 # DEVICENAME = "/dev/ttyUSB0".encode('utf-8')  # Check which port is being used on your controller
 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
@@ -485,33 +499,13 @@ def get_parameter_data_len(d, parameter):
     # enforce assumption that all motors on one port are the same model
     motor_model_no = dynamixel.pingGetModelNum(d.port_num, d.protocol_version, d.motor_id[0])
 
-    parameter_data_len = 0
-    try:
-        if motor_model_no == MX106.MX_106:
-            parameter_data_len = getattr(MX106, 'LEN_{}'.format(parameter))
-        elif motor_model_no == MX106_P1.MX_106_P1:
-            parameter_data_len = getattr(MX106_P1, 'LEN_{}'.format(parameter))
-        elif motor_model_no in [DXLPRO.H54_200_S500_R,
-                                DXLPRO.H54_200_B500_R,
-                                DXLPRO.H54_100_S500_R,
-                                DXLPRO.H42_20_S300_R,
-                                DXLPRO.M54_60_S250_R,
-                                DXLPRO.M54_40_S250_R,
-                                DXLPRO.M42_10_S260_R,
-                                DXLPRO.L54_50_S500_R,
-                                DXLPRO.L54_30_S500_R,
-                                DXLPRO.L54_50_S290_R,
-                                DXLPRO.L54_30_S400_R,
-                                ]:
-            parameter_data_len = getattr(DXLPRO, 'LEN_{}'.format(parameter))
-        elif motor_model_no == MX28.MX_28:
-            parameter_data_len = getattr(MX28, 'LEN_{}'.format(parameter))
-        elif motor_model_no == MX28_P1.MX_28_P1:
-            parameter_data_len = getattr(MX28_P1, 'LEN_{}'.format(parameter))
-        else:
-            # TODO figure out a good assumption for parameter_data_length. maybe base on P1 vs P2
-            # would not always work because some P1 things are length 4 and some are length 2
-            parameter_data_len = 4
+    try:  # to get motor model
+        motor = NUM2MODEL[motor_model_no]
+    except AttributeError:
+        raise TypeError('Unexpected motor type. Model number: {}'.format(motor_model_no))
+
+    try:  # to get command length
+        parameter_data_len = getattr(motor, 'LEN_{}'.format(parameter))
     except AttributeError:
         parameter_data_len = 4
 
