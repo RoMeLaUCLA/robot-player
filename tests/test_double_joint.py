@@ -46,19 +46,19 @@ with MotionManager(motor_id, dt, VrepOptions(joint_prefix="joint")) as mm:
 
     print("reset position")
     mm.set_joint_ctrl_loop([1, 2], [True, True])
-    mm.set_all_joint_effort([100, 100], send=False)
+    mm.set_all_goal_effort([100, 100], send=False)
     for i in range(1000):
         mm.set_all_goal_position([0, 0])
         mm.advance_timestep()
 
     mm.set_joint_ctrl_loop([1, 2], [False, False])
-    print("test set_joint_effort")
+    print("test set_goal_effort")
     for i in range(100):
-        # get joint effort is also run in the set_all_joint_effort part
-        mm.set_all_joint_effort([.25,0])
+        # get joint effort is also run in the set_all_goal_effort part
+        mm.set_all_goal_effort([.25, 0])
         mm.advance_timestep()
     for i in range(100):
-        mm.set_joint_effort([1,2], [0,0])
+        mm.set_goal_effort([1, 2], [0, 0])
         mm.advance_timestep()
 
 

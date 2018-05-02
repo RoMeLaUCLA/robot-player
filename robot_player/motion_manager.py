@@ -156,9 +156,8 @@ class MotionManager(object):
         if self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
-    ## Effort (force/torque) ##
-    # TODO: refactor
-    def set_joint_effort(self, ids, commands, send=True):
+    ## Effort (force/torque/PWM/current) ##
+    def set_goal_effort(self, ids, commands, send=True):
 
         try:
             assert(len(ids) == len(commands))
@@ -170,8 +169,7 @@ class MotionManager(object):
         if self.player == 'dxl':
             self.device.set_joint_torque(ids, commands)
 
-    # TODO: refactor
-    def set_all_joint_effort(self, commands, send=True):
+    def set_all_goal_effort(self, commands, send=True):
         if self.player == 'vrep':
             self.device.set_all_joint_effort(commands, send)
         elif self.player == 'dxl':
