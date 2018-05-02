@@ -175,15 +175,13 @@ class MotionManager(object):
         elif self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
-    # TODO: refactor
-    def get_joint_effort(self, ids):
+    def get_present_effort(self, ids):
         if self.player == 'vrep':
             return self.device.get_joint_effort(ids)
         elif self.player == 'dxl':
             self.device.get_current_torque(ids)
 
-    # TODO: refactor
-    def get_all_joint_effort(self):
+    def get_all_present_effort(self):
         if self.player == 'vrep':
             return self.device.get_all_joint_effort()
         elif self.player == 'dxl':
