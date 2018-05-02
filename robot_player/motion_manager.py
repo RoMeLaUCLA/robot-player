@@ -126,13 +126,13 @@ class MotionManager(object):
     ## Velocity ##
     def get_present_velocity(self, ids):
         if self.player == 'vrep':
-            return self.device.get_joint_velocity(ids)
+            return self.device.get_present_velocity(ids)
         if self.player == 'dxl':
             return self.device.get_current_velocity(ids)
 
     def get_all_present_velocity(self):
         if self.player == 'vrep':
-            return self.device.get_all_joint_velocity()
+            return self.device.get_all_present_velocity()
         if self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
@@ -146,13 +146,13 @@ class MotionManager(object):
             raise ValueError('ERROR: ids and commands must be same length')
 
         if self.player == 'vrep':
-            self.device.set_joint_velocity(ids, commands, send)
+            self.device.set_goal_velocity(ids, commands, send)
         if self.player == 'dxl':
             self.device.set_joint_velocity(ids, commands)
 
     def set_all_goal_velocity(self, commands, send=True):
         if self.player == 'vrep':
-            self.device.set_all_joint_velocity(commands, send)
+            self.device.set_all_goal_velocity(commands, send)
         if self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 

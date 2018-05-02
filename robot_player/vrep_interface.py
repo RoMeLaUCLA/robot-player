@@ -234,8 +234,7 @@ class VrepInterface(object):
         self.set_goal_position(self.motor_id, commands, send_command)
 
     ## Velocity ##
-    # TODO: refactor
-    def get_joint_velocity(self, ids):
+    def get_present_velocity(self, ids):
         joint_velocity = []
         for i in ids:
             j = self.joint[i]
@@ -246,25 +245,22 @@ class VrepInterface(object):
                 joint_velocity.append(vel)
         return joint_velocity
 
-    # TODO: refactor
-    def get_all_joint_velocity(self):
+    def get_all_present_velocity(self):
         # use the built in joint data structure to read all motor velocities
         # commands must be for joints ordered from least to greatest
-        return self.get_joint_velocity(self.motor_id)
+        return self.get_present_velocity(self.motor_id)
 
-    # TODO: refactor
-    def set_joint_velocity(self, ids, commands, send=True):
+    def set_goal_velocity(self, ids, commands, send=True):
         for i, c in zip(ids, commands):
             j = self.joint[i]
             vrep.simxSetJointTargetVelocity(self._sim_Client_ID, j['sim_handle'], c, vrep.simx_opmode_blocking)
         if send:
             self.send_command()
 
-    # TODO: refactor
-    def set_all_joint_velocity(self, commands, send_command=True):
+    def set_all_goal_velocity(self, commands, send_command=True):
         # use the built in joint data structure to write commands to all joints.
         # commands must be for joints ordered from least to greatest ie. (1,2,3 ... n)
-        self.set_joint_velocity(self.joint, commands, send_command)
+        self.set_goal_velocity(self.joint, commands, send_command)
 
     ## Effort (force/torque/PWM/current) ##
     # TODO: refactor
