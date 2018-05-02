@@ -37,11 +37,11 @@ with MotionManager(motor_id, dt, VrepOptions(joint_prefix="joint")) as mm:
     mm.set_joint_ctrl_loop([1, 2], [False, False])
     print("set joint velocity")
     for i in range(100):
-        mm.set_joint_velocity([1,2], [1,-1])
+        mm.set_goal_velocity([1, 2], [1, -1])
         mm.advance_timestep()
     print("set all joint velocity")
     for i in range(100):
-        mm.set_all_joint_velocity([1,2], [2,-2])
+        mm.set_all_goal_velocity([1, 2], [2, -2])
         mm.advance_timestep()
 
     print("reset position")

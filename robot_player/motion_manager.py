@@ -136,8 +136,7 @@ class MotionManager(object):
         if self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
-    # TODO: refactor
-    def set_joint_velocity(self, ids, commands, send=True):
+    def set_goal_velocity(self, ids, commands, send=True):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
 
@@ -151,8 +150,7 @@ class MotionManager(object):
         if self.player == 'dxl':
             self.device.set_joint_velocity(ids, commands)
 
-    # TODO: refactor
-    def set_all_joint_velocity(self, commands, send=True):
+    def set_all_goal_velocity(self, commands, send=True):
         if self.player == 'vrep':
             self.device.set_all_joint_velocity(commands, send)
         if self.player == 'dxl':
