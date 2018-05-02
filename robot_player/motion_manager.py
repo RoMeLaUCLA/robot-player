@@ -157,24 +157,6 @@ class MotionManager(object):
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     ## Effort (force/torque/PWM/current) ##
-    def set_goal_effort(self, ids, commands, send=True):
-
-        try:
-            assert(len(ids) == len(commands))
-        except AssertionError:
-            raise ValueError('ERROR: ids and commands must be same length')
-        
-        if self.player == 'vrep':
-            self.device.set_goal_effort(ids, commands, send)
-        if self.player == 'dxl':
-            self.device.set_joint_torque(ids, commands)
-
-    def set_all_goal_effort(self, commands, send=True):
-        if self.player == 'vrep':
-            self.device.set_all_goal_effort(commands, send)
-        elif self.player == 'dxl':
-            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
-
     def get_present_effort(self, ids):
         if self.player == 'vrep':
             return self.device.get_joint_effort(ids)
@@ -184,6 +166,24 @@ class MotionManager(object):
     def get_all_present_effort(self):
         if self.player == 'vrep':
             return self.device.get_all_joint_effort()
+        elif self.player == 'dxl':
+            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
+
+    def set_goal_effort(self, ids, commands, send=True):
+
+        try:
+            assert (len(ids) == len(commands))
+        except AssertionError:
+            raise ValueError('ERROR: ids and commands must be same length')
+
+        if self.player == 'vrep':
+            self.device.set_goal_effort(ids, commands, send)
+        if self.player == 'dxl':
+            self.device.set_joint_torque(ids, commands)
+
+    def set_all_goal_effort(self, commands, send=True):
+        if self.player == 'vrep':
+            self.device.set_all_goal_effort(commands, send)
         elif self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
