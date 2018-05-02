@@ -101,7 +101,6 @@ class MotionManager(object):
         # gets current position of robot
         return self.device.get_all_current_position()
 
-    # TODO: refactor
     def set_goal_position(self, ids, commands, send=False):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
@@ -117,7 +116,7 @@ class MotionManager(object):
             self.device.set_command_position(ids, commands)
 
     # TODO: refactor
-    def set_all_command_position(self, command, send=False):
+    def set_all_goal_position(self, command, send=False):
         # set command position for using positional arguments
         # send is whether to also trigger a timestep
         if self.player == 'vrep':
@@ -318,17 +317,17 @@ def player_arg_parser(filename):
 #
 #     with MotionManager(Devices) as MM:
 #         MM.initialize()
-#         MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
+#         MM.set_all_goal_position([0, 0, 0, 0, 0, 0, 0])
 #         for i in xrange(100):
 #             print(MM.get_all_current_position())
 #             MM.wait(dt)
 #
-#         MM.set_all_command_position([np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, ])
+#         MM.set_all_goal_position([np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, ])
 #         for i in range(100):
 #             print(MM.get_all_current_position())
 #             MM.wait(dt)
 #
-#         MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
+#         MM.set_all_goal_position([0, 0, 0, 0, 0, 0, 0])
 #         for i in range(100):
 #             print(MM.get_all_current_position())
 #             MM.wait(dt)

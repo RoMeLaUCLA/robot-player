@@ -18,7 +18,7 @@ with MotionManager(motor_id, dt, VrepOptions(joint_prefix="joint")) as mm:
     assert(np.allclose(pos,[1,1]))
 
     for i in range(100):
-        mm.set_all_command_position([-1,-2])
+        mm.set_all_goal_position([-1, -2])
         mm.advance_timestep()
     # check that motors got to right place
     pos = mm.get_all_current_position()
@@ -48,7 +48,7 @@ with MotionManager(motor_id, dt, VrepOptions(joint_prefix="joint")) as mm:
     mm.set_joint_ctrl_loop([1, 2], [True, True])
     mm.set_all_joint_effort([100, 100], send=False)
     for i in range(1000):
-        mm.set_all_command_position([0,0])
+        mm.set_all_goal_position([0, 0])
         mm.advance_timestep()
 
     mm.set_joint_ctrl_loop([1, 2], [False, False])

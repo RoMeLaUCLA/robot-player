@@ -113,7 +113,7 @@ class DxlInterface(object):
 
     eg. device1 = id:[1,2,3,4,5]
         device2 = id:[6,7,8,9,10]
-    DI.set_all_command_position([x,x,x,x,x,x,x,x,x,x])
+    DI.set_all_goal_position([x,x,x,x,x,x,x,x,x,x])
     corresponds to the order 1,2,3,4,5,6,7,8,9,10
 
     instead of writing new functions for each of the values, access the values using the
