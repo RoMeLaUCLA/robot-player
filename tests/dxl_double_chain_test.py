@@ -20,7 +20,7 @@ def test_set_command_position():
         # checking that the set_all/get_all position commands work
         position_list = [[pi,pi,pi,pi], [1,1,2,2], [0,0,0,0], [pi,pi,pi,pi]]
         for pl in position_list:
-            mm.set_command_position([1,2,3,4], pl)
+            mm.set_goal_position([1, 2, 3, 4], pl)
             mm.wait(2.5)
             print(mm.get_all_current_position())
 

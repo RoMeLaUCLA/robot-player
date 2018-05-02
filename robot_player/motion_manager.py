@@ -102,7 +102,7 @@ class MotionManager(object):
         return self.device.get_all_current_position()
 
     # TODO: refactor
-    def set_command_position(self, ids, commands, send=False):
+    def set_goal_position(self, ids, commands, send=False):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
 
