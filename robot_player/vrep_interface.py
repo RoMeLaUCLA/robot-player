@@ -230,7 +230,7 @@ class VrepInterface(object):
         for i, c in zip(ids, commands):
             # set joint speed
             j = self.joint[i]
-            joint_effort = self.get_joint_effort([i], send)[0] # get the value in the list
+            joint_effort = self.get_joint_effort([i])[0]  # get the value in the list
 
             # if either the sign of the joint effort or the direction of the command change,
             # flip the sign of the target velocity

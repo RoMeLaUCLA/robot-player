@@ -101,6 +101,7 @@ class MotionManager(object):
         # gets current position of robot
         return self.device.get_all_current_position()
 
+    # TODO: refactor
     def set_command_position(self, ids, commands, send=False):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
@@ -111,10 +112,11 @@ class MotionManager(object):
             raise ValueError('ERROR: ids and commands must be same length')
 
         if self.player == 'vrep':
-            self.device.set_command_position(ids, commands, send)
+            self.device.set_goal_position(ids, commands, send)
         if self.player == 'dxl':
             self.device.set_command_position(ids, commands)
 
+    # TODO: refactor
     def set_all_command_position(self, command, send=False):
         # set command position for using positional arguments
         # send is whether to also trigger a timestep
@@ -124,18 +126,21 @@ class MotionManager(object):
             self.device.set_all_command_position(command)
 
     ## Velocity ##
+    # TODO: refactor
     def get_joint_velocity(self, ids):
         if self.player == 'vrep':
             return self.device.get_joint_velocity(ids)
         if self.player == 'dxl':
             return self.device.get_current_velocity(ids)
 
+    # TODO: refactor
     def get_all_joint_velocity(self):
         if self.player == 'vrep':
             return self.device.get_all_joint_velocity()
         if self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
+    # TODO: refactor
     def set_joint_velocity(self, ids, commands, send=True):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
@@ -150,6 +155,7 @@ class MotionManager(object):
         if self.player == 'dxl':
             self.device.set_joint_velocity(ids, commands)
 
+    # TODO: refactor
     def set_all_joint_velocity(self, commands, send=True):
         if self.player == 'vrep':
             self.device.set_all_joint_velocity(commands, send)
@@ -157,6 +163,7 @@ class MotionManager(object):
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     ## Effort (force/torque) ##
+    # TODO: refactor
     def set_joint_effort(self, ids, commands, send=True):
 
         try:
@@ -169,18 +176,21 @@ class MotionManager(object):
         if self.player == 'dxl':
             self.device.set_joint_torque(ids, commands)
 
+    # TODO: refactor
     def set_all_joint_effort(self, commands, send=True):
         if self.player == 'vrep':
             self.device.set_all_joint_effort(commands, send)
         elif self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
+    # TODO: refactor
     def get_joint_effort(self, ids):
         if self.player == 'vrep':
             return self.device.get_joint_effort(ids)
         elif self.player == 'dxl':
             self.device.get_current_torque(ids)
 
+    # TODO: refactor
     def get_all_joint_effort(self):
         if self.player == 'vrep':
             return self.device.get_all_joint_effort()
