@@ -124,15 +124,13 @@ class MotionManager(object):
             self.device.set_all_command_position(command)
 
     ## Velocity ##
-    # TODO: refactor
-    def get_joint_velocity(self, ids):
+    def get_present_velocity(self, ids):
         if self.player == 'vrep':
             return self.device.get_joint_velocity(ids)
         if self.player == 'dxl':
             return self.device.get_current_velocity(ids)
 
-    # TODO: refactor
-    def get_all_joint_velocity(self):
+    def get_all_present_velocity(self):
         if self.player == 'vrep':
             return self.device.get_all_joint_velocity()
         if self.player == 'dxl':
