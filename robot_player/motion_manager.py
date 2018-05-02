@@ -165,13 +165,13 @@ class MotionManager(object):
             raise ValueError('ERROR: ids and commands must be same length')
         
         if self.player == 'vrep':
-            self.device.set_joint_effort(ids, commands, send)
+            self.device.set_goal_effort(ids, commands, send)
         if self.player == 'dxl':
             self.device.set_joint_torque(ids, commands)
 
     def set_all_goal_effort(self, commands, send=True):
         if self.player == 'vrep':
-            self.device.set_all_joint_effort(commands, send)
+            self.device.set_all_goal_effort(commands, send)
         elif self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 

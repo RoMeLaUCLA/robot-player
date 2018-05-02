@@ -225,8 +225,7 @@ class VrepInterface(object):
         vrep.simxSynchronousTrigger(self._sim_Client_ID)
         vrep.simxGetPingTime(self._sim_Client_ID)
 
-    # TODO: refactor
-    def set_joint_effort(self, ids, commands, send=True):
+    def set_goal_effort(self, ids, commands, send=True):
         for i, c in zip(ids, commands):
             # set joint speed
             j = self.joint[i]
@@ -315,9 +314,9 @@ class VrepInterface(object):
         # commands must be for joints ordered from least to greatest
         return self.get_joint_velocity(self.motor_id)
 
-    def set_all_joint_effort(self, commands, send=True):
+    def set_all_goal_effort(self, commands, send=True):
         # print("setting joint effort")
-        self.set_joint_effort(self.motor_id, commands, send)
+        self.set_goal_effort(self.motor_id, commands, send)
 
     def get_all_joint_effort(self):
 
