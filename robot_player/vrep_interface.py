@@ -263,8 +263,7 @@ class VrepInterface(object):
         self.set_goal_velocity(self.joint, commands, send_command)
 
     ## Effort (force/torque/PWM/current) ##
-    # TODO: refactor
-    def get_joint_effort(self, ids):
+    def get_present_effort(self, ids):
         effort_list = []
         for i in ids:
             j = self.joint[i]
@@ -274,16 +273,14 @@ class VrepInterface(object):
             effort_list.append(effort)
         return effort_list
 
-    # TODO: refactor
-    def get_all_joint_effort(self):
-
-        return self.get_joint_effort(self.joint)
+    def get_all_present_effort(self):
+        return self.get_present_effort(self.joint)
 
     def set_goal_effort(self, ids, commands, send=True):
         for i, c in zip(ids, commands):
             # set joint speed
             j = self.joint[i]
-            joint_effort = self.get_joint_effort([i])[0]  # get the value in the list
+            joint_effort = self.get_present_effort([i])[0]  # get the value in the list
 
             # if either the sign of the joint effort or the direction of the command change,
             # flip the sign of the target velocity
