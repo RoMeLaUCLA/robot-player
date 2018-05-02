@@ -89,7 +89,7 @@ class MotionManager(object):
         return vi
 
     ## Position ##
-    def get_current_position(self, ids):
+    def get_present_position(self, ids):
         # gets current position of specific joint
         # ids is a list of ids
         if self.player == 'vrep':
@@ -97,7 +97,7 @@ class MotionManager(object):
         if self.player == 'dxl':
             return self.device.get_current_position(ids)
 
-    def get_all_current_position(self):
+    def get_all_present_position(self):
         # gets current position of robot
         return self.device.get_all_current_position()
 
@@ -115,7 +115,6 @@ class MotionManager(object):
         if self.player == 'dxl':
             self.device.set_command_position(ids, commands)
 
-    # TODO: refactor
     def set_all_goal_position(self, command, send=False):
         # set command position for using positional arguments
         # send is whether to also trigger a timestep
@@ -319,15 +318,15 @@ def player_arg_parser(filename):
 #         MM.initialize()
 #         MM.set_all_goal_position([0, 0, 0, 0, 0, 0, 0])
 #         for i in xrange(100):
-#             print(MM.get_all_current_position())
+#             print(MM.get_all_present_position())
 #             MM.wait(dt)
 #
 #         MM.set_all_goal_position([np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, ])
 #         for i in range(100):
-#             print(MM.get_all_current_position())
+#             print(MM.get_all_present_position())
 #             MM.wait(dt)
 #
 #         MM.set_all_goal_position([0, 0, 0, 0, 0, 0, 0])
 #         for i in range(100):
-#             print(MM.get_all_current_position())
+#             print(MM.get_all_present_position())
 #             MM.wait(dt)

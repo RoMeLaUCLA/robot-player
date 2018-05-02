@@ -8,20 +8,20 @@ dt = .01
 with MotionManager(motor_id, dt, VrepOptions(joint_prefix="joint")) as mm:
 
     for i in range(100):
-        assert(mm.get_current_position([1,2]) == mm.get_all_current_position())
+        assert(mm.get_present_position([1, 2]) == mm.get_all_present_position())
         # send command to just one motor
         mm.set_goal_position([1], [1])
         mm.set_goal_position([2], [1])
         mm.advance_timestep()
     # check that motors got to right place
-    pos = mm.get_all_current_position()
+    pos = mm.get_all_present_position()
     assert(np.allclose(pos,[1,1]))
 
     for i in range(100):
         mm.set_all_goal_position([-1, -2])
         mm.advance_timestep()
     # check that motors got to right place
-    pos = mm.get_all_current_position()
+    pos = mm.get_all_present_position()
     assert(np.allclose(pos,[-1,-2]))
 
     # joint velocity

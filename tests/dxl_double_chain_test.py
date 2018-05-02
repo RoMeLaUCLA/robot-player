@@ -22,12 +22,12 @@ def test_set_command_position():
         for pl in position_list:
             mm.set_goal_position([1, 2, 3, 4], pl)
             mm.wait(2.5)
-            print(mm.get_all_current_position())
+            print(mm.get_all_present_position())
 
-            get_curr_pos = mm.get_current_position([1, 2]) + mm.get_current_position([3, 4])
-            get_all_curr_pos = mm.get_all_current_position()
+            get_curr_pos = mm.get_present_position([1, 2]) + mm.get_present_position([3, 4])
+            get_all_curr_pos = mm.get_all_present_position()
             assert(np.allclose(get_curr_pos, get_all_curr_pos, atol=.05))
-            assert (np.allclose(mm.get_all_current_position(), pl, atol=.05))
+            assert (np.allclose(mm.get_all_present_position(), pl, atol=.05))
 
 def test_set_all_command_position():
     with MotionManager(ids, dt=.005, options=dopts) as mm:
@@ -36,12 +36,12 @@ def test_set_all_command_position():
         for pl in position_list:
             mm.set_all_goal_position(pl)
             mm.wait(2.5)
-            print(mm.get_all_current_position())
+            print(mm.get_all_present_position())
 
-            get_curr_pos = mm.get_current_position([1, 2]) + mm.get_current_position([3, 4])
-            get_all_curr_pos = mm.get_all_current_position()
+            get_curr_pos = mm.get_present_position([1, 2]) + mm.get_present_position([3, 4])
+            get_all_curr_pos = mm.get_all_present_position()
             assert (np.allclose(get_curr_pos, get_all_curr_pos, atol=.05))
-            assert (np.allclose(mm.get_all_current_position(), pl, atol=.05))
+            assert (np.allclose(mm.get_all_present_position(), pl, atol=.05))
 
 if __name__ == '__main__':
     test_set_all_command_position()
