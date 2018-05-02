@@ -205,15 +205,15 @@ class VrepInterface(object):
         return joint_dict
 
     ## Position ##
-    def get_current_position(self, ids):
+    def get_present_position(self, ids):
         joint_angles = [vrep.simxGetJointPosition(self._sim_Client_ID, self.joint[i]['sim_handle'],
                                                   vrep.simx_opmode_blocking)[1] for i in ids]
         return joint_angles
 
-    def get_all_current_position(self):
+    def get_all_present_position(self):
         # use the built in joint data structure to read all motor positions
         # commands must be for joints ordered from least to greatest
-        return self.get_current_position(self.motor_id)
+        return self.get_present_position(self.motor_id)
 
     def set_goal_position(self, ids, commands, send=False):
         for i, c in zip(ids, commands):
@@ -228,8 +228,7 @@ class VrepInterface(object):
             vrep.simxSetJointPosition(self._sim_Client_ID, j['sim_handle'], c,
                                       vrep.simx_opmode_oneshot)
 
-    # TODO: refactor
-    def set_all_command_position(self, commands, send_command=True):
+    def set_all_goal_position(self, commands, send_command=True):
         # use the built in joint data structure to write commands to all joints.
         # commands must be for joints ordered from least to greatest ie. (1,2,3 ... n)
         self.set_goal_position(self.motor_id, commands, send_command)

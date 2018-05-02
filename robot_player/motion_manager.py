@@ -93,13 +93,13 @@ class MotionManager(object):
         # gets current position of specific joint
         # ids is a list of ids
         if self.player == 'vrep':
-            return self.device.get_current_position(ids)
+            return self.device.get_present_position(ids)
         if self.player == 'dxl':
             return self.device.get_current_position(ids)
 
     def get_all_present_position(self):
         # gets current position of robot
-        return self.device.get_all_current_position()
+        return self.device.get_all_present_position()
 
     def set_goal_position(self, ids, commands, send=False):
         # ids is a list of the ids that you want to command
@@ -119,7 +119,7 @@ class MotionManager(object):
         # set command position for using positional arguments
         # send is whether to also trigger a timestep
         if self.player == 'vrep':
-            return self.device.set_all_command_position(command, send)
+            return self.device.set_all_goal_position(command, send)
         if self.player == 'dxl':
             self.device.set_all_command_position(command)
 
