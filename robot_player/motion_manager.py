@@ -128,7 +128,7 @@ class MotionManager(object):
         if self.player == 'vrep':
             return self.device.get_present_velocity(ids)
         if self.player == 'dxl':
-            return self.device.get_current_velocity(ids)
+            return self.device.get_present_velocity(ids)
 
     def get_all_present_velocity(self):
         if self.player == 'vrep':
@@ -148,7 +148,7 @@ class MotionManager(object):
         if self.player == 'vrep':
             self.device.set_goal_velocity(ids, commands, send)
         if self.player == 'dxl':
-            self.device.set_joint_velocity(ids, commands)
+            self.device.set_goal_velocity(ids, commands)
 
     def set_all_goal_velocity(self, commands, send=True):
         if self.player == 'vrep':
