@@ -420,17 +420,17 @@ class DxlInterface(object):
             self._sync_write(d, 'GOAL_VELOCITY', 4, id_list, commands)  # TODO: check parameter_data_length of GOAL_VELOCITY
             # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
 
-    def get_current_torque(self, ids):
+    def get_present_effort(self, ids):
         torque_data = []
         for d in self.device:
             id_list = self.filter_ids(ids, d)
-            torque_data.append(self._sync_read(d, 'PRESENT_CURRENT', 4, id_list))  # TODO: check parameter_data_length of PRESSENT_CURRENT
+            torque_data.append(self._sync_read(d, 'PRESENT_EFFORT', 4, id_list))  # TODO: check parameter_data_length of PRESSENT_CURRENT
             # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
 
-    def set_joint_torque(self, ids, commands):
+    def set_goal_effort(self, ids, commands):
         for d in self.device:
             id_list, command_list = self.filter_ids_and_commands(ids, commands, d)
-            self._sync_write(d, 'GOAL_TORQUE', 4, id_list, commands)  # TODO: check parameter_data_length of GOAL_TORQUE
+            self._sync_write(d, 'GOAL_EFFORT', 4, id_list, commands)  # TODO: check parameter_data_length of GOAL_TORQUE
             # TODO: parameter may be different for different motors. only listed for DXLPRO, and I think it's called GOAL_CURRENT for MX106
 
     def filter_ids(self, ids, device):

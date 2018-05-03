@@ -161,7 +161,7 @@ class MotionManager(object):
         if self.player == 'vrep':
             return self.device.get_present_effort(ids)
         elif self.player == 'dxl':
-            self.device.get_current_torque(ids)
+            self.device.get_present_effort(ids)
 
     def get_all_present_effort(self):
         if self.player == 'vrep':
@@ -179,7 +179,7 @@ class MotionManager(object):
         if self.player == 'vrep':
             self.device.set_goal_effort(ids, commands, send)
         if self.player == 'dxl':
-            self.device.set_joint_torque(ids, commands)
+            self.device.set_goal_effort(ids, commands)
 
     def set_all_goal_effort(self, commands, send=True):
         if self.player == 'vrep':
