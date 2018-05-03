@@ -113,7 +113,7 @@ class MotionManager(object):
         if self.player == 'vrep':
             self.device.set_goal_position(ids, commands, send)
         if self.player == 'dxl':
-            self.device.set_command_position(ids, commands)
+            self.device.set_goal_position(ids, commands)
 
     def set_all_goal_position(self, command, send=False):
         # set command position for using positional arguments
@@ -121,7 +121,7 @@ class MotionManager(object):
         if self.player == 'vrep':
             return self.device.set_all_goal_position(command, send)
         if self.player == 'dxl':
-            self.device.set_all_command_position(command)
+            self.device.set_all_goal_position(command)
 
     ## Velocity ##
     def get_present_velocity(self, ids):
