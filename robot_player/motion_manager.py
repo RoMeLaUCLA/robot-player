@@ -95,7 +95,7 @@ class MotionManager(object):
         if self.player == 'vrep':
             return self.device.get_present_position(ids)
         if self.player == 'dxl':
-            return self.device.get_current_position(ids)
+            return self.device.get_present_position(ids)
 
     def get_all_present_position(self):
         # gets current position of robot

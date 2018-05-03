@@ -373,7 +373,7 @@ class DxlInterface(object):
                 data_list.append(data)
         return data_list
 
-    def get_current_position(self, ids):
+    def get_present_position(self, ids):
         pos_data = []
         for d in self.device:
             # filter out ids that are on this device
@@ -386,7 +386,7 @@ class DxlInterface(object):
 
         return pos_data
 
-    def get_all_current_position(self):
+    def get_all_present_position(self):
         pos_data = []
         for d in self.device:
             data_list = self._sync_read(d, 'PRESENT_POSITION', 4, d.motor_id)
