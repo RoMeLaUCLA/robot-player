@@ -47,10 +47,15 @@ class MotionManager(object):
         if self.player == "vrep":
             self.sim = True
             self.device = self.vrep_init(options)
+            self.imu_device = self.device # read sensors from VREP
+            self.ft_device = self.device
+            self.ft_sensors = options.ft_sensor_names
 
         elif self.player == 'dxl':
             self.dxl = True
             self.device = self.dxl_init(options)
+            self.imu_device = None # TODO: add IMU interface when ready
+            self.ft_device = None # TODO: add F/T sensor interface when ready
 
 
     def __enter__(self):
@@ -217,6 +222,52 @@ class MotionManager(object):
         # if isinstance(self.device, DxlInterface):
         #     # timesteps to wait, rounded down to the nearest integer
         #     self.device.wait(dt)
+
+    def read_gyro(self, **kwargs):
+        """
+        get euler angles of IMU from imu device (roll-pitch-yaw)
+        :param kwargs: initialize=True/False
+        :return: roll pitch yaw angles TODO: quaternions???
+        """
+        if isinstance(self.imu_device, VrepInterface):
+            return self.imu_device.read_gyro(**kwargs)
+        else:
+            print("WARNING! Non VREP interfaces aren't supported yet!")
+
+
+    def read_accelerometer(self, **kwargs):
+        """
+        get acceleration of IMU from imu device
+        :param kwargs: initialize=True/False
+        :return: cdd (xdd,ydd,zdd)
+        """
+        if isinstance(self.imu_device, VrepInterface):
+            return self.imu_device.read_accelerometer(**kwargs)
+        else:
+            print("WARNING! Non VREP interfaces aren't supported yet!")
+
+    def read_imu(self, **kwargs):
+        if isinstance(self.imu_device, VrepInterface):
+            rpy = self.imu_device.read_gyro(**kwargs)
+            cdd = self.imu_device.read_accelerometer()
+            return rpy, cdd
+
+    def read_ft_sensor(self, sensor_id, **kwargs):
+        """
+
+        :param sensor_id: name of the sensor that you gave to one of the Options classes.
+        eg: 'Force_sensor', 'Force_sensor1' etc.
+        :param kwargs:
+        :return:
+        """
+        if isinstance(self.ft_device, VrepInterface):
+            if 'initialize' in kwargs:
+                initialize= kwargs['initialize']
+            else:
+                initialize = False
+            out = []
+            force, torque = self.ft_device.read_ft_sensor(sensor_id, initialize=initialize)
+        return force, torque
 
 
 def to_player_angle_offset(angles, player_offset):

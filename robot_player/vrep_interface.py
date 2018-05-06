@@ -36,8 +36,6 @@ class VrepInterface(object):
     <VREP root>/programming/remoteApiBindings/lib/lib/64Bit and <VREP root>/programming/remoteApiBindings/python/python
 
 
-
-
     """
     # TODO: make "set" commands not trigger the next simulation step automatically
     # TODO: make joint data structure a dictionary and not a list
@@ -67,12 +65,13 @@ class VrepInterface(object):
         # sensor
         self.gyroscope = gyroscope
         self.accelerometer = accelerometer
-        self.ft_handles = []
+        self.ft_sensors = {}
 
 
         if ft_sensor_names != None:
             for ft in ft_sensor_names:
-                self.ft_handles.append(self.get_object_handles(ft))
+                ft_handle = self.get_object_handles(ft)
+                self.ft_sensors[ft] = ft_handle
 
         if self._sim_Client_ID != -1:
             print("Connected to V-REP remote API server.")
@@ -209,15 +208,26 @@ class VrepInterface(object):
 
         return joint_dict
 
-    def get_current_position(self, ids):
+    def get_current_position(self, ids, initialize=False):
+        # if initialize:
+        #     opmode = vrep.simx_opmode_streaming
+        # else:
+        #     opmode = vrep.simx_opmode_buffer
         joint_angles = [vrep.simxGetJointPosition(self._sim_Client_ID, self.joint[i]['sim_handle'],
-                                                  vrep.simx_opmode_blocking)[1] for i in ids]
+                                                  operationMode=vrep.simx_opmode_blocking)[1] for i in ids]
         return joint_angles
 
-    def set_command_position(self, ids, commands, send=False):
+    def set_command_position(self, ids, commands, send=False, initialize=False):
+        # if initialize:
+        #     opmode = vrep.simx_opmode_streaming
+        # else:
+        #     opmode = vrep.simx_opmode_buffer
+        # for i,c in zip(ids,commands):
+        #     vrep.simxSetJointTargetPosition(self._sim_Client_ID, self.joint[i]['sim_handle'], c,
+        #                                     operationMode=opmode)
         for i,c in zip(ids,commands):
             vrep.simxSetJointTargetPosition(self._sim_Client_ID, self.joint[i]['sim_handle'], c,
-                                            vrep.simx_opmode_oneshot)
+                                            operationMode=vrep.simx_opmode_blocking)
         if send:
             self.send_command()
 
@@ -378,7 +388,7 @@ class VrepInterface(object):
         else:
             opmode = vrep.simx_opmode_buffer
         returnCode, state, forceVector, torqueVector = vrep.simxReadForceSensor(self._sim_Client_ID,
-                                                                       self.ft_handles[sensor_id],
+                                                                       self.ft_sensors[sensor_id],
                                                                        opmode)
         # if returnCode != vrep.simx_return_ok:
         #     raise Exception("ERROR in {}: returnCode = {}".format(__name__, returnCode))
