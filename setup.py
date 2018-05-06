@@ -5,5 +5,5 @@ setup(
     author='Daniel Sun',
     author_email='danielsun@ucla.edu',
     version='0.1.0',
-    packages = find_packages(),
+    packages=find_packages(),
 )
