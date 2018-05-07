@@ -28,7 +28,7 @@ class motion_manager_test(unittest.TestCase):
         with MotionManager(motor_ids=ids, dt=.016, options=vopts) as mm:
             mm.initialize()
 
-            command_list = [mm.set_command_position, mm.set_joint_velocity, mm.set_joint_effort]
+            command_list = [mm.set_goal_position, mm.set_goal_velocity, mm.set_goal_effort]
             for command in command_list:
                 self.assertRaises( ValueError, command, ids=[1,3],commands=[1,1,1]) # ids and commands are not the same length.
 

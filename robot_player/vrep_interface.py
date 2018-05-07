@@ -119,13 +119,14 @@ class VrepInterface(object):
         return vrep.simxSetObjectOrientation(
             self._sim_Client_ID, object_handle, base_handle, orientation, vrep.simx_opmode_oneshot)
 
-    def get_object_handles(self,object_name):
+    def get_object_handles(self, object_name):
         return vrep.simxGetObjectHandle(self._sim_Client_ID, object_name, vrep.simx_opmode_blocking)[1]
 
     """
     Joint Communication functions
 
     These functions use the convention that the joint parameter is a list of dictionaries.
+    these commands should have identical syntax between Dynamixel and VREP.
 
     """
 
@@ -204,26 +205,21 @@ class VrepInterface(object):
 
         return joint_dict
 
-    def get_current_position(self, ids, initialize=False):
-        # if initialize:
-        #     opmode = vrep.simx_opmode_streaming
-        # else:
-        #     opmode = vrep.simx_opmode_buffer
+    ## Position ##
+    def get_present_position(self, ids):
         joint_angles = [vrep.simxGetJointPosition(self._sim_Client_ID, self.joint[i]['sim_handle'],
-                                                  operationMode=vrep.simx_opmode_blocking)[1] for i in ids]
+                                                  vrep.simx_opmode_blocking)[1] for i in ids]
         return joint_angles
 
-    def set_command_position(self, ids, commands, send=False, initialize=False):
-        # if initialize:
-        #     opmode = vrep.simx_opmode_streaming
-        # else:
-        #     opmode = vrep.simx_opmode_buffer
-        # for i,c in zip(ids,commands):
-        #     vrep.simxSetJointTargetPosition(self._sim_Client_ID, self.joint[i]['sim_handle'], c,
-        #                                     operationMode=opmode)
+    def get_all_present_position(self):
+        # use the built in joint data structure to read all motor positions
+        # commands must be for joints ordered from least to greatest
+        return self.get_present_position(self.motor_id)
+
+    def set_goal_position(self, ids, commands, send=False):
         for i, c in zip(ids, commands):
             vrep.simxSetJointTargetPosition(self._sim_Client_ID, self.joint[i]['sim_handle'], c,
-                                            operationMode=vrep.simx_opmode_oneshot)
+                                            vrep.simx_opmode_oneshot)
         if send:
             self.send_command()
 
@@ -233,15 +229,59 @@ class VrepInterface(object):
             vrep.simxSetJointPosition(self._sim_Client_ID, j['sim_handle'], c,
                                       vrep.simx_opmode_oneshot)
 
-    def send_command(self):
-        vrep.simxSynchronousTrigger(self._sim_Client_ID)
-        vrep.simxGetPingTime(self._sim_Client_ID)
+    def set_all_goal_position(self, commands, send_command=True):
+        # use the built in joint data structure to write commands to all joints.
+        # commands must be for joints ordered from least to greatest ie. (1,2,3 ... n)
+        self.set_goal_position(self.motor_id, commands, send_command)
 
-    def set_joint_effort(self, ids, commands, send=True):
+    ## Velocity ##
+    def get_present_velocity(self, ids):
+        joint_velocity = []
+        for i in ids:
+            j = self.joint[i]
+            _, vel = vrep.simxGetObjectFloatParameter(self._sim_Client_ID, j['sim_handle'], vrep.sim_jointfloatparam_velocity, vrep.simx_opmode_blocking)
+            if _ != 0:
+                raise Exception("VREP Error {}".format(_))
+            else:
+                joint_velocity.append(vel)
+        return joint_velocity
+
+    def get_all_present_velocity(self):
+        # use the built in joint data structure to read all motor velocities
+        # commands must be for joints ordered from least to greatest
+        return self.get_present_velocity(self.motor_id)
+
+    def set_goal_velocity(self, ids, commands, send=True):
+        for i, c in zip(ids, commands):
+            j = self.joint[i]
+            vrep.simxSetJointTargetVelocity(self._sim_Client_ID, j['sim_handle'], c, vrep.simx_opmode_blocking)
+        if send:
+            self.send_command()
+
+    def set_all_goal_velocity(self, commands, send_command=True):
+        # use the built in joint data structure to write commands to all joints.
+        # commands must be for joints ordered from least to greatest ie. (1,2,3 ... n)
+        self.set_goal_velocity(self.joint, commands, send_command)
+
+    ## Effort (force/torque/PWM/current) ##
+    def get_present_effort(self, ids):
+        effort_list = []
+        for i in ids:
+            j = self.joint[i]
+            _, effort = vrep.simxGetJointForce(self._sim_Client_ID, j['sim_handle'], vrep.simx_opmode_blocking)
+            if _ != 0:
+                raise Exception("Return code non-zero: {}".format(_))
+            effort_list.append(effort)
+        return effort_list
+
+    def get_all_present_effort(self):
+        return self.get_present_effort(self.joint)
+
+    def set_goal_effort(self, ids, commands, send=True):
         for i, c in zip(ids, commands):
             # set joint speed
             j = self.joint[i]
-            joint_effort = self.get_joint_effort([i], send)[0] # get the value in the list
+            joint_effort = self.get_present_effort([i])[0]  # get the value in the list
 
             # if either the sign of the joint effort or the direction of the command change,
             # flip the sign of the target velocity
@@ -253,41 +293,11 @@ class VrepInterface(object):
         if send:
             self.send_command()
 
-    def get_joint_effort(self, ids, send=True):
-        effort_list = []
-        for i in ids:
-            j = self.joint[i]
-            _, effort = vrep.simxGetJointForce(self._sim_Client_ID, j['sim_handle'], vrep.simx_opmode_blocking)
-            if _ != 0:
-                raise Exception("Return code non-zero: {}".format(_))
-            effort_list.append(effort)
-        return effort_list
+    def set_all_goal_effort(self, commands, send=True):
+        # print("setting joint effort")
+        self.set_goal_effort(self.motor_id, commands, send)
 
-    def get_joint_velocity(self, ids):
-        joint_velocity = []
-        for i in ids:
-            j = self.joint[i]
-            _, vel = vrep.simxGetObjectFloatParameter(self._sim_Client_ID, j['sim_handle'], vrep.sim_jointfloatparam_velocity, vrep.simx_opmode_blocking)
-            if _ != 0:
-                raise Exception("VREP Error {}".format(_))
-            else:
-                joint_velocity.append(vel)
-        return joint_velocity
-
-    def set_joint_velocity(self, ids, commands, send=True):
-        for i, c in zip(ids, commands):
-            j = self.joint[i]
-            vrep.simxSetJointTargetVelocity(self._sim_Client_ID, j['sim_handle'], c, vrep.simx_opmode_blocking)
-        if send:
-            self.send_command()
-
-    def set_joint_ctrl_loop(self, ids, commands):
-        for i, c in zip(ids, commands):
-
-            j = self.joint[i]
-            # convert True/False to ints
-            vrep.simxSetObjectIntParameter(self._sim_Client_ID, j['sim_handle'], vrep.sim_jointintparam_ctrl_enabled, int(c), vrep.simx_opmode_blocking)
-
+    ## Control Loop ##
     def get_joint_ctrl_loop(self, ids):
         enable_list = []
         for i in ids:
@@ -301,35 +311,16 @@ class VrepInterface(object):
 
         return enable_list
 
-    # these commands should have identical syntax between Dynamixel and VREP.
+    def set_joint_ctrl_loop(self, ids, commands):
+        for i, c in zip(ids, commands):
 
-    def set_all_command_position(self, commands, send_command=True):
-        # use the built in joint data structure to write commands to all joints.
-        # commands must be for joints ordered from least to greatest ie. (1,2,3 ... n)
-        self.set_command_position(self.motor_id, commands, send_command)
+            j = self.joint[i]
+            # convert True/False to ints
+            vrep.simxSetObjectIntParameter(self._sim_Client_ID, j['sim_handle'], vrep.sim_jointintparam_ctrl_enabled, int(c), vrep.simx_opmode_blocking)
 
-    def get_all_current_position(self):
-        # use the built in joint data structure to read all motor positions
-        # commands must be for joints ordered from least to greatest
-        return self.get_current_position(self.motor_id)
-
-    def set_all_joint_velocity(self, commands, send_command=True):
-        # use the built in joint data structure to write commands to all joints.
-        # commands must be for joints ordered from least to greatest ie. (1,2,3 ... n)
-        self.set_joint_velocity(self.joint, commands, send_command)
-
-    def get_all_joint_velocity(self):
-        # use the built in joint data structure to read all motor velocities
-        # commands must be for joints ordered from least to greatest
-        return self.get_joint_velocity(self.motor_id)
-
-    def set_all_joint_effort(self, commands, send=True):
-        # print("setting joint effort")
-        self.set_joint_effort(self.motor_id, commands, send)
-
-    def get_all_joint_effort(self, send=True):
-
-        return self.get_joint_effort(self.joint)
+    def send_command(self):
+        vrep.simxSynchronousTrigger(self._sim_Client_ID)
+        vrep.simxGetPingTime(self._sim_Client_ID)
 
     """
     Sensor Communication functions
@@ -381,11 +372,11 @@ class VrepInterface(object):
         else:
             opmode = vrep.simx_opmode_buffer
         returnCode, state, forceVector, torqueVector = vrep.simxReadForceSensor(self._sim_Client_ID,
-                                                                                self.ft_sensors[sensor_id],
+                                                                                self.ft_handles[sensor_id],
                                                                                 opmode)
         # if returnCode != vrep.simx_return_ok:
         #     raise Exception("ERROR in {}: returnCode = {}".format(__name__, returnCode))
-        return forceVector,torqueVector
+        return forceVector, torqueVector
 
 def sign(x):
     if x > 0:

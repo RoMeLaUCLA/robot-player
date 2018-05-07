@@ -10,12 +10,25 @@ __status__ = "Prototype"
 
 import ctypes
 from .dxl import dynamixel_functions as dynamixel
-from .dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28
+from .dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28, MX28_P1
 from collections import OrderedDict
 
-# data Byte Length
-LEN_GOAL_POSITION = 4
-LEN_PRESENT_POSITION = 4
+# conversion table. pass in the motor model number, get the object
+NUM2MODEL = {MX106.MX_106: MX106,
+             MX106_P1.MX_106_P1: MX106_P1,
+             DXLPRO.H54_200_S500_R: DXLPRO,
+             DXLPRO.H54_200_B500_R: DXLPRO,
+             DXLPRO.H54_100_S500_R: DXLPRO,
+             DXLPRO.H42_20_S300_R: DXLPRO,
+             DXLPRO.M54_60_S250_R: DXLPRO,
+             DXLPRO.M54_40_S250_R: DXLPRO,
+             DXLPRO.M42_10_S260_R: DXLPRO,
+             DXLPRO.L54_50_S500_R: DXLPRO,
+             DXLPRO.L54_30_S500_R: DXLPRO,
+             DXLPRO.L54_50_S290_R: DXLPRO,
+             DXLPRO.L54_30_S400_R: DXLPRO,
+             MX28.MX_28: MX28,
+             MX28_P1.MX_28_P1: MX28_P1}
 
 # DEVICENAME = "/dev/ttyUSB0".encode('utf-8')  # Check which port is being used on your controller
 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
@@ -100,7 +113,7 @@ class DxlInterface(object):
 
     eg. device1 = id:[1,2,3,4,5]
         device2 = id:[6,7,8,9,10]
-    DI.set_all_command_position([x,x,x,x,x,x,x,x,x,x])
+    DI.set_all_goal_position([x,x,x,x,x,x,x,x,x,x])
     corresponds to the order 1,2,3,4,5,6,7,8,9,10
 
     instead of writing new functions for each of the values, access the values using the
@@ -173,84 +186,56 @@ class DxlInterface(object):
 
                 print("[ID:%03d] ping Succeeded. Dynamixel model number : %d" % (m_id, motor_model_no))
 
-                if motor_model_no == MX106.MX_106:
-                    ctrl_table = MX106
-                    resolution = MX106.resolution
-
-                elif motor_model_no == MX106_P1.MX_106_P1:
-                    ctrl_table = MX106_P1
-                    resolution = MX106_P1.resolution
-
-                elif motor_model_no in [DXLPRO.H54_200_S500_R,
-                                        DXLPRO.H54_200_B500_R,
-                                        DXLPRO.H54_100_S500_R,
-                                        DXLPRO.H42_20_S300_R,
-                                        DXLPRO.M54_60_S250_R,
-                                        DXLPRO.M54_40_S250_R,
-                                        DXLPRO.M42_10_S260_R,
-                                        DXLPRO.L54_50_S500_R,
-                                        DXLPRO.L54_30_S500_R,
-                                        DXLPRO.L54_50_S290_R,
-                                        DXLPRO.L54_30_S400_R,
-                                        ]:
-                    print(DXLPRO)
-
-                    ctrl_table = DXLPRO
-                    resolution = DXLPRO.resolution[motor_model_no]
-
-                elif motor_model_no == MX28.MX_28:
-                    ctrl_table = MX28
-                    resolution = MX28.resolution
-
-                else:
-                    print("motor_model not found!")
-                    quit()
+                try:
+                    ctrl_table = NUM2MODEL[motor_model_no]
+                    resolution = ctrl_table.resolution
+                except KeyError:
+                    raise TypeError('Unexpected motor type. Dynamixel model number: {}'.format(motor_model_no))
 
                 d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution}
                 print("motor_model_no:" + str(motor_model_no))
 
     def setup_sync_functions(self):
-        self.setup_group_sync_write('GOAL_POSITION', 4)
-        self.setup_group_sync_read('PRESENT_POSITION', 4)
-        self.setup_group_sync_write('GOAL_VELOCITY', 4)
-        self.setup_group_sync_read('PRESENT_VELOCITY', 4)
-        # DXL PROs don't have GOAL CURRENT commands, left out for now.
-        # self.setup_group_sync_write('GOAL_CURRENT', 4)
-        # self.setup_group_sync_read('PRESENT_CURRENT', 4)
+        self.setup_group_sync_write('GOAL_POSITION')
+        self.setup_group_sync_read('PRESENT_POSITION')
+        self.setup_group_sync_write('GOAL_VELOCITY')
+        self.setup_group_sync_read('PRESENT_VELOCITY')
+        # self.setup_group_sync_write('GOAL_EFFORT')
+        # self.setup_group_sync_read('PRESENT_EFFORT')
         for d in self.device:
             print("gw_GOAL_POSITION {}".format(d.gw_GOAL_POSITION))
             print("gr_PRESENT_POSITION {}".format(d.gr_PRESENT_POSITION))
 
-    def setup_group_sync_write(self, parameter, parameter_data_len):
+    def setup_group_sync_write(self, parameter):
         """
         Set up a group sync write parameter for later use with each dxl port
         Assign the group write ids to a DxlPort for later reference.
         :param parameter: parameter to write to, as a string
-        :param parameter_data_len: length of data in ctrl table
         :return:
         """
-
         for d in self.device:
+            parameter_data_len = get_parameter_data_len(d, parameter)  # TODO: returns 4 if parameter DNE
             print("d.port_num {}".format(d.port_num))
             gw_id = dynamixel.groupSyncWrite(d.port_num,
                                              d.protocol_version,
-                                             getattr(d.ctrl_table, parameter),
+                                             getattr(d.ctrl_table, parameter),  # TODO: fails if parameter DNE
                                              parameter_data_len
                                              )
 
             # set device to have .gw_<name of parameter> attached to it for further reference
             setattr(d, "gw_" + parameter, gw_id)
 
-    def setup_group_sync_read(self, parameter, parameter_data_len):
+    def setup_group_sync_read(self, parameter):
         """
         Set up a group sync read parameter for later use with each dxl port
         Assign the group read ids to a DxlPort data member for later reference.
         :param parameter: parameter to read from, as a string
-        :param parameter_data_len: length of data in ctrl table
         :return:
         """
 
         for d in self.device:
+            parameter_data_len = get_parameter_data_len(d, parameter)
+
             # Protocol 2.0 has sync read
             if d.protocol_version == 2:
                 gr_id = dynamixel.groupSyncRead(d.port_num,
@@ -295,17 +280,6 @@ class DxlInterface(object):
                         print(dynamixel.getTxRxResult(d.protocol_version, dxl_comm_result))
                     elif dxl_error != 0:
                         print(dynamixel.getRxPacketError(d.protocol_version, dxl_error))
-
-    def set_command_position(self, ids, angles):
-        for d in self.device:
-            id_list, angle_list = self.filter_ids_and_commands(ids, angles, d)
-            # convert radians to encoder counts
-            res_list = [d.motor[m_id]["resolution"] for m_id in id_list]
-            commands = [rad2pos(a, res) for a, res in zip(angle_list, res_list)]
-            self._sync_write(d, 'GOAL_POSITION', 4, id_list, commands)
-
-    def set_all_command_position(self, angles):
-        self.set_command_position(self.motor_id, angles)
 
     def _sync_write(self, device, parameter, parameter_data_length, ids, commands):
         """
@@ -399,7 +373,7 @@ class DxlInterface(object):
                 data_list.append(data)
         return data_list
 
-    def get_current_position(self, ids):
+    def get_present_position(self, ids):
         pos_data = []
         for d in self.device:
             # filter out ids that are on this device
@@ -412,7 +386,7 @@ class DxlInterface(object):
 
         return pos_data
 
-    def get_all_current_position(self):
+    def get_all_present_position(self):
         pos_data = []
         for d in self.device:
             data_list = self._sync_read(d, 'PRESENT_POSITION', 4, d.motor_id)
@@ -421,6 +395,43 @@ class DxlInterface(object):
                 pos_data.append(pos2rad(data, res))
 
         return pos_data
+
+    def set_goal_position(self, ids, angles):
+        for d in self.device:
+            id_list, angle_list = self.filter_ids_and_commands(ids, angles, d)
+            # convert radians to encoder counts
+            res_list = [d.motor[m_id]["resolution"] for m_id in id_list]
+            commands = [rad2pos(a, res) for a, res in zip(angle_list, res_list)]
+            self._sync_write(d, 'GOAL_POSITION', 4, id_list, commands)
+
+    def set_all_goal_position(self, angles):
+        self.set_goal_position(self.motor_id, angles)
+
+    def get_present_velocity(self, ids):
+        vel_data = []
+        for d in self.device:
+            id_list = self.filter_ids(ids, d)
+            vel_data.append(self._sync_read(d, 'PRESENT_VELOCITY', 4, id_list))  # TODO: check parameter_data_length of PRESENT_VELOCITY
+            # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
+
+    def set_goal_velocity(self, ids, commands):
+        for d in self.device:
+            id_list, command_list = self.filter_ids_and_commands(ids, commands, d)
+            self._sync_write(d, 'GOAL_VELOCITY', 4, id_list, commands)  # TODO: check parameter_data_length of GOAL_VELOCITY
+            # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
+
+    def get_present_effort(self, ids):
+        torque_data = []
+        for d in self.device:
+            id_list = self.filter_ids(ids, d)
+            torque_data.append(self._sync_read(d, 'PRESENT_EFFORT', 4, id_list))  # TODO: check parameter_data_length of PRESSENT_CURRENT
+            # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
+
+    def set_goal_effort(self, ids, commands):
+        for d in self.device:
+            id_list, command_list = self.filter_ids_and_commands(ids, commands, d)
+            self._sync_write(d, 'GOAL_EFFORT', 4, id_list, commands)  # TODO: check parameter_data_length of GOAL_TORQUE
+            # TODO: parameter may be different for different motors. only listed for DXLPRO, and I think it's called GOAL_CURRENT for MX106
 
     def filter_ids(self, ids, device):
         # filters out ids based on which ids are on the device
@@ -448,3 +459,27 @@ def rad2pos(rad, resolution):
 
 def pos2rad(pos, resolution):
     return pos * (2 * 3.1415926) / resolution
+
+def get_parameter_data_len(d, parameter):
+    """
+    checks the model of a passed device and fetches the data length of a passed parameter. assumes that all devices on
+    the same port are the same model.
+
+    :param d: device to check for
+    :param parameter: the parameter whose length is checked
+    :return: command length of the parameter
+    """
+    # enforce assumption that all motors on one port are the same model
+    motor_model_no = dynamixel.pingGetModelNum(d.port_num, d.protocol_version, d.motor_id[0])
+
+    try:  # to get motor model
+        motor = NUM2MODEL[motor_model_no]
+    except KeyError:
+        raise TypeError('Unexpected motor type. Dynamixel model number: {}'.format(motor_model_no))
+
+    try:  # to get command length
+        parameter_data_len = getattr(motor, 'LEN_{}'.format(parameter))
+    except AttributeError:
+        parameter_data_len = 4  # TODO: figure out best way to assume data lengh
+
+    return parameter_data_len

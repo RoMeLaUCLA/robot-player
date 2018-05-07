@@ -95,19 +95,19 @@ class MotionManager(object):
         return vi
 
     ## Position ##
-    def get_current_position(self, ids):
+    def get_present_position(self, ids):
         # gets current position of specific joint
         # ids is a list of ids
         if self.player == 'vrep':
-            return self.device.get_current_position(ids)
+            return self.device.get_present_position(ids)
         if self.player == 'dxl':
-            return self.device.get_current_position(ids)
+            return self.device.get_present_position(ids)
 
-    def get_all_current_position(self):
+    def get_all_present_position(self):
         # gets current position of robot
-        return self.device.get_all_current_position()
+        return self.device.get_all_present_position()
 
-    def set_command_position(self, ids, commands, send=False):
+    def set_goal_position(self, ids, commands, send=False):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
 
@@ -117,29 +117,32 @@ class MotionManager(object):
             raise ValueError('ERROR: ids and commands must be same length')
 
         if self.player == 'vrep':
-            self.device.set_command_position(ids, commands, send)
+            self.device.set_goal_position(ids, commands, send)
         if self.player == 'dxl':
-            self.device.set_command_position(ids, commands)
+            self.device.set_goal_position(ids, commands)
 
-    def set_all_command_position(self, command, send=False):
+    def set_all_goal_position(self, command, send=False):
         # set command position for using positional arguments
         # send is whether to also trigger a timestep
         if self.player == 'vrep':
-            return self.device.set_all_command_position(command, send)
+            return self.device.set_all_goal_position(command, send)
         if self.player == 'dxl':
-            self.device.set_all_command_position(command)
+            self.device.set_all_goal_position(command)
 
     ## Velocity ##
-    def get_joint_velocity(self, ids):
+    def get_present_velocity(self, ids):
         if self.player == 'vrep':
-            return self.device.get_joint_velocity(ids)
+            return self.device.get_present_velocity(ids)
+        if self.player == 'dxl':
+            return self.device.get_present_velocity(ids)
+
+    def get_all_present_velocity(self):
+        if self.player == 'vrep':
+            return self.device.get_all_present_velocity()
         if self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
-    def get_all_joint_velocity(self):
-        return self.device.get_all_joint_velocity()
-
-    def set_joint_velocity(self, ids, commands, send=True):
+    def set_goal_velocity(self, ids, commands, send=True):
         # ids is a list of the ids that you want to command
         # commands is a list of the values that you want to send to the actuators
 
@@ -149,46 +152,46 @@ class MotionManager(object):
             raise ValueError('ERROR: ids and commands must be same length')
 
         if self.player == 'vrep':
-            self.device.set_joint_velocity(ids, commands, send)
+            self.device.set_goal_velocity(ids, commands, send)
         if self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+            self.device.set_goal_velocity(ids, commands)
 
-    def set_all_joint_velocity(self, commands, send=True):
+    def set_all_goal_velocity(self, commands, send=True):
         if self.player == 'vrep':
-            self.device.set_all_joint_velocity(commands, send)
+            self.device.set_all_goal_velocity(commands, send)
         if self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
-    ## Effort (force/torque) ##
-    def set_joint_effort(self, ids, commands, send=True):
+    ## Effort (force/torque/PWM/current) ##
+    def get_present_effort(self, ids):
+        if self.player == 'vrep':
+            return self.device.get_present_effort(ids)
+        elif self.player == 'dxl':
+            self.device.get_present_effort(ids)
+
+    def get_all_present_effort(self):
+        if self.player == 'vrep':
+            return self.device.get_all_present_effort()
+        elif self.player == 'dxl':
+            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
+
+    def set_goal_effort(self, ids, commands, send=True):
 
         try:
-            assert(len(ids) == len(commands))
+            assert (len(ids) == len(commands))
         except AssertionError:
             raise ValueError('ERROR: ids and commands must be same length')
-        
+
         if self.player == 'vrep':
-            self.device.set_joint_effort(ids, commands, send)
+            self.device.set_goal_effort(ids, commands, send)
         if self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet") # TODO: fix this
+            self.device.set_goal_effort(ids, commands)
 
-    def set_all_joint_effort(self, commands, send=True):
+    def set_all_goal_effort(self, commands, send=True):
         if self.player == 'vrep':
-            self.device.set_all_joint_effort(commands, send)
+            self.device.set_all_goal_effort(commands, send)
         elif self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
-
-    def get_joint_effort(self, ids):
-        if self.player == 'vrep':
-            return self.device.get_joint_effort(ids)
-        elif self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
-
-    def get_all_joint_effort(self):
-        if self.player == 'vrep':
-            return self.device.get_all_joint_effort()
-        elif self.player == 'dxl':
-            raise Exception("this function hasn't been implemented for DXL yet")  # TODO: fix this
+            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     def wait(self, time_to_wait):
         # wait for a specified duration of time, in seconds. This command is blocking.
@@ -358,17 +361,17 @@ def player_arg_parser(filename):
 #
 #     with MotionManager(Devices) as MM:
 #         MM.initialize()
-#         MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
+#         MM.set_all_goal_position([0, 0, 0, 0, 0, 0, 0])
 #         for i in xrange(100):
-#             print(MM.get_all_current_position())
+#             print(MM.get_all_present_position())
 #             MM.wait(dt)
 #
-#         MM.set_all_command_position([np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, ])
+#         MM.set_all_goal_position([np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, ])
 #         for i in range(100):
-#             print(MM.get_all_current_position())
+#             print(MM.get_all_present_position())
 #             MM.wait(dt)
 #
-#         MM.set_all_command_position([0, 0, 0, 0, 0, 0, 0])
+#         MM.set_all_goal_position([0, 0, 0, 0, 0, 0, 0])
 #         for i in range(100):
-#             print(MM.get_all_current_position())
+#             print(MM.get_all_present_position())
 #             MM.wait(dt)

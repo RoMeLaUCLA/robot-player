@@ -1,6 +1,9 @@
 """
 Control Table
 =================
+Tables have been coppied from Robotis documentation, with the modification that
+PWM, torque, and current in names have all been replaced with "effort". Torque
+enable was left alone.
 """
 
 class Instruction:
@@ -168,19 +171,21 @@ class MX106:
 
     LEN_GOAL_POSITION = 4
     LEN_PRESENT_POSITION = 4
+    LEN_GOAL_VELOCITY = 4
+    LEN_PRESENT_VELOCITY = 4
 
     # =====================================================================
     # EEPROM
     # =====================================================================
     MODEL_NUMBER = 0
     MODEL_INFORMATION = 2
-    FIRMWARE_VERSION = 6
-    MOTOR_ID = 7
+    VERSION_OF_FIRMWARE = 6
+    ID = 7
     BAUD_RATE = 8
     RETURN_DELAY_TIME = 9
     DRIVE_MODE = 10
     OPERATING_MODE = 11
-    SECONDARY_ID = 12
+    SECONDARY_SHADOW_ID = 12
     PROTOCOL_VERSION = 13
     HOMING_OFFSET = 20
     MOVING_THRESHOLD = 24
@@ -237,67 +242,149 @@ class MX106_P1:
 
     LEN_GOAL_POSITION = 2
     LEN_PRESENT_POSITION = 2
+    LEN_PRESENT_SPEED = 2
+    LEN_GOAL_EFFORT = 2
 
     # =====================================================================
     # EEPROM
     # =====================================================================
-
-    MODEL_NUMBER = 0x00
-    FIRMWARE_VERSION = 0x02
-    MOTOR_ID = 0x03
-    BAUD_RATE = 0x04
-    RETURN_DELAY_TIME = 0x05
-    CW_ANGLE_LIMIT_L = 0x06
-    CW_ANGLE_LIMIT_H = 0x07
-    CCW_ANGLE_LIMIT_L = 0x08
-    CCW_ANGLE_LIMIT_H = 0x09
-    DXL_DRIVE_MODE = 0x0A
-    DXL_HIGH_LIMIT_TEMP = 0x0B
-    DXL_LOW_LIMIT_VOLTAGE = 0x0C
-    DXL_HIGH_LIMIT_VOLTAGE = 0x0D
-    DXL_MAX_TORQUE_L = 0x0E
-    DXL_MAX_TORQUE_H = 0x0F
-    DXL_STATUS_RETURN_LEVEL = 0x10
-    DXL_ALARM_LED = 0x11
-    DXL_ALARM_SHUTDOWN = 0x12
-    DXL_MULTI_TURN_OFFSET_L = 0x14
-    DXL_MULTI_TURN_OFFSET_H = 0x15
-    DXL_RESOLUTION_DIVIDER = 0x16
+    MODEL_NUMBER_L = 0
+    MODEL_NUMBER_H = 1
+    VERSION_OF_FIRMWARE = 2
+    ID = 3
+    BAUD_RATE = 4
+    RETURN_DELAY_TIME = 5
+    CW_ANGLE_LIMIT_L = 6
+    CW_ANGLE_LIMIT_H = 7
+    CCW_ANGLE_LIMIT_L = 8
+    CCW_ANGLE_LIMIT_H = 9
+    DRIVE_MODE = 10
+    THE_HIGHEST_LIMIT_TEMPERATURE = 11
+    THE_LOWEST_LIMIT_VOLTAGE = 12
+    THE_HIGHEST_LIMIT_VOLTAGE = 13
+    MAX_EFFORT_L = 14
+    MAX_EFFORT_H = 15
+    STATUS_RETURN_LEVEL = 16
+    ALARM_LED = 17
+    ALARM_SHUTDOWN = 18
+    MULTI_TURN_OFFSET_L = 20
+    MULTI_TURN_OFFSET_H = 21
+    RESOLUTION_DIVIDER = 22
 
     # =====================================================================
     # RAM
     # =====================================================================
-
-    TORQUE_ENABLE = 0x18
-    DXL_LED = 0x19
-    DXL_D_GAIN = 0x1A
-    DXL_I_GAIN = 0x1B
-    DXL_P_GAIN = 0x1C
-    GOAL_POSITION = 30
-    DXL_MOVING_SPEED_L = 32
-    DXL_MOVING_SPEED_H = 33
-    DXL_TORQUE_LIMIT_L = 34
-    DXL_TORQUE_LIMIT_H = 35
-    PRESENT_POSITION = 36
-    DXL_PRESENT_SPEED_L = 38
-    DXL_PRESENT_SPEED_H = 39
-    DXL_PRESENT_LOAD_L = 40
-    DXL_PRESENT_LOAD_H = 41
-    DXL_PRESENT_VOLTAGE = 42
-    DXL_PRESENT_TEMPERATURE = 43
-    DXL_REGISTERED = 44
-    DXL_MOVING = 46
-    DXL_LOCK = 47
-    DXL_PUNCH_L = 48
-    DXL_PUNCH_H = 49
-    DXL_CURRENT_L = 68
-    DXL_CURRENT_H = 69
-    DXL_TORQUE_CONTROL_MODE_ENABLE = 70
-    DXL_GOAL_TORQUE_L = 71
-    DXL_GOAL_TORQUE_H = 72
-    DXL_GOAL_ACCELERATION = 73
+    TORQUE_ENABLE = 24
+    LED = 25
+    D_GAIN = 26
+    I_GAIN = 27
+    P_GAIN = 28
+    GOAL_POSITION_L = 30
+    GOAL_POSITION_H = 31
+    MOVING_SPEED_L = 32
+    MOVING_SPEED_H = 33
+    EFFORT_LIMIT_L = 34
+    EFFORT_LIMIT_H = 35
+    PRESENT_POSITION_L = 36
+    PRESENT_POSITION_H = 37
+    PRESENT_SPEED_L = 38
+    PRESENT_SPEED_H = 39
+    PRESENT_LOAD_L = 40
+    PRESENT_LOAD_H = 41
+    PRESENT_VOLTAGE = 42
+    PRESENT_TEMPERATURE = 43
+    REGISTERED = 44
+    MOVING = 46
+    LOCK = 47
+    PUNCH_L = 48
+    PUNCH_H = 49
+    EFFORT_L = 68
+    EFFORT_H = 69
+    TORQUE_CONTROL_MODE_ENABLE = 70
+    GOAL_EFFORT_L = 71
+    GOAL_EFFORT_H = 72
+    GOAL_ACCELERATION = 73
 
 class MX28:
+    """
+    DXL Control Table
+    ================
+    Register values from the online manual.
+    Reference:
+    http://support.robotis.com/en/product/actuator/dynamixel/mx_series/mx-28(2.0).htm
+    """
+
+    MX_28 = 31
+    resolution = 4096
+
+    LEN_GOAL_POSITION = 4
+    LEN_PRESENT_POSITION = 4
+    LEN_GOAL_VELOCITY = 4
+    LEN_PRESENT_VELOCITY = 4
+    LEN_GOAL_EFFORT = 2
+    LEN_PRESENT_EFFORT = 2
+
+    # =====================================================================
+    # EEPROM
+    # =====================================================================
+    MODEL_NUMBER = 0
+    MODEL_INFORMATION = 2
+    VERSION_OF_FIRMWARE = 6
+    ID = 7
+    BAUD_RATE = 8
+    RETURN_DELAY_TIME = 9
+    DRIVE_MODE = 10
+    OPERATING_MODE = 11
+    SECONDARY_ID = 12
+    PROTOCOL_VERSION = 13
+    HOMING_OFFSET = 20
+    MOVING_THRESHOLD = 24
+    TEMPERATURE_LIMIT = 31
+    MAX_VOLTAGE_LIMIT = 32
+    MIN_VOLTAGE_LIMIT = 34
+    PWM_LIMIT = 36
+    RESERVED = 38
+    ACCELERATION_LIMIT = 40
+    VELOCITY_LIMIT = 44
+    MAX_POSITION_LIMIT = 48
+    MIN_POSITION_LIMIT = 52
+    SHUTDOWN = 63
+
+    # =====================================================================
+    # RAM
+    # =====================================================================
+    TORQUE_ENABLE = 64
+    LED = 65
+    STATUS_RETURN_LEVEL = 68
+    REGISTERED_INSTRUCTION = 69
+    HARDWARE_ERROR_STATUS = 70
+    VELOCITY_I_GAIN = 76
+    VELOCITY_P_GAIN = 78
+    POSITION_D_GAIN = 80
+    POSITION_I_GAIN = 82
+    POSITION_P_GAIN = 84
+    FEEDFORWARD_2ND_GAIN = 88
+    FEEDFORWARD_1ST_GAIN = 90
+    BUS_WATCHDOG = 98
+    GOAL_EFFORT = 100
+    RESERVED = 102
+    GOAL_VELOCITY = 104
+    PROFILE_ACCELERATION = 108
+    PROFILE_VELOCITY = 112
+    GOAL_POSITION = 116
+    REALTIME_TICK = 120
+    MOVING = 122
+    MOVING_STATUS = 123
+    PRESENT_EFFORT = 124
+    PRESENT_LOAD = 126
+    PRESENT_VELOCITY = 128
+    PRESENT_POSITION = 132
+    VELOCITY_TRAJECTORY = 136
+    POSITION_TRAJECTORY = 140
+    PRESENT_INPUT_VOLTAGE = 144
+    PRESENT_TEMPERATURE = 146
+
+class MX28_P1:
     """
     DXL Control Table
     =================
@@ -306,62 +393,66 @@ class MX28:
     http://support.robotis.com/ko/product/actuator/dynamixel/mx_series/mx-28.htm
     http://support.robotis.com/en/product/dynamixel/communication/dxl_instruction.htm
     """
-    MX_28 = 30
+    MX_28_P1 = 30
     resolution = 4096
+
+    LEN_GOAL_POSITION = 2
+    LEN_PRESENT_POSITION = 2
+    LEN_PRESENT_SPEED = 2
 
     # =====================================================================
     # EEPROM
     # =====================================================================
-    MODEL_NUMBER_L = 0X00
-    MODEL_NUMBER_H = 0X01
-    FIRMWARE_VERSION = 0X02
-    ID = 0X03
-    BAUD_RATE = 0X04
-    RETURN_DELAY_TIME = 0X05
-    CW_ANGLE_LIMIT_L = 0X06
-    CW_ANGLE_LIMIT_H = 0X07
-    CCW_ANGLE_LIMIT_L = 0X08
-    CCW_ANGLE_LIMIT_H = 0X09
-    HIGH_LIMIT_TEMP = 0X0B
-    LOW_LIMIT_VOLTAGE = 0X0C
-    HIGH_LIMIT_VOLTAGE = 0X0D
-    MAX_TORQUE_L = 0X0E
-    MAX_TORQUE_H = 0X0F
-    STATUS_RETURN_LEVEL = 0X10
-    ALARM_LED = 0X11
-    ALARM_SHUTDOWN = 0X12
-    MULTI_TURN_OFFSET_L = 0X14
-    MULTI_TURN_OFFSET_H = 0X15
-    RESOLUTION_DIVIDER = 0X16
+    MODEL_NUMBER_L = 0
+    MODEL_NUMBER_H = 1
+    VERSION_OF_FIRMWARE = 2
+    ID = 3
+    BAUD_RATE = 4
+    RETURN_DELAY_TIME = 5
+    CW_ANGLE_LIMIT_L = 6
+    CW_ANGLE_LIMIT_H = 7
+    CCW_ANGLE_LIMIT_L = 8
+    CCW_ANGLE_LIMIT_H = 9
+    THE_HIGHEST_LIMIT_TEMPERATURE = 11
+    THE_LOWEST_LIMIT_VOLTAGE = 12
+    THE_HIGHEST_LIMIT_VOLTAGE = 13
+    MAX_EFFORT_L = 14
+    MAX_EFFORT_H = 15
+    STATUS_RETURN_LEVEL = 16
+    ALARM_LED = 17
+    ALARM_SHUTDOWN = 18
+    MULTI_TURN_OFFSET_L = 20
+    MULTI_TURN_OFFSET_H = 21
+    RESOLUTION_DIVIDER = 22
 
     # =====================================================================
     # RAM
     # =====================================================================
-    TORQUE_ENABLE = 0X18
-    LED = 0X19
-    D_GAIN = 0X1A
-    I_GAIN = 0X1B
-    P_GAIN = 0X1C
-    GOAL_POSITION_L = 0X1E
-    GOAL_POSITION_H = 0X1F
-    MOVING_SPEED_L = 0X20
-    MOVING_SPEED_H = 0X21
-    TORQUE_LIMIT_L = 0X22
-    TORQUE_LIMIT_H = 0X23
-    PRESENT_POSITION_L = 0X24
-    PRESENT_POSITION_H = 0X25
-    PRESENT_SPEED_L = 0X26
-    PRESENT_SPEED_H = 0X27
-    PRESENT_LOAD_L = 0X28
-    PRESENT_LOAD_H = 0X29
-    PRESENT_VOLTAGE = 0X2A
-    PRESENT_TEMPERATURE = 0X2B
-    REGISTERED = 0X2C
-    MOVING = 0X2E
-    LOCK = 0X2F
-    PUNCH_L = 0X30
-    PUNCH_H = 0X31
-    GOAL_ACCELERATION = 0X49
+    TORQUE_ENABLE = 24
+    LED = 25
+    D_GAIN = 26
+    I_GAIN = 27
+    P_GAIN = 28
+    GOAL_POSITION_L = 30
+    GOAL_POSITION_H = 31
+    MOVING_SPEED_L = 32
+    MOVING_SPEED_H = 33
+    EFFORT_LIMIT_L = 34
+    EFFORT_LIMIT_H = 35
+    PRESENT_POSITION_L = 36
+    PRESENT_POSITION_H = 37
+    PRESENT_SPEED_L = 38
+    PRESENT_SPEED_H = 39
+    PRESENT_LOAD_L = 40
+    PRESENT_LOAD_H = 41
+    PRESENT_VOLTAGE = 42
+    PRESENT_TEMPERATURE = 43
+    REGISTERED = 44
+    MOVING = 46
+    LOCK = 47
+    PUNCH_L = 48
+    PUNCH_H = 49
+    GOAL_ACCELERATION = 73
 
     # Backward Compatibility, Compliance is replaced with PID
     CW_COMPLIANCE_MARGIN = 26   # DEPRECATED
@@ -477,7 +568,7 @@ class DXLPRO:
                   L54_30_S500_R: 180692*2,
                   }
 
-    # byte length of certain control table values. TODO: update for control torques.
+    # byte length of certain control table values.
     LEN_GOAL_POSITION = 4
     LEN_PRESENT_POSITION = 4
 
@@ -486,8 +577,8 @@ class DXLPRO:
     # =====================================================================
     MODEL_NUMBER = 0
     MODEL_INFORMATION = 2
-    FIRMWARE_VERSION = 6
-    MOTOR_ID = 7
+    VERSION_OF_FIRMWARE = 6
+    ID = 7
     BAUD_RATE = 8
     RETURN_DELAY_TIME = 9
     OPERATING_MODE = 11
@@ -497,7 +588,7 @@ class DXLPRO:
     MAX_VOLTAGE_LIMIT = 22
     MIN_VOLTAGE_LIMIT = 24
     ACCELERATION_LIMIT = 26
-    TORQUE_LIMIT = 30
+    EFFORT_LIMIT = 30
     VELOCITY_LIMIT = 32
     MAX_POSITION_LIMIT = 36
     MIN_POSITION_LIMIT = 40
@@ -506,16 +597,12 @@ class DXLPRO:
     EXTERNAL_PORT_MODE_3 = 46
     EXTERNAL_PORT_MODE_4 = 47
     SHUTDOWN = 48
-    INDIRECT_ADDRESS = 49
-
-
+    INDIRECT_ADDRESS_1 = 49
     """
-    can do other indirect addresses by adding INDIRECT_ADDRESS + 2*(address_num-1)
-    eg. INDIRECT_ADDRESS_5 = INDIRECT_ADDRESS + 2*(5-1) = 57
+    can do other indirect addresses by adding INDIRECT_ADDRESS_1 + 2*(address_num-1)
+    e.g. INDIRECT_ADDRESS_5 = INDIRECT_ADDRESS_1 + 2*(5-1) = 57
 
     up to INDIRECT_ADDRESS_256 (569)
-
-    
     """
 
     # =====================================================================
@@ -528,32 +615,27 @@ class DXLPRO:
     VELOCITY_I_GAIN = 586
     VELOCITY_P_GAIN = 588
     POSITION_P_GAIN = 594
-    FEEDFORWARD_2ND_GAIN = 88
-    FEEDFORWARD_1ST_GAIN = 90
     GOAL_POSITION = 596
     GOAL_VELOCITY = 600
-    GOAL_TORQUE = 604
+    GOAL_EFFORT = 604
     GOAL_ACCELERATION = 606
     MOVING = 610
     PRESENT_POSITION = 611
     PRESENT_VELOCITY = 615
-    PRESENT_CURRENT = 621
+    PRESENT_EFFORT = 621
     PRESENT_INPUT_VOLTAGE = 623
     PRESENT_TEMPERATURE = 625
     EXTERNAL_PORT_DATA_1 = 626
     EXTERNAL_PORT_DATA_2 = 628
     EXTERNAL_PORT_DATA_3 = 630
     EXTERNAL_PORT_DATA_4 = 632
-    INDIRECT_DATA = 634
-
+    INDIRECT_DATA_1 = 634
     """ 
-    can do other indirect data by adding INDIRECT_DATA + 2*(address_num-1)
-    eg. INDIRECT_DATA_5 = INDIRECT_DATA + 2*(5-1) = 57
+    can do other indirect data by adding INDIRECT_DATA_1 + 2*(address_num-1)
+    e.g. INDIRECT_DATA_5 = INDIRECT_DATA_1 + 2*(5-1) = 57
 
     up to INDIRECT_DATA_256 (889)
-
     """
-
     REGISTERED_INSTRUCTION = 890
     STATUS_RETURN_LEVEL = 891
     HARDWARE_ERROR_STATUS = 892
