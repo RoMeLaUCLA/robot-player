@@ -489,6 +489,12 @@ def rad2pos(rad, resolution):
 def pos2rad(pos, resolution):
     return pos * (2 * 3.1415926) / resolution
 
+def radps2vel(radps, conversion):
+    return int(round(radps * (30 / 3.1415926) / conversion))
+
+def vel2radps(vel, conversion):
+    return vel * conversion / (30 / 3.1415926)
+
 def get_parameter_data_len(d, parameter):
     """
     checks the model of a passed device and fetches the data length of a passed parameter. assumes that all devices on
