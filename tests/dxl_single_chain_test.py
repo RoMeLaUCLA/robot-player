@@ -1,5 +1,6 @@
 from robot_player import MotionManager, DxlOptions
 import numpy as np
+import platform
 from time import sleep
 
 """
@@ -9,11 +10,18 @@ USB port is /dev/ttyUSB0
 Motors are MX106s
 """
 
+
 motor_id = [1,2]
 dt = .005
+
+if platform.system() == 'Windows':
+    ports = ['COM15']
+else:
+    ports = ['/dev/ttyUSB0']
+
 dxl_opts = DxlOptions([[1,2]],
             motor_types=['MX106'],
-            ports=['/dev/ttyUSB0'],
+            ports=ports,
             baudrate=3000000,
             protocol_version=2
            )

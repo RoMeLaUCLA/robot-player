@@ -1,5 +1,6 @@
 from robot_player import MotionManager, DxlOptions
 from time import sleep
+import platform
 from math import pi
 import numpy as np
 """
@@ -8,9 +9,15 @@ test for chains of MX106 dynamixels, two plugged into each port.
 
 ids = [1,2,3,4]
 motor_ids = [(1,2),(3,4)]
+
+if platform.system() == 'Windows':
+    ports = ['COM15','COM16']
+else:
+    ports = ['/dev/ttyUSB2','/dev/ttyUSB0']
+
 dopts = DxlOptions(motor_ids,
                    motor_types=['MX106','MX106'],
-                   ports=['/dev/ttyUSB2','/dev/ttyUSB0'],
+                   ports=ports,
                    baudrate=3000000,
                    protocol_version=2)
 
