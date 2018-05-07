@@ -186,11 +186,16 @@ class DxlInterface(object):
 
                 print("[ID:%03d] ping Succeeded. Dynamixel model number : %d" % (m_id, motor_model_no))
 
+                # use model number to get motor object
                 try:
                     ctrl_table = NUM2MODEL[motor_model_no]
-                    resolution = ctrl_table.resolution
                 except KeyError:
                     raise TypeError('Unexpected motor type. Dynamixel model number: {}'.format(motor_model_no))
+                # get resolution by assuming a dictionary (DXLPRO case) and failing down to class attribute
+                try:
+                    resolution = ctrl_table.resolution[motor_model_no]
+                except TypeError:
+                    resolution = ctrl_table.resolution
 
                 d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution}
                 print("motor_model_no:" + str(motor_model_no))
