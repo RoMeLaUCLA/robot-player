@@ -412,7 +412,7 @@ class DxlInterface(object):
             # filter out ids that are on this device
             id_list = self.filter_ids(ids, d)
 
-            data_list = self._sync_read(d, 'PRESENT_POSITION', 4, id_list)
+            data_list = self._sync_read(d, 'PRESENT_POSITION', d.motor[0]['LEN_PRESENT_POSITION'], id_list)
             for m_id, data in zip(d.motor_id, data_list):
                 res = d.motor[m_id]["resolution"]
                 pos_data.append(pos2rad(data, res))
@@ -422,7 +422,7 @@ class DxlInterface(object):
     def get_all_present_position(self):
         pos_data = []
         for d in self.device:
-            data_list = self._sync_read(d, 'PRESENT_POSITION', 4, d.motor_id)
+            data_list = self._sync_read(d, 'PRESENT_POSITION', d.motor[0]['LEN_PRESENT_POSITION'], d.motor_id)
             for m_id, data in zip(d.motor_id, data_list):
                 res = d.motor[m_id]["resolution"]
                 pos_data.append(pos2rad(data, res))
@@ -435,7 +435,7 @@ class DxlInterface(object):
             # convert radians to encoder counts
             res_list = [d.motor[m_id]["resolution"] for m_id in id_list]
             commands = [rad2pos(a, res) for a, res in zip(angle_list, res_list)]
-            self._sync_write(d, 'GOAL_POSITION', 4, id_list, commands)
+            self._sync_write(d, 'GOAL_POSITION', d.motor[0]['LEN_GOAL_POSITION'], id_list, commands)
 
     def set_all_goal_position(self, angles):
         self.set_goal_position(self.motor_id, angles)
@@ -444,27 +444,23 @@ class DxlInterface(object):
         vel_data = []
         for d in self.device:
             id_list = self.filter_ids(ids, d)
-            vel_data.append(self._sync_read(d, 'PRESENT_VELOCITY', 4, id_list))  # TODO: check parameter_data_length of PRESENT_VELOCITY
-            # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
+            vel_data.append(self._sync_read(d, 'PRESENT_VELOCITY', d.motor[0]['LEN_PRESENT_VELOCITY'], id_list))
 
     def set_goal_velocity(self, ids, commands):
         for d in self.device:
             id_list, command_list = self.filter_ids_and_commands(ids, commands, d)
-            self._sync_write(d, 'GOAL_VELOCITY', 4, id_list, commands)  # TODO: check parameter_data_length of GOAL_VELOCITY
-            # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
+            self._sync_write(d, 'GOAL_VELOCITY', d.motor[0]['LEN_GOAL_VELOCITY'], id_list, commands)
 
     def get_present_effort(self, ids):
         torque_data = []
         for d in self.device:
             id_list = self.filter_ids(ids, d)
-            torque_data.append(self._sync_read(d, 'PRESENT_EFFORT', 4, id_list))  # TODO: check parameter_data_length of PRESSENT_CURRENT
-            # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
+            torque_data.append(self._sync_read(d, 'PRESENT_EFFORT', d.motor[0]['LEN_PRESENT_EFFORT'], id_list))
 
     def set_goal_effort(self, ids, commands):
         for d in self.device:
             id_list, command_list = self.filter_ids_and_commands(ids, commands, d)
-            self._sync_write(d, 'GOAL_EFFORT', 4, id_list, commands)  # TODO: check parameter_data_length of GOAL_TORQUE
-            # TODO: parameter may be different for different motors. only listed for DXLPRO, and I think it's called GOAL_CURRENT for MX106
+            self._sync_write(d, 'GOAL_EFFORT', d.motor[0]['LEN_GOAL_EFFORT'], id_list, commands)
 
     def filter_ids(self, ids, device):
         # filters out ids based on which ids are on the device
