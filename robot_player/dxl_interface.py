@@ -226,7 +226,7 @@ class DxlInterface(object):
             print("setup success: PRESENT_EFFORT")
         except AttributeError:
             print("setup failed: PRESENT_EFFORT")
-            
+
         for d in self.device:
             print("gw_GOAL_POSITION {}".format(d.gw_GOAL_POSITION))
             print("gr_PRESENT_POSITION {}".format(d.gr_PRESENT_POSITION))
@@ -239,16 +239,19 @@ class DxlInterface(object):
         :return:
         """
         for d in self.device:
-            parameter_data_len = get_parameter_data_len(d, parameter)  # TODO: returns 4 if parameter DNE
+            parameter_data_len = get_parameter_data_len(d, parameter)
             print("d.port_num {}".format(d.port_num))
             gw_id = dynamixel.groupSyncWrite(d.port_num,
                                              d.protocol_version,
-                                             getattr(d.ctrl_table, parameter),  # TODO: fails if parameter DNE
+                                             getattr(d.ctrl_table, parameter),
                                              parameter_data_len
                                              )
 
             # set device to have .gw_<name of parameter> attached to it for further reference
             setattr(d, "gw_" + parameter, gw_id)
+
+            for m_id in d.motor_id:
+                d.motor[m_id]['LEN_{}'.format(parameter)] = parameter_data_len  # TODO needs testing
 
     def setup_group_sync_read(self, parameter):
         """
@@ -273,6 +276,8 @@ class DxlInterface(object):
                     if dxl_addparam_result != 1:
                         print("[ID:%03d] groupSyncRead addparam failed" % m_id)
 
+                    d.motor[m_id]['LEN_{}'.format(parameter)] = parameter_data_len  # TODO needs testing
+
             # Protocol 1.0 doesn't have sync read, so use bulk read instead
             else:
                 gr_id = dynamixel.groupBulkRead(d.port_num,
@@ -289,6 +294,9 @@ class DxlInterface(object):
                                                          ).value
                     if dxl_addparam_result != 1:
                         print("[ID:%03d] groupBulkRead addparam failed" % m_id)
+
+                    d.motor[m_id]['LEN_{}'.format(parameter)] = parameter_data_len  # TODO needs testing
+
             # set device to have .gw_<name of parameter> attached to it for further reference
             setattr(d, "gr_" + parameter, gr_id)
 
