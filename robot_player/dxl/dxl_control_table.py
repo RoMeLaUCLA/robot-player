@@ -169,10 +169,13 @@ class MX106:
     MX_106 = 321
     resolution = 4096
 
+    ## READ/WRITE COMMAND LENGTHS ##
     LEN_GOAL_POSITION = 4
     LEN_PRESENT_POSITION = 4
     LEN_GOAL_VELOCITY = 4
     LEN_PRESENT_VELOCITY = 4
+    LEN_GOAL_EFFORT = 2
+    LEN_PRESENT_EFFORT = 2
 
     # =====================================================================
     # EEPROM
@@ -217,7 +220,7 @@ class MX106:
     FEEDFORWARD_1ST_GAIN = 90
     BUS_WATCHDOG = 98
     GOAL_PWM = 100
-    GOAL_CURRENT = 102
+    GOAL_EFFORT = 102
     GOAL_VELOCITY = 104
     PROFILE_ACCELERATION = 108
     PROFILE_VELOCITY = 112
@@ -226,7 +229,7 @@ class MX106:
     MOVING = 122
     MOVING_STATUS = 123
     PRESENT_PWM = 124
-    PRESENT_CURRENT = 126
+    PRESENT_EFFORT = 126
     PRESENT_VELOCITY = 128
     PRESENT_POSITION = 132
     VELOCITY_TRAJECTORY = 136
@@ -240,6 +243,7 @@ class MX106_P1:
     MX_106_P1 = 320
     resolution = 4096
 
+    ## READ/WRITE COMMAND LENGTHS ##
     LEN_GOAL_POSITION = 2
     LEN_PRESENT_POSITION = 2
     LEN_PRESENT_SPEED = 2
@@ -317,6 +321,7 @@ class MX28:
     MX_28 = 31
     resolution = 4096
 
+    ## READ/WRITE COMMAND LENGTHS ##
     LEN_GOAL_POSITION = 4
     LEN_PRESENT_POSITION = 4
     LEN_GOAL_VELOCITY = 4
@@ -396,6 +401,7 @@ class MX28_P1:
     MX_28_P1 = 30
     resolution = 4096
 
+    ## READ/WRITE COMMAND LENGTHS ##
     LEN_GOAL_POSITION = 2
     LEN_PRESENT_POSITION = 2
     LEN_PRESENT_SPEED = 2
@@ -568,7 +574,7 @@ class DXLPRO:
                   L54_30_S500_R: 180692*2,
                   }
 
-    # byte length of certain control table values.
+    ## READ/WRITE COMMAND LENGTHS ##
     LEN_GOAL_POSITION = 4
     LEN_PRESENT_POSITION = 4
 
