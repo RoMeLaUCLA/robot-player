@@ -196,12 +196,37 @@ class DxlInterface(object):
                 print("motor_model_no:" + str(motor_model_no))
 
     def setup_sync_functions(self):
-        self.setup_group_sync_write('GOAL_POSITION')
-        self.setup_group_sync_read('PRESENT_POSITION')
-        self.setup_group_sync_write('GOAL_VELOCITY')
-        self.setup_group_sync_read('PRESENT_VELOCITY')
-        # self.setup_group_sync_write('GOAL_EFFORT')
-        # self.setup_group_sync_read('PRESENT_EFFORT')
+        try:
+            self.setup_group_sync_write('GOAL_POSITION')
+            print("setup success: GOAL_POSITION")
+        except AttributeError:
+            print("setup failed: GOAL_POSITION")
+        try:
+            self.setup_group_sync_read('PRESENT_POSITION')
+            print("setup success: PRESENT_POSITION")
+        except AttributeError:
+            print("setup failed: PRESENT_POSITION")
+        try:
+            self.setup_group_sync_write('GOAL_VELOCITY')
+            print("setup success: GOAL_VELOCITY")
+        except AttributeError:
+            print("setup failed: GOAL_VELOCITY")
+        try:
+            self.setup_group_sync_read('PRESENT_VELOCITY')
+            print("setup success: PRESENT_VELOCITY")
+        except AttributeError:
+            print("setup failed: PRESENT_VELOCITY")
+        try:
+            self.setup_group_sync_write('GOAL_EFFORT')
+            print("setup success: GOAL_EFFORT")
+        except AttributeError:
+            print("setup failed: GOAL_EFFORT")
+        try:
+            self.setup_group_sync_read('PRESENT_EFFORT')
+            print("setup success: PRESENT_EFFORT")
+        except AttributeError:
+            print("setup failed: PRESENT_EFFORT")
+            
         for d in self.device:
             print("gw_GOAL_POSITION {}".format(d.gw_GOAL_POSITION))
             print("gr_PRESENT_POSITION {}".format(d.gr_PRESENT_POSITION))
@@ -480,6 +505,6 @@ def get_parameter_data_len(d, parameter):
     try:  # to get command length
         parameter_data_len = getattr(motor, 'LEN_{}'.format(parameter))
     except AttributeError:
-        parameter_data_len = 4  # TODO: figure out best way to assume data lengh
+        raise AttributeError('Error: motor_model {} does not have parameter {}'.format(motor_model_no, parameter))
 
     return parameter_data_len
