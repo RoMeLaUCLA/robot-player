@@ -223,7 +223,7 @@ class VrepInterface(object):
         #                                     operationMode=opmode)
         for i, c in zip(ids, commands):
             vrep.simxSetJointTargetPosition(self._sim_Client_ID, self.joint[i]['sim_handle'], c,
-                                            operationMode=vrep.simx_opmode_blocking)
+                                            operationMode=vrep.simx_opmode_oneshot)
         if send:
             self.send_command()
 
