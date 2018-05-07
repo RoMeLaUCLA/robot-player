@@ -197,7 +197,7 @@ class DxlInterface(object):
                 except TypeError:
                     resolution = ctrl_table.resolution
 
-                d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution}
+                d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution, "vel_unit": ctrl_table.VEL_UNIT}
                 print("motor_model_no:" + str(motor_model_no))
 
     def setup_sync_functions(self):
@@ -449,11 +449,17 @@ class DxlInterface(object):
         vel_data = []
         for d in self.device:
             id_list = self.filter_ids(ids, d)
-            vel_data.append(self._sync_read(d, 'PRESENT_VELOCITY', d.motor[0]['LEN_PRESENT_VELOCITY'], id_list))
+            data_list = self._sync_read(d, 'PRESENT_VELOCITY', d.motor[0]['LEN_PRESENT_VELOCITY'], id_list)
+            for m_id, data in zip(d.motor_id, data_list):
+                unit = d.motor[m_id]['vel_unit']
+                vel_data.append(vel2radps(data, unit))
 
-    def set_goal_velocity(self, ids, commands):
+    def set_goal_velocity(self, ids, velocities):
         for d in self.device:
-            id_list, command_list = self.filter_ids_and_commands(ids, commands, d)
+            id_list, velocity_list = self.filter_ids_and_commands(ids, velocities, d)
+            unit_list = [d.motor[m_id]['vel_unit'] for m_id in id_list]
+            # convert radians per sec to appropriate velocity unit
+            commands = [radps2vel(v, unit) for v, unit in zip(velocity_list, unit_list)]
             self._sync_write(d, 'GOAL_VELOCITY', d.motor[0]['LEN_GOAL_VELOCITY'], id_list, commands)
 
     def get_present_effort(self, ids):
