@@ -191,13 +191,15 @@ class DxlInterface(object):
                     ctrl_table = NUM2MODEL[motor_model_no]
                 except KeyError:
                     raise TypeError('Unexpected motor type. Dynamixel model number: {}'.format(motor_model_no))
-                # get resolution by assuming a dictionary (DXLPRO case) and failing down to class attribute
+                # get attributes by assuming dictionaries (DXLPRO case) and failing down to class attribute
                 try:
                     resolution = ctrl_table.resolution[motor_model_no]
+                    vel_unit = ctrl_table.VEL_UNIT[motor_model_no]
                 except TypeError:
                     resolution = ctrl_table.resolution
+                    vel_unit = ctrl_table.VEL_UNIT
 
-                d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution, "vel_unit": ctrl_table.VEL_UNIT}
+                d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution, "vel_unit": vel_unit}
                 print("motor_model_no:" + str(motor_model_no))
 
     def setup_sync_functions(self):
@@ -501,9 +503,11 @@ def pos2rad(pos, resolution):
     return pos * (2 * 3.1415926) / resolution
 
 def radps2vel(radps, conversion):
+    # 30/pi rpm per radps, then divide by conversion to get the unit
     return int(round(radps * (30 / 3.1415926) / conversion))
 
 def vel2radps(vel, conversion):
+    # multiply by conversion to get rpm, then pi/30 radps per rpm
     return vel * conversion / (30 / 3.1415926)
 
 def get_parameter_data_len(d, parameter):

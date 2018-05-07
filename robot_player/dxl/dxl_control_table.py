@@ -168,6 +168,7 @@ class MX106:
 
     MX_106 = 321
     resolution = 4096
+    VEL_UNIT = .229  # RPM
 
     ## READ/WRITE COMMAND LENGTHS ##
     LEN_GOAL_POSITION = 4
@@ -242,6 +243,7 @@ class MX106_P1:
 
     MX_106_P1 = 320
     resolution = 4096
+    VEL_UNIT = .11  # RPM
 
     ## READ/WRITE COMMAND LENGTHS ##
     LEN_GOAL_POSITION = 2
@@ -320,6 +322,7 @@ class MX28:
 
     MX_28 = 31
     resolution = 4096
+    VEL_UNIT = .229  # RPM
 
     ## READ/WRITE COMMAND LENGTHS ##
     LEN_GOAL_POSITION = 4
@@ -400,6 +403,7 @@ class MX28_P1:
     """
     MX_28_P1 = 30
     resolution = 4096
+    VEL_UNIT = .11  # RPM
 
     ## READ/WRITE COMMAND LENGTHS ##
     LEN_GOAL_POSITION = 2
@@ -484,6 +488,7 @@ class MX28_P1:
 class AX12:
 
     AX_12 = 12
+    VEL_UNIT = .111  # RPM
 
     # =====================================================================
     # EEPROM
@@ -573,6 +578,20 @@ class DXLPRO:
                   L54_30_S400_R: 144197*2,
                   L54_30_S500_R: 180692*2,
                   }
+
+    # converts velocity units to RPM
+    VEL_UNIT = {H54_200_S500_R: 0.00199234,
+                H54_100_S500_R: 0.00199234,
+                # TODO: H54_200_B500_R
+                H42_20_S300_R: 0.00329218,
+                M54_60_S250_R: 0.00397746,
+                M54_40_S250_R: 0.00397746,
+                M42_10_S260_R: 0.00389076,
+                L54_50_S290_R: 0.00346667,
+                L54_50_S500_R: 0.00199234,
+                L54_30_S400_R: 0.00249657,
+                L54_30_S500_R: 0.00199234,
+                }
 
     ## READ/WRITE COMMAND LENGTHS ##
     LEN_GOAL_POSITION = 4
