@@ -158,31 +158,35 @@ class MotionManager(object):
 
     ## Effort (force/torque/PWM/current) ##
     def get_present_effort(self, ids):
-        return self.device.get_present_effort(ids)
+        # return self.device.get_present_effort(ids)
+        pass
 
     def get_all_present_effort(self):
-        if self.player == 'vrep':
-            return self.device.get_all_present_effort()
-        elif self.player == 'dxl':
-            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
+        # if self.player == 'vrep':
+        #     return self.device.get_all_present_effort()
+        # elif self.player == 'dxl':
+        #     raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
+        pass
 
     def set_goal_effort(self, ids, commands, send=True):
 
-        try:
-            assert (len(ids) == len(commands))
-        except AssertionError:
-            raise ValueError('ERROR: ids and commands must be same length')
-
-        if self.player == 'vrep':
-            self.device.set_goal_effort(ids, commands, send)
-        if self.player == 'dxl':
-            self.device.set_goal_effort(ids, commands)
+        # try:
+        #     assert (len(ids) == len(commands))
+        # except AssertionError:
+        #     raise ValueError('ERROR: ids and commands must be same length')
+        #
+        # if self.player == 'vrep':
+        #     self.device.set_goal_effort(ids, commands, send)
+        # if self.player == 'dxl':
+        #     self.device.set_goal_effort(ids, commands)
+        pass
 
     def set_all_goal_effort(self, commands, send=True):
-        if self.player == 'vrep':
-            self.device.set_all_goal_effort(commands, send)
-        elif self.player == 'dxl':
-            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
+        # if self.player == 'vrep':
+        #     self.device.set_all_goal_effort(commands, send)
+        # elif self.player == 'dxl':
+        #     raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
+        pass
 
     def wait(self, time_to_wait):
         # wait for a specified duration of time, in seconds. This command is blocking.

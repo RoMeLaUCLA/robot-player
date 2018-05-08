@@ -223,16 +223,16 @@ class DxlInterface(object):
             print("setup success: PRESENT_VELOCITY")
         except AttributeError:
             print("setup failed: PRESENT_VELOCITY")
-        try:
-            self.setup_group_sync_write('GOAL_EFFORT')
-            print("setup success: GOAL_EFFORT")
-        except AttributeError:
-            print("setup failed: GOAL_EFFORT")
-        try:
-            self.setup_group_sync_read('PRESENT_EFFORT')
-            print("setup success: PRESENT_EFFORT")
-        except AttributeError:
-            print("setup failed: PRESENT_EFFORT")
+        # try:
+        #     self.setup_group_sync_write('GOAL_EFFORT')
+        #     print("setup success: GOAL_EFFORT")
+        # except AttributeError:
+        #     print("setup failed: GOAL_EFFORT")
+        # try:
+        #     self.setup_group_sync_read('PRESENT_EFFORT')
+        #     print("setup success: PRESENT_EFFORT")
+        # except AttributeError:
+        #     print("setup failed: PRESENT_EFFORT")
 
         for d in self.device:
             print("gw_GOAL_POSITION {}".format(d.gw_GOAL_POSITION))
@@ -465,15 +465,10 @@ class DxlInterface(object):
             self._sync_write(d, 'GOAL_VELOCITY', d.motor[0]['LEN_GOAL_VELOCITY'], id_list, commands)
 
     def get_present_effort(self, ids):
-        torque_data = []
-        for d in self.device:
-            id_list = self.filter_ids(ids, d)
-            torque_data.append(self._sync_read(d, 'PRESENT_EFFORT', d.motor[0]['LEN_PRESENT_EFFORT'], id_list))
+        pass
 
     def set_goal_effort(self, ids, commands):
-        for d in self.device:
-            id_list, command_list = self.filter_ids_and_commands(ids, commands, d)
-            self._sync_write(d, 'GOAL_EFFORT', d.motor[0]['LEN_GOAL_EFFORT'], id_list, commands)
+        pass
 
     def filter_ids(self, ids, device):
         # filters out ids based on which ids are on the device
