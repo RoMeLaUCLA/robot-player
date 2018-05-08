@@ -372,7 +372,7 @@ class VrepInterface(object):
         else:
             opmode = vrep.simx_opmode_buffer
         returnCode, state, forceVector, torqueVector = vrep.simxReadForceSensor(self._sim_Client_ID,
-                                                                                self.ft_handles[sensor_id],
+                                                                                self.ft_sensors[sensor_id],
                                                                                 opmode)
         # if returnCode != vrep.simx_return_ok:
         #     raise Exception("ERROR in {}: returnCode = {}".format(__name__, returnCode))
