@@ -91,6 +91,8 @@ class DxlPort(object):
             self.ctrl_table = MX106_P1
         elif self.motor_type == 'DXLPRO':
             self.ctrl_table = DXLPRO
+        else:
+            raise ValueError("Control table {} did not match one of the supported types: MX28, MX106, MX106_P1, DXLPRO".format(self.motor_type))
 
 class DxlInterface(object):
     """
