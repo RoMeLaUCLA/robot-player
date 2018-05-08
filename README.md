@@ -196,6 +196,16 @@ qcurr = from_player_angle_offset(mm.get_all_present_position(), player_offset)
 q = to_player_angle_offset(qdes,player_offset)
 mm.set_all_present_position(q)
 ```
+### Streaming initialization
+All of the setter commands have the opmode simx_opmode_oneshot, which sends a single command without waiting for a reply.
+We use this instead of using blocking commands because they make the simulation run much faster.
+
+Some of the getter commands might have the option to use either the opmode simx_opmode_streaming or simx_opmode_buffer. 
+Call all of the getter commands once at the beginning of your script with the keyword argument streaming=True 
+and then from then on you can leave it off and VREP will automatically prepare the data and put it into a queue.
+This speeds up the simulation speed dramatically.
+
+
 
 ## DxlInterface
 
