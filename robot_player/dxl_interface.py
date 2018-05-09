@@ -283,6 +283,27 @@ class DxlInterface(object):
                     elif dxl_error != 0:
                         print(dynamixel.getRxPacketError(d.protocol_version, dxl_error))
 
+    def _read_data(self, ids, address, data_length):
+        # choose a number of bytes to read based on data length
+        if data_length == 1:
+            read_fn = dynamixel.read1ByteTxRx
+
+        # read_fn = dynamixel.readTxRx
+        # choose protocol version
+        result = []
+        for d in self.device:
+            device_ids = self.filter_ids(ids, d)
+            portno = d.port_num
+            protocol_version = d.protocol_version
+            for m_id in device_ids:
+                data = read_fn(portno, protocol_version, m_id, address)
+                # data = read_fn(portno, protocol_version, m_id, address, data_length)
+                result.append(data)
+        return result
+
+    def _write_data(self):
+        pass
+
     def _sync_write(self, device, parameter, parameter_data_length, ids, commands):
         """
         Uses sync write to write a string of data to a single port. Use this on every port.

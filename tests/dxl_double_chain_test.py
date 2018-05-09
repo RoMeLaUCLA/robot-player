@@ -10,7 +10,7 @@ ids = [1,2,3,4]
 motor_ids = [(1,2),(3,4)]
 dopts = DxlOptions(motor_ids,
                    motor_types=['MX106','MX106'],
-                   ports=['/dev/ttyUSB2','/dev/ttyUSB0'],
+                   ports=['/dev/ttyUSB0','/dev/ttyUSB1'],
                    baudrate=3000000,
                    protocol_version=2)
 
