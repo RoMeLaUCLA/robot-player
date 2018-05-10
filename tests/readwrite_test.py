@@ -27,6 +27,10 @@ with MotionManager(ids, dt=.005, options=dopts) as mm:
     address = 7 # motor id
     assert([1,2,3,4] ==  di._read_data(ids, address, 1))
 
+    # check to make sure that data gets read back in whatever order the ids were passed in.
+    assert([3,4,2,1] ==  di._read_data([3,4,2,1], address, 1))
+
+
     address = 0 # model number
     assert(di._read_data(ids, address, 2) == [321,321,321,321])
 
@@ -76,12 +80,12 @@ with MotionManager(ids, dt=.005, options=dopts) as mm:
 
     # set goal position to be 1000
     address = 116
-    di._write_data(ids, address, [1000, 1000, 1000, 1000], 4)
+    di._write_data([3,4,2,1], address, [1300, 1400, 1200, 1100], 4)
     sleep(3)
 
-    # check that data is close to 1000
-    pos_data = di._read_data(ids, address, 4)
-    allclose(pos_data, [1000, 1000, 1000, 1000], tol=2)
+    # check that data is close
+    pos_data = di._read_data([3,4,2,1], address, 4)
+    allclose(pos_data, [1300, 1400, 1200, 1100], tol=2)
 
     # set goal position to be 0
     address = 116

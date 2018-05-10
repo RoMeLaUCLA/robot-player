@@ -303,15 +303,17 @@ class DxlInterface(object):
             print("Invalid data length: 1,2,4 bytes only")
 
         # choose protocol version
-        result = []
+        result = {}
         for d in self.device:
             device_ids = self.filter_ids(ids, d)
             portno = d.port_num
             protocol_version = d.protocol_version
             for m_id in device_ids:
                 data = read_fn(portno, protocol_version, m_id, address)
-                result.append(data)
-        return result
+                result[m_id] = data
+
+        return [result[m_id] for m_id in ids] # reorder data to match original id order
+
 
     def _write_data(self, ids, address, data, data_length):
         """
