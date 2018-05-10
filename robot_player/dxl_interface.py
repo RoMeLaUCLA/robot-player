@@ -12,6 +12,7 @@ import ctypes
 from .dxl import dynamixel_functions as dynamixel
 from .dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28, MX28_P1
 from collections import OrderedDict
+from math import pi
 
 # conversion table. pass in the motor model number, get the object
 NUM2MODEL = {MX106.MX_106: MX106,
@@ -480,7 +481,7 @@ class DxlInterface(object):
             # filter out ids that are on this device
             id_list = self.filter_ids(ids, d)
 
-            data_list = self._sync_read(d, 'PRESENT_POSITION', d.motor[0]['LEN_PRESENT_POSITION'], id_list)
+            data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, id_list)
             for m_id, data in zip(d.motor_id, data_list):
                 res = d.motor[m_id]["resolution"]
                 pos_data.append(pos2rad(data, res))
@@ -490,7 +491,7 @@ class DxlInterface(object):
     def get_all_present_position(self):
         pos_data = []
         for d in self.device:
-            data_list = self._sync_read(d, 'PRESENT_POSITION', d.motor[0]['LEN_PRESENT_POSITION'], d.motor_id)
+            data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, d.motor_id)
             for m_id, data in zip(d.motor_id, data_list):
                 res = d.motor[m_id]["resolution"]
                 pos_data.append(pos2rad(data, res))
@@ -503,7 +504,7 @@ class DxlInterface(object):
             # convert radians to encoder counts
             res_list = [d.motor[m_id]["resolution"] for m_id in id_list]
             commands = [rad2pos(a, res) for a, res in zip(angle_list, res_list)]
-            self._sync_write(d, 'GOAL_POSITION', d.motor[0]['LEN_GOAL_POSITION'], id_list, commands)
+            self._sync_write(d, 'GOAL_POSITION', d.ctrl_table.LEN_GOAL_POSITION, id_list, commands)
 
     def set_all_goal_position(self, angles):
         self.set_goal_position(self.motor_id, angles)
@@ -512,10 +513,12 @@ class DxlInterface(object):
         vel_data = []
         for d in self.device:
             id_list = self.filter_ids(ids, d)
-            data_list = self._sync_read(d, 'PRESENT_VELOCITY', d.motor[0]['LEN_PRESENT_VELOCITY'], id_list)
+            data_list = self._sync_read(d, 'PRESENT_VELOCITY', d.ctrl_table.LEN_PRESENT_VELOCITY, id_list)
             for m_id, data in zip(d.motor_id, data_list):
                 unit = d.motor[m_id]['vel_unit']
                 vel_data.append(vel2radps(data, unit))
+
+        return vel_data
 
     def set_goal_velocity(self, ids, velocities):
         for d in self.device:
@@ -523,7 +526,7 @@ class DxlInterface(object):
             unit_list = [d.motor[m_id]['vel_unit'] for m_id in id_list]
             # convert radians per sec to appropriate velocity unit
             commands = [radps2vel(v, unit) for v, unit in zip(velocity_list, unit_list)]
-            self._sync_write(d, 'GOAL_VELOCITY', d.motor[0]['LEN_GOAL_VELOCITY'], id_list, commands)
+            self._sync_write(d, 'GOAL_VELOCITY', d.ctrl_table.LEN_GOAL_VELOCITY, id_list, commands)
 
     def get_present_effort(self, ids):
         pass
@@ -553,18 +556,18 @@ class DxlInterface(object):
         return id_list, comm_list
 
 def rad2pos(rad, resolution):
-    return int(round(rad * resolution / (2 * 3.1415926)))
+    return int(round(rad * resolution / (2 * pi)))
 
 def pos2rad(pos, resolution):
-    return pos * (2 * 3.1415926) / resolution
+    return pos * (2 * pi) / resolution
 
 def radps2vel(radps, conversion):
     # 30/pi rpm per radps, then divide by conversion to get the unit
-    return int(round(radps * (30 / 3.1415926) / conversion))
+    return int(round(radps * (30 / pi) / conversion))
 
 def vel2radps(vel, conversion):
     # multiply by conversion to get rpm, then pi/30 radps per rpm
-    return vel * conversion / (30 / 3.1415926)
+    return vel * conversion / (30 / pi)
 
 def get_parameter_data_len(d, parameter):
     """

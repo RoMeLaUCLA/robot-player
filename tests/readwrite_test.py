@@ -2,6 +2,7 @@ from robot_player import MotionManager, DxlOptions
 from time import sleep
 from math import pi
 import numpy as np
+import platform
 """
 test for chains of MX106 dynamixels, two plugged into each port.
 """
@@ -12,11 +13,16 @@ def allclose(l1, l2, tol=2):
             raise AssertionError("elements of lists are {}, which is not within tolerance {}".format(abs(i-j), tol))
     return True
 
+if platform.system() == 'Windows':
+    ports = ['COM15','COM16']
+else:
+    ports = ['/dev/ttyUSB2','/dev/ttyUSB0']
+
 ids = [1,2,3,4]
 motor_ids = [(1,2),(3,4)]
 dopts = DxlOptions(motor_ids,
                    motor_types=['MX106','MX106'],
-                   ports=['/dev/ttyUSB0','/dev/ttyUSB1'],
+                   ports=ports,
                    baudrate=3000000,
                    protocol_version=2)
 
@@ -65,6 +71,12 @@ with MotionManager(ids, dt=.005, options=dopts) as mm:
     sleep(3)
     di._write_data(ids, address, [0]*len(ids), 4)
 
+    # check that velocities are read and written exactly if passed in counts
+    di._write_data(ids, address, [100]*4, 4)
+    sleep(1)
+    print(di._read_data(ids, address, 4))
+    di._write_data(ids, address, [0] * 4, 4)
+
     # torque enable off
     address = 64
     di._write_data(ids, address, [0] * len(ids), 1)
@@ -96,6 +108,3 @@ with MotionManager(ids, dt=.005, options=dopts) as mm:
     address = 132
     pos_data = di._read_data(ids, address, 4)
     allclose(pos_data,[0,0,0,0],tol=2)
-
-
-
