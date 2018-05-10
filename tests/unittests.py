@@ -20,6 +20,15 @@ class dxl_interface_test(unittest.TestCase):
         with MotionManager(motor_ids=ids, dt=.016, options=dopts) as mm:
             mm.initialize()
 
+    def test_bad_ctrl_table(self):
+        motor_ids = [5, 6]
+        dt = .01
+        self.assertRaises(ValueError, DxlOptions, motor_ids=[motor_ids],
+                                                  motor_types=['DXL_PRO'], # if there's an incorrectly named control table type, it gets caught
+                                                  ports=['/dev/ttyUSB0'],
+                                                  baudrate=3000000,
+                                                  protocol_version=2)
+
 class motion_manager_test(unittest.TestCase):
     def test_check_command_and_ids_are_same_length(self):
         print("Check that command and ids are same length")
