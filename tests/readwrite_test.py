@@ -91,7 +91,7 @@ with MotionManager(ids, dt=.005, options=dopts) as mm:
     # check that present position is back to zero
     address = 132
     pos_data = di._read_data(ids, address, 4)
-    allclose(pos_data,[0,0,0,0])
+    allclose(pos_data,[0,0,0,0],tol=2)
 
 
 
