@@ -12,6 +12,7 @@ import ctypes
 from .dxl import dynamixel_functions as dynamixel
 from .dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28, MX28_P1
 from collections import OrderedDict
+from math import pi
 
 # conversion table. pass in the motor model number, get the object
 NUM2MODEL = {MX106.MX_106: MX106,
@@ -188,22 +189,54 @@ class DxlInterface(object):
 
                 print("[ID:%03d] ping Succeeded. Dynamixel model number : %d" % (m_id, motor_model_no))
 
+                # use model number to get motor object
                 try:
                     ctrl_table = NUM2MODEL[motor_model_no]
-                    resolution = ctrl_table.resolution
                 except KeyError:
                     raise TypeError('Unexpected motor type. Dynamixel model number: {}'.format(motor_model_no))
+                # get attributes by assuming dictionaries (DXLPRO case) and failing down to class attribute
+                try:
+                    resolution = ctrl_table.resolution[motor_model_no]
+                    vel_unit = ctrl_table.VEL_UNIT[motor_model_no]
+                except TypeError:
+                    resolution = ctrl_table.resolution
+                    vel_unit = ctrl_table.VEL_UNIT
 
-                d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution}
+                d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution, "vel_unit": vel_unit}
                 print("motor_model_no:" + str(motor_model_no))
 
     def setup_sync_functions(self):
-        self.setup_group_sync_write('GOAL_POSITION')
-        self.setup_group_sync_read('PRESENT_POSITION')
-        self.setup_group_sync_write('GOAL_VELOCITY')
-        self.setup_group_sync_read('PRESENT_VELOCITY')
-        # self.setup_group_sync_write('GOAL_EFFORT')
-        # self.setup_group_sync_read('PRESENT_EFFORT')
+        try:
+            self.setup_group_sync_write('GOAL_POSITION')
+            print("setup success: GOAL_POSITION")
+        except AttributeError:
+            print("setup failed: GOAL_POSITION")
+        try:
+            self.setup_group_sync_read('PRESENT_POSITION')
+            print("setup success: PRESENT_POSITION")
+        except AttributeError:
+            print("setup failed: PRESENT_POSITION")
+        try:
+            self.setup_group_sync_write('GOAL_VELOCITY')
+            print("setup success: GOAL_VELOCITY")
+        except AttributeError:
+            print("setup failed: GOAL_VELOCITY")
+        try:
+            self.setup_group_sync_read('PRESENT_VELOCITY')
+            print("setup success: PRESENT_VELOCITY")
+        except AttributeError:
+            print("setup failed: PRESENT_VELOCITY")
+        # try:
+        #     self.setup_group_sync_write('GOAL_EFFORT')
+        #     print("setup success: GOAL_EFFORT")
+        # except AttributeError:
+        #     print("setup failed: GOAL_EFFORT")
+        # try:
+        #     self.setup_group_sync_read('PRESENT_EFFORT')
+        #     print("setup success: PRESENT_EFFORT")
+        # except AttributeError:
+        #     print("setup failed: PRESENT_EFFORT")
+
         for d in self.device:
             print("gw_GOAL_POSITION {}".format(d.gw_GOAL_POSITION))
             print("gr_PRESENT_POSITION {}".format(d.gr_PRESENT_POSITION))
@@ -216,16 +249,19 @@ class DxlInterface(object):
         :return:
         """
         for d in self.device:
-            parameter_data_len = get_parameter_data_len(d, parameter)  # TODO: returns 4 if parameter DNE
+            parameter_data_len = get_parameter_data_len(d, parameter)
             print("d.port_num {}".format(d.port_num))
             gw_id = dynamixel.groupSyncWrite(d.port_num,
                                              d.protocol_version,
-                                             getattr(d.ctrl_table, parameter),  # TODO: fails if parameter DNE
+                                             getattr(d.ctrl_table, parameter),
                                              parameter_data_len
                                              )
 
             # set device to have .gw_<name of parameter> attached to it for further reference
             setattr(d, "gw_" + parameter, gw_id)
+
+            for m_id in d.motor_id:
+                d.motor[m_id]['LEN_{}'.format(parameter)] = parameter_data_len  # TODO needs testing
 
     def setup_group_sync_read(self, parameter):
         """
@@ -250,6 +286,8 @@ class DxlInterface(object):
                     if dxl_addparam_result != 1:
                         print("[ID:%03d] groupSyncRead addparam failed" % m_id)
 
+                    d.motor[m_id]['LEN_{}'.format(parameter)] = parameter_data_len  # TODO needs testing
+
             # Protocol 1.0 doesn't have sync read, so use bulk read instead
             else:
                 gr_id = dynamixel.groupBulkRead(d.port_num,
@@ -266,6 +304,9 @@ class DxlInterface(object):
                                                          ).value
                     if dxl_addparam_result != 1:
                         print("[ID:%03d] groupBulkRead addparam failed" % m_id)
+
+                    d.motor[m_id]['LEN_{}'.format(parameter)] = parameter_data_len  # TODO needs testing
+
             # set device to have .gw_<name of parameter> attached to it for further reference
             setattr(d, "gr_" + parameter, gr_id)
 
@@ -440,7 +481,7 @@ class DxlInterface(object):
             # filter out ids that are on this device
             id_list = self.filter_ids(ids, d)
 
-            data_list = self._sync_read(d, 'PRESENT_POSITION', 4, id_list)
+            data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, id_list)
             for m_id, data in zip(d.motor_id, data_list):
                 res = d.motor[m_id]["resolution"]
                 pos_data.append(pos2rad(data, res))
@@ -450,7 +491,7 @@ class DxlInterface(object):
     def get_all_present_position(self):
         pos_data = []
         for d in self.device:
-            data_list = self._sync_read(d, 'PRESENT_POSITION', 4, d.motor_id)
+            data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, d.motor_id)
             for m_id, data in zip(d.motor_id, data_list):
                 res = d.motor[m_id]["resolution"]
                 pos_data.append(pos2rad(data, res))
@@ -463,7 +504,7 @@ class DxlInterface(object):
             # convert radians to encoder counts
             res_list = [d.motor[m_id]["resolution"] for m_id in id_list]
             commands = [rad2pos(a, res) for a, res in zip(angle_list, res_list)]
-            self._sync_write(d, 'GOAL_POSITION', 4, id_list, commands)
+            self._sync_write(d, 'GOAL_POSITION', d.ctrl_table.LEN_GOAL_POSITION, id_list, commands)
 
     def set_all_goal_position(self, angles):
         self.set_goal_position(self.motor_id, angles)
@@ -472,27 +513,26 @@ class DxlInterface(object):
         vel_data = []
         for d in self.device:
             id_list = self.filter_ids(ids, d)
-            vel_data.append(self._sync_read(d, 'PRESENT_VELOCITY', 4, id_list))  # TODO: check parameter_data_length of PRESENT_VELOCITY
-            # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
+            data_list = self._sync_read(d, 'PRESENT_VELOCITY', d.ctrl_table.LEN_PRESENT_VELOCITY, id_list)
+            for m_id, data in zip(d.motor_id, data_list):
+                unit = d.motor[m_id]['vel_unit']
+                vel_data.append(vel2radps(data, unit))
 
-    def set_goal_velocity(self, ids, commands):
+        return vel_data
+
+    def set_goal_velocity(self, ids, velocities):
         for d in self.device:
-            id_list, command_list = self.filter_ids_and_commands(ids, commands, d)
-            self._sync_write(d, 'GOAL_VELOCITY', 4, id_list, commands)  # TODO: check parameter_data_length of GOAL_VELOCITY
-            # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
+            id_list, velocity_list = self.filter_ids_and_commands(ids, velocities, d)
+            unit_list = [d.motor[m_id]['vel_unit'] for m_id in id_list]
+            # convert radians per sec to appropriate velocity unit
+            commands = [radps2vel(v, unit) for v, unit in zip(velocity_list, unit_list)]
+            self._sync_write(d, 'GOAL_VELOCITY', d.ctrl_table.LEN_GOAL_VELOCITY, id_list, commands)
 
     def get_present_effort(self, ids):
-        torque_data = []
-        for d in self.device:
-            id_list = self.filter_ids(ids, d)
-            torque_data.append(self._sync_read(d, 'PRESENT_EFFORT', 4, id_list))  # TODO: check parameter_data_length of PRESSENT_CURRENT
-            # TODO: parameter may be different for different motors. only listed for MX106 and DXLPRO
+        pass
 
     def set_goal_effort(self, ids, commands):
-        for d in self.device:
-            id_list, command_list = self.filter_ids_and_commands(ids, commands, d)
-            self._sync_write(d, 'GOAL_EFFORT', 4, id_list, commands)  # TODO: check parameter_data_length of GOAL_TORQUE
-            # TODO: parameter may be different for different motors. only listed for DXLPRO, and I think it's called GOAL_CURRENT for MX106
+        pass
 
     def filter_ids(self, ids, device):
         # filters out ids based on which ids are on the device
@@ -516,10 +556,18 @@ class DxlInterface(object):
         return id_list, comm_list
 
 def rad2pos(rad, resolution):
-    return int(round(rad * resolution / (2 * 3.1415926)))
+    return int(round(rad * resolution / (2 * pi)))
 
 def pos2rad(pos, resolution):
-    return pos * (2 * 3.1415926) / resolution
+    return pos * (2 * pi) / resolution
+
+def radps2vel(radps, conversion):
+    # 30/pi rpm per radps, then divide by conversion to get the unit
+    return int(round(radps * (30 / pi) / conversion))
+
+def vel2radps(vel, conversion):
+    # multiply by conversion to get rpm, then pi/30 radps per rpm
+    return vel * conversion / (30 / pi)
 
 def get_parameter_data_len(d, parameter):
     """
@@ -541,6 +589,6 @@ def get_parameter_data_len(d, parameter):
     try:  # to get command length
         parameter_data_len = getattr(motor, 'LEN_{}'.format(parameter))
     except AttributeError:
-        parameter_data_len = 4  # TODO: figure out best way to assume data lengh
+        raise AttributeError('Error: motor_model {} does not have parameter {}'.format(motor_model_no, parameter))
 
     return parameter_data_len
