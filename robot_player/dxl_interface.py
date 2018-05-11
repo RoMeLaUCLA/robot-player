@@ -489,14 +489,7 @@ class DxlInterface(object):
         return pos_data
 
     def get_all_present_position(self):
-        pos_data = []
-        for d in self.device:
-            data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, d.motor_id)
-            for m_id, data in zip(d.motor_id, data_list):
-                res = d.motor[m_id]["resolution"]
-                pos_data.append(pos2rad(data, res))
-
-        return pos_data
+        return self.get_present_position(self.motor_id)
 
     def set_goal_position(self, ids, angles):
         for d in self.device:
