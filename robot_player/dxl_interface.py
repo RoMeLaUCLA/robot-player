@@ -527,26 +527,26 @@ class DxlInterface(object):
     def set_goal_effort(self, ids, commands):
         pass
 
-    def filter_ids(self, ids, device):
-        # filters out ids based on which ids are on the device
+    def filter_ids(self, ids, port):
         """
+        takes some ids and filters for ids which are on a particular port
 
         :param ids: motor ids to check
-        :param device: device to match
+        :param port: device to match
         :return: list of devices that match this device
         """
-        return [m_id for m_id in ids if self.id_to_port[m_id] == device]
+        return filter(lambda x: self.id_to_port[x] == port, ids)
 
-    def filter_ids_and_commands(self, ids, commands, device):
+    def filter_ids_and_commands(self, ids, commands, port):
         """
+        takes some ids and and commands for those ids and filters for ids which are on a particular port
 
         :param ids: motor_ids to check
         :param commands: commands to attach
-        :param device: device to match
+        :param port: device to match
         :return: (id_list, command_list) of ids and matching commands to send
         """
-        id_list, comm_list = zip(*[(m_id, comm) for m_id, comm in zip(ids, commands) if self.id_to_port[m_id] == device])
-        return id_list, comm_list
+        return zip(*[(m_id, comm) for m_id, comm in zip(ids, commands) if self.id_to_port[m_id] == port])
 
 def rad2pos(rad, resolution):
     return int(round(rad * resolution / (2 * pi)))
