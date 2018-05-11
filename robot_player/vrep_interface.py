@@ -267,7 +267,7 @@ class VrepInterface(object):
         for i in ids:
             j = self.joint[i]
             _, vel = vrep.simxGetObjectFloatParameter(self._sim_Client_ID, j['sim_handle'], vrep.sim_jointfloatparam_velocity, opmode)
-            if _ != 0:
+            if _ > 1:
                 raise Exception("VREP Error {}".format(_))
             else:
                 joint_velocity.append(vel)
@@ -302,7 +302,7 @@ class VrepInterface(object):
         for i in ids:
             j = self.joint[i]
             _, effort = vrep.simxGetJointForce(self._sim_Client_ID, j['sim_handle'], opmode)
-            if _ != 0:
+            if _ > 1:
                 raise Exception("Return code non-zero: {}".format(_))
             effort_list.append(effort)
         return effort_list
@@ -337,7 +337,7 @@ class VrepInterface(object):
             j = self.joint[i]
             # convert True/False to ints
             _, val = vrep.simxGetObjectIntParameter(self._sim_Client_ID, j['sim_handle'], vrep.sim_jointintparam_ctrl_enabled, vrep.simx_opmode_blocking)
-            if _ != 0:
+            if _ > 1:
                 raise Exception("VREP Error {}".format(_))
             else:
                 enable_list.append(val)
