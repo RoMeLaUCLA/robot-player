@@ -327,13 +327,14 @@ class DxlInterface(object):
     def _read_data(self, ids, address, data_length):
         """
         Read control table data from a list of ids
-        :param ids:
-        :param address:
+
+        :param ids: motors to read for
+        :param address: address to read from
         :param data_length: 1, 2 or 4 bytes. Can't do more than that.
         :return: list of the data in the same order as the ids
         """
 
-        # choose a number of bytes to read based on data length
+        # choose correct reading function based on data_length
         if data_length == 1:
             read_fn = dynamixel.read1ByteTxRx
         elif data_length == 2:
@@ -341,19 +342,20 @@ class DxlInterface(object):
         elif data_length == 4:
             read_fn = dynamixel.read4ByteTxRx
         else:
-            print("Invalid data length: 1,2,4 bytes only")
+            raise ValueError("Invalid data length: 1,2,4 bytes only")
 
-        # choose protocol version
+        # create empty dictionary to hold results
         result = {}
+
+        # for each device, get the ids for that device and get the data for each id, storing in dictionary
         for d in self.device:
             device_ids = self.filter_ids(ids, d)
-            portno = d.port_num
-            protocol_version = d.protocol_version
             for m_id in device_ids:
-                data = read_fn(portno, protocol_version, m_id, address)
+                data = read_fn(d.port_num, d.protocol_version, m_id, address)
                 result[m_id] = data
 
-        return [result[m_id] for m_id in ids] # reorder data to match original id order
+        # reorder dictionary data to match original id order
+        return (result[m_id] for m_id in ids)
 
 
     def _write_data(self, ids, address, data, data_length):
