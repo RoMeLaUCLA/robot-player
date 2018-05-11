@@ -326,11 +326,11 @@ class DxlInterface(object):
 
     def _read_data(self, ids, address, data_length):
         """
-        Read control table data from a list of ids
+        Read data from motors at a particular address
 
-        :param ids: motors to read for
+        :param ids: motors to read from
         :param address: address to read from
-        :param data_length: 1, 2 or 4 bytes. Can't do more than that.
+        :param data_length: 1, 2, or 4 bytes. Can't do more than that
         :return: list of the data in the same order as the ids
         """
 
@@ -360,14 +360,15 @@ class DxlInterface(object):
 
     def _write_data(self, ids, address, data, data_length):
         """
-        Write data to list of motor ids
+        Write data to motors at a particular address
 
-        :param ids:
-        :param address:
-        :param data_length:
-        :return:
+        :param ids: motors to write to
+        :param address: address to write to
+        :param data_length: 1, 2, or 4 bytes. Can't do more than that
+        :return: list of the data in the same order as the ids
         """
 
+        # choose correct reading function based on data_length
         if data_length == 1:
             write_fn = dynamixel.write1ByteTxRx
         elif data_length == 2:
@@ -375,14 +376,13 @@ class DxlInterface(object):
         elif data_length == 4:
             write_fn = dynamixel.write4ByteTxRx
         else:
-            print("Invalid data length: 1,2,4 bytes only")
+            raise ValueError("Invalid data length: 1,2,4 bytes only")
 
+        # for each device, get the ids for that device and write the data for each id
         for d in self.device:
             device_ids, commands = self.filter_ids_and_commands(ids, data, d)
-            portno = d.port_num
-            protocol_version = d.protocol_version
             for m_id, comm in zip(device_ids, commands):
-                write_fn(portno, protocol_version, m_id, address,  comm)
+                write_fn(d.portno, d.protocol_version, m_id, address, comm)
 
 
     def _sync_write(self, device, parameter, parameter_data_length, ids, commands):
