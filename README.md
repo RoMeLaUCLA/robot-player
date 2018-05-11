@@ -25,7 +25,6 @@ pip install numpy
 ```bash
 git clone https://github.com/RoMeLaUCLA/robot-player.git
 cd robot-player
-git checkout release
 pip install .
 ```
 
