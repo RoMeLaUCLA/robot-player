@@ -13,6 +13,7 @@ from .dxl import dynamixel_functions as dynamixel
 from .dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28, MX28_P1
 from collections import OrderedDict
 from math import pi
+from functools import wraps
 
 # conversion table. pass in the motor model number, get the object
 NUM2MODEL = {MX106.MX_106: MX106,
@@ -36,6 +37,21 @@ NUM2MODEL = {MX106.MX_106: MX106,
 
 COMM_SUCCESS = 0  # Communication Success result value
 COMM_TX_FAIL = -1001  # Communication Tx Failed
+
+def dict_sorter_decorator(getter_fn):
+    """
+    sorts results from a getter function into the order originally requested.
+    assumes that the ids argument is the first thing passed after self.
+
+    :param getter_fn: the getter function to modify
+    :return: results from getter function sorted into original order
+    """
+    @wraps(getter_fn)
+    def wrapper(*args, **kwargs):
+        results_dict = getter_fn(*args, **kwargs)
+        ids = args[1]
+        return [results_dict[x] for x in ids]
+    return wrapper
 
 class DxlOptions(object):
     def __init__(self,
@@ -324,6 +340,7 @@ class DxlInterface(object):
                     elif dxl_error != 0:
                         print(dynamixel.getRxPacketError(d.protocol_version, dxl_error))
 
+    @dict_sorter_decorator
     def _read_data(self, ids, address, data_length):
         """
         Read data from motors at a particular address
@@ -345,18 +362,16 @@ class DxlInterface(object):
             raise ValueError("Invalid data length: 1,2,4 bytes only")
 
         # create empty dictionary to hold results
-        result = {}
+        results = {}
 
         # for each device, get the ids for that device and get the data for each id, storing in dictionary
         for d in self.device:
             device_ids = self.filter_ids(ids, d)
             for m_id in device_ids:
                 data = read_fn(d.port_num, d.protocol_version, m_id, address)
-                result[m_id] = data
+                results[m_id] = data
 
-        # reorder dictionary data to match original id order
-        return (result[m_id] for m_id in ids)
-
+        return results
 
     def _write_data(self, ids, address, data, data_length):
         """
@@ -477,8 +492,9 @@ class DxlInterface(object):
                 data_list.append(data)
         return data_list
 
+    @dict_sorter_decorator
     def get_present_position(self, ids):
-        pos_data = []
+        pos_data = {}
         for d in self.device:
             # filter out ids that are on this device
             id_list = self.filter_ids(ids, d)
@@ -486,7 +502,7 @@ class DxlInterface(object):
             data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, id_list)
             for m_id, data in zip(d.motor_id, data_list):
                 res = d.motor[m_id]["resolution"]
-                pos_data.append(pos2rad(data, res))
+                pos_data[m_id] = pos2rad(data, res)
 
         return pos_data
 
@@ -504,14 +520,15 @@ class DxlInterface(object):
     def set_all_goal_position(self, angles):
         self.set_goal_position(self.motor_id, angles)
 
+    @dict_sorter_decorator
     def get_present_velocity(self, ids):
-        vel_data = []
+        vel_data = {}
         for d in self.device:
             id_list = self.filter_ids(ids, d)
             data_list = self._sync_read(d, 'PRESENT_VELOCITY', d.ctrl_table.LEN_PRESENT_VELOCITY, id_list)
             for m_id, data in zip(d.motor_id, data_list):
                 unit = d.motor[m_id]['vel_unit']
-                vel_data.append(vel2radps(data, unit))
+                vel_data[m_id] = vel2radps(data, unit)
 
         return vel_data
 
@@ -523,6 +540,7 @@ class DxlInterface(object):
             commands = [radps2vel(v, unit) for v, unit in zip(velocity_list, unit_list)]
             self._sync_write(d, 'GOAL_VELOCITY', d.ctrl_table.LEN_GOAL_VELOCITY, id_list, commands)
 
+    @dict_sorter_decorator
     def get_present_effort(self, ids):
         pass
 
