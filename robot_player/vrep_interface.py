@@ -422,6 +422,18 @@ class VrepInterface(object):
     
     These functions are to allow generic access to all of VREP's functions by specifying the name of the function
     """
+    def vrep_func(self, fn_name, *args):
+        """
+        Generic VREP function access. Automatically supplies the client ID. Everything else is left to the user to
+        supply the correct arguments.
+        :param fn_name: string with the name of the function
+        :param args: arguments for the function, in order, skipping the client ID
+        :return:
+        """
+
+        func_to_call = getattr(vrep, fn_name)
+        return func_to_call(self._sim_Client_ID, *args)
+
     def vrep_func_w_op(self, fn_name, *args, **kwargs):
         """
         Generic VREP function access. Automatically supplies the client ID and the last parameter, which is the
@@ -448,6 +460,8 @@ class VrepInterface(object):
         args.append(opmode)
         func_to_call = getattr(vrep, fn_name)
         return func_to_call(self._sim_Client_ID, *args)
+
+
 
 def sign(x):
     if x > 0:

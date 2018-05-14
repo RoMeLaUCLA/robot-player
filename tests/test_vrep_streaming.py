@@ -9,6 +9,7 @@ from math import sin, cos
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 ids = [0,1,2,3,4,5,6,7]
 dt = .01
 numtimesteps = 500
@@ -21,6 +22,10 @@ with MotionManager(ids, dt=dt, options=VrepOptions(joint_prefix='revolute_joint'
     mm.get_present_velocity(ids, streaming=True)
     mm.read_accelerometer(streaming=True)
     mm.read_gyro(streaming=True)
+    vi = mm.device
+
+    # testing vrep generics
+    vi.vrep_func_w_op('simxAddStatusbarMessage', 'This is the message to display', opmode="oneshot")
 
     mm.wait(.5)
 
@@ -42,6 +47,9 @@ with MotionManager(ids, dt=dt, options=VrepOptions(joint_prefix='revolute_joint'
         joint_velocity[i, :] = np.array(mm.get_present_velocity(ids, buffer=True))
         gyro_data[i,:] = np.array(mm.read_gyro(buffer=True))
         accel_data[i,:] = np.array(mm.read_accelerometer(buffer=True))
+
+        # vrep generic without opmode
+        print("simxGetLastCmdTime = {}".format(vi.vrep_func('simxGetLastCmdTime')))
 
 
 plt.figure(1)
