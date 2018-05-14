@@ -95,14 +95,17 @@ class MotionManager(object):
         return vi
 
     ## Position ##
-    def get_present_position(self, ids):
+    def get_present_position(self, ids, **kwargs):
         # gets current position of specific joint
         # ids is a list of ids
-        return self.device.get_present_position(ids)
+        if self.player == 'vrep':
+            return self.device.get_present_position(ids, **kwargs)
+        if self.player == 'dxl':
+            return self.device.get_present_position(ids)
 
-    def get_all_present_position(self):
+    def get_all_present_position(self, **kwargs):
         # gets current position of robot
-        return self.device.get_all_present_position()
+        return self.device.get_all_present_position(**kwargs)
 
     def set_goal_position(self, ids, commands, send=False):
         # ids is a list of the ids that you want to command
@@ -127,12 +130,15 @@ class MotionManager(object):
             self.device.set_all_goal_position(command)
 
     ## Velocity ##
-    def get_present_velocity(self, ids):
-        return self.device.get_present_velocity(ids)
-
-    def get_all_present_velocity(self):
+    def get_present_velocity(self, ids, **kwargs):
         if self.player == 'vrep':
-            return self.device.get_all_present_velocity()
+            return self.device.get_present_velocity(ids, **kwargs)
+        if self.player == 'dxl':
+            return self.device.get_present_velocity(ids)
+
+    def get_all_present_velocity(self, **kwargs):
+        if self.player == 'vrep':
+            return self.device.get_all_present_velocity(**kwargs)
         if self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
@@ -154,39 +160,39 @@ class MotionManager(object):
         if self.player == 'vrep':
             self.device.set_all_goal_velocity(commands, send)
         if self.player == 'dxl':
-            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
+            self.set_goal_velocity(self.motor_id, commands, send)
 
     ## Effort (force/torque/PWM/current) ##
-    def get_present_effort(self, ids):
-        # return self.device.get_present_effort(ids)
-        pass
+    def get_present_effort(self, ids, **kwargs):
+        if self.player == 'vrep':
+            return self.device.get_present_effort(ids, **kwargs)
+        elif self.player == 'dxl':
+            self.device.get_present_effort(ids)
 
-    def get_all_present_effort(self):
-        # if self.player == 'vrep':
-        #     return self.device.get_all_present_effort()
-        # elif self.player == 'dxl':
-        #     raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
-        pass
+    def get_all_present_effort(self, **kwargs):
+        if self.player == 'vrep':
+            return self.device.get_all_present_effort(**kwargs)
+        elif self.player == 'dxl':
+            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     def set_goal_effort(self, ids, commands, send=True):
 
-        # try:
-        #     assert (len(ids) == len(commands))
-        # except AssertionError:
-        #     raise ValueError('ERROR: ids and commands must be same length')
-        #
-        # if self.player == 'vrep':
-        #     self.device.set_goal_effort(ids, commands, send)
-        # if self.player == 'dxl':
-        #     self.device.set_goal_effort(ids, commands)
-        pass
+        try:
+            assert (len(ids) == len(commands))
+        except AssertionError:
+            raise ValueError('ERROR: ids and commands must be same length')
+
+        if self.player == 'vrep':
+            self.device.set_goal_effort(ids, commands, send)
+        if self.player == 'dxl':
+            # self.device.set_goal_effort(ids, commands)
+            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     def set_all_goal_effort(self, commands, send=True):
-        # if self.player == 'vrep':
-        #     self.device.set_all_goal_effort(commands, send)
-        # elif self.player == 'dxl':
-        #     raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
-        pass
+        if self.player == 'vrep':
+            self.device.set_all_goal_effort(commands, send)
+        elif self.player == 'dxl':
+            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     def wait(self, time_to_wait):
         # wait for a specified duration of time, in seconds. This command is blocking.
@@ -246,7 +252,7 @@ class MotionManager(object):
     def read_imu(self, **kwargs):
         if isinstance(self.imu_device, VrepInterface):
             rpy = self.imu_device.read_gyro(**kwargs)
-            cdd = self.imu_device.read_accelerometer()
+            cdd = self.imu_device.read_accelerometer(**kwargs)
             return rpy, cdd
 
     def read_ft_sensor(self, sensor_id, **kwargs):

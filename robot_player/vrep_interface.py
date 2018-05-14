@@ -10,7 +10,7 @@ __status__ = "Prototype"
   This class is used to handle the communication between python and V-REP
 '''
 
-from . vrep import vrep
+from vrep import vrep
 from collections import OrderedDict
 
 class VrepOptions(object):
@@ -105,15 +105,27 @@ class VrepInterface(object):
         for i in range(timesteps_to_wait):
             self.send_command()
 
-    def get_object_position(self, object_handle, base_handle=-1):
-        return vrep.simxGetObjectPosition(self._sim_Client_ID, object_handle, base_handle, vrep.simx_opmode_blocking)[1]
+    def get_object_position(self, object_handle, base_handle=-1, **kwargs):
+        if kwargs.get('streaming'):
+            opmode = vrep.simx_opmode_streaming
+        elif kwargs.get('buffer'):
+            opmode = vrep.simx_opmode_buffer
+        else:
+            opmode = vrep.simx_opmode_blocking
+        return vrep.simxGetObjectPosition(self._sim_Client_ID, object_handle, base_handle, opmode)[1]
 
     def set_object_position(self, position, object_handle, base_handle=-1):
         return vrep.simxSetObjectPosition(
             self._sim_Client_ID, object_handle, base_handle, position, vrep.simx_opmode_oneshot)
 
-    def get_object_orientation(self, object_handle, base_handle=-1):
-        return vrep.simxGetObjectOrientation(self._sim_Client_ID, object_handle, base_handle, vrep.simx_opmode_blocking)[1]
+    def get_object_orientation(self, object_handle, base_handle=-1, **kwargs):
+        if kwargs.get('streaming'):
+            opmode = vrep.simx_opmode_streaming
+        elif kwargs.get('buffer'):
+            opmode = vrep.simx_opmode_buffer
+        else:
+            opmode = vrep.simx_opmode_blocking
+        return vrep.simxGetObjectOrientation(self._sim_Client_ID, object_handle, base_handle, opmode)[1]
 
     def set_object_orientation(self, orientation, object_handle, base_handle=-1):
         return vrep.simxSetObjectOrientation(
@@ -206,20 +218,29 @@ class VrepInterface(object):
         return joint_dict
 
     ## Position ##
-    def get_present_position(self, ids):
+    def get_present_position(self, ids, **kwargs):
+        if kwargs.get('streaming'):
+            opmode = vrep.simx_opmode_streaming
+        elif kwargs.get('buffer'):
+            opmode = vrep.simx_opmode_buffer
+        else:
+            opmode = vrep.simx_opmode_blocking
+
         joint_angles = [vrep.simxGetJointPosition(self._sim_Client_ID, self.joint[i]['sim_handle'],
-                                                  vrep.simx_opmode_blocking)[1] for i in ids]
+                                                  operationMode=opmode)[1] for i in ids]
         return joint_angles
 
-    def get_all_present_position(self):
+    def get_all_present_position(self, **kwargs):
         # use the built in joint data structure to read all motor positions
         # commands must be for joints ordered from least to greatest
-        return self.get_present_position(self.motor_id)
+        return self.get_present_position(self.motor_id, **kwargs)
 
     def set_goal_position(self, ids, commands, send=False):
+        vrep.simxPauseCommunication(self._sim_Client_ID, True)
         for i, c in zip(ids, commands):
             vrep.simxSetJointTargetPosition(self._sim_Client_ID, self.joint[i]['sim_handle'], c,
                                             vrep.simx_opmode_oneshot)
+        vrep.simxPauseCommunication(self._sim_Client_ID, False)
         if send:
             self.send_command()
 
@@ -235,26 +256,32 @@ class VrepInterface(object):
         self.set_goal_position(self.motor_id, commands, send_command)
 
     ## Velocity ##
-    def get_present_velocity(self, ids):
+    def get_present_velocity(self, ids, **kwargs):
+        if kwargs.get('streaming'):
+            opmode = vrep.simx_opmode_streaming
+        elif kwargs.get('buffer'):
+            opmode = vrep.simx_opmode_buffer
+        else:
+            opmode = vrep.simx_opmode_blocking
         joint_velocity = []
         for i in ids:
             j = self.joint[i]
-            _, vel = vrep.simxGetObjectFloatParameter(self._sim_Client_ID, j['sim_handle'], vrep.sim_jointfloatparam_velocity, vrep.simx_opmode_blocking)
-            if _ != 0:
+            _, vel = vrep.simxGetObjectFloatParameter(self._sim_Client_ID, j['sim_handle'], vrep.sim_jointfloatparam_velocity, opmode)
+            if _ > 1:
                 raise Exception("VREP Error {}".format(_))
             else:
                 joint_velocity.append(vel)
         return joint_velocity
 
-    def get_all_present_velocity(self):
+    def get_all_present_velocity(self, **kwargs):
         # use the built in joint data structure to read all motor velocities
         # commands must be for joints ordered from least to greatest
-        return self.get_present_velocity(self.motor_id)
+        return self.get_present_velocity(self.motor_id, **kwargs)
 
     def set_goal_velocity(self, ids, commands, send=True):
         for i, c in zip(ids, commands):
             j = self.joint[i]
-            vrep.simxSetJointTargetVelocity(self._sim_Client_ID, j['sim_handle'], c, vrep.simx_opmode_blocking)
+            vrep.simxSetJointTargetVelocity(self._sim_Client_ID, j['sim_handle'], c, vrep.simx_opmode_oneshot)
         if send:
             self.send_command()
 
@@ -264,18 +291,24 @@ class VrepInterface(object):
         self.set_goal_velocity(self.joint, commands, send_command)
 
     ## Effort (force/torque/PWM/current) ##
-    def get_present_effort(self, ids):
+    def get_present_effort(self, ids, **kwargs):
+        if kwargs.get('streaming'):
+            opmode = vrep.simx_opmode_streaming
+        elif kwargs.get('buffer'):
+            opmode = vrep.simx_opmode_buffer
+        else:
+            opmode = vrep.simx_opmode_blocking
         effort_list = []
         for i in ids:
             j = self.joint[i]
-            _, effort = vrep.simxGetJointForce(self._sim_Client_ID, j['sim_handle'], vrep.simx_opmode_blocking)
-            if _ != 0:
+            _, effort = vrep.simxGetJointForce(self._sim_Client_ID, j['sim_handle'], opmode)
+            if _ > 1:
                 raise Exception("Return code non-zero: {}".format(_))
             effort_list.append(effort)
         return effort_list
 
-    def get_all_present_effort(self):
-        return self.get_present_effort(self.joint)
+    def get_all_present_effort(self, **kwargs):
+        return self.get_present_effort(self.joint, **kwargs)
 
     def set_goal_effort(self, ids, commands, send=True):
         for i, c in zip(ids, commands):
@@ -304,7 +337,7 @@ class VrepInterface(object):
             j = self.joint[i]
             # convert True/False to ints
             _, val = vrep.simxGetObjectIntParameter(self._sim_Client_ID, j['sim_handle'], vrep.sim_jointintparam_ctrl_enabled, vrep.simx_opmode_blocking)
-            if _ != 0:
+            if _ > 1:
                 raise Exception("VREP Error {}".format(_))
             else:
                 enable_list.append(val)
@@ -329,11 +362,13 @@ class VrepInterface(object):
     and gyro defined in the RobotData models
     """
 
-    def read_gyro(self, initialize=False):
-        if initialize:
+    def read_gyro(self, **kwargs):
+        if kwargs.get('streaming'):
             opmode = vrep.simx_opmode_streaming
-        else:
+        elif kwargs.get('buffer'):
             opmode = vrep.simx_opmode_buffer
+        else:
+            opmode = vrep.simx_opmode_blocking
         returnCode, _, outFloats, _, _ = vrep.simxCallScriptFunction(self._sim_Client_ID,
                                                                      scriptDescription="GyroSensor",
                                                                      options=vrep.sim_scripttype_childscript,
@@ -348,11 +383,13 @@ class VrepInterface(object):
 
         return outFloats
 
-    def read_accelerometer(self, initialize=False):
-        if initialize:
+    def read_accelerometer(self, **kwargs):
+        if kwargs.get('streaming'):
             opmode = vrep.simx_opmode_streaming
-        else:
+        elif kwargs.get('buffer'):
             opmode = vrep.simx_opmode_buffer
+        else:
+            opmode = vrep.simx_opmode_blocking
         returnCode, _, outFloats, _, _ = vrep.simxCallScriptFunction(self._sim_Client_ID,
                                                                      scriptDescription="Accelerometer",
                                                                      options=vrep.sim_scripttype_childscript,
@@ -366,17 +403,65 @@ class VrepInterface(object):
         #     raise Exception("ERROR in {}: returnCode = {}".format(__name__, returnCode))
         return outFloats
 
-    def read_ft_sensor(self, sensor_id, initialize=False):
-        if initialize:
+    def read_ft_sensor(self, sensor_id, **kwargs):
+        if kwargs.get('streaming'):
             opmode = vrep.simx_opmode_streaming
-        else:
+        elif kwargs.get('buffer'):
             opmode = vrep.simx_opmode_buffer
+        else:
+            opmode = vrep.simx_opmode_blocking
         returnCode, state, forceVector, torqueVector = vrep.simxReadForceSensor(self._sim_Client_ID,
                                                                                 self.ft_sensors[sensor_id],
                                                                                 opmode)
         # if returnCode != vrep.simx_return_ok:
         #     raise Exception("ERROR in {}: returnCode = {}".format(__name__, returnCode))
         return forceVector, torqueVector
+
+    """
+    Generics
+    
+    These functions are to allow generic access to all of VREP's functions by specifying the name of the function
+    """
+    def vrep_func(self, fn_name, *args):
+        """
+        Generic VREP function access. Automatically supplies the client ID. Everything else is left to the user to
+        supply the correct arguments.
+        :param fn_name: string with the name of the function
+        :param args: arguments for the function, in order, skipping the client ID
+        :return:
+        """
+
+        func_to_call = getattr(vrep, fn_name)
+        return func_to_call(self._sim_Client_ID, *args)
+
+    def vrep_func_w_op(self, fn_name, *args, **kwargs):
+        """
+        Generic VREP function access. Automatically supplies the client ID and the last parameter, which is the
+        operation mode. Everything else is left to the user to supply the correct arguments.
+        :param fn_name: string with the name of the function
+        :param args: arguments for the function, in order
+        :param kwargs:
+        :return:
+        """
+
+        if kwargs.get('streaming'):
+            opmode = vrep.simx_opmode_streaming
+        elif kwargs.get('buffer'):
+            opmode = vrep.simx_opmode_buffer
+        elif kwargs.get('oneshot'):
+            opmode = vrep.simx_opmode_oneshot
+        elif kwargs.get('blocking'):
+            opmode = vrep.simx_opmode_blocking
+        else:
+            opmode = vrep.simx_opmode_blocking
+
+        # append opmode to arguments
+        args = list(args)
+        args.append(opmode)
+        func_to_call = getattr(vrep, fn_name)
+        return func_to_call(self._sim_Client_ID, *args)
+
+
 
 def sign(x):
     if x > 0:
