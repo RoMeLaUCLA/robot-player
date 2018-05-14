@@ -10,7 +10,7 @@ __status__ = "Prototype"
   This class is used to handle the communication between python and V-REP
 '''
 
-from . vrep import vrep
+from vrep import vrep
 from collections import OrderedDict
 
 class VrepOptions(object):
@@ -416,6 +416,38 @@ class VrepInterface(object):
         # if returnCode != vrep.simx_return_ok:
         #     raise Exception("ERROR in {}: returnCode = {}".format(__name__, returnCode))
         return forceVector, torqueVector
+
+    """
+    Generics
+    
+    These functions are to allow generic access to all of VREP's functions by specifying the name of the function
+    """
+    def vrep_func_w_op(self, fn_name, *args, **kwargs):
+        """
+        Generic VREP function access. Automatically supplies the client ID and the last parameter, which is the
+        operation mode. Everything else is left to the user to supply the correct arguments.
+        :param fn_name: string with the name of the function
+        :param args: arguments for the function, in order
+        :param kwargs:
+        :return:
+        """
+
+        if kwargs.get('streaming'):
+            opmode = vrep.simx_opmode_streaming
+        elif kwargs.get('buffer'):
+            opmode = vrep.simx_opmode_buffer
+        elif kwargs.get('oneshot'):
+            opmode = vrep.simx_opmode_oneshot
+        elif kwargs.get('blocking'):
+            opmode = vrep.simx_opmode_blocking
+        else:
+            opmode = vrep.simx_opmode_blocking
+
+        # append opmode to arguments
+        args = list(args)
+        args.append(opmode)
+        func_to_call = getattr(vrep, fn_name)
+        return func_to_call(self._sim_Client_ID, *args)
 
 def sign(x):
     if x > 0:
