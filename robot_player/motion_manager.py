@@ -222,9 +222,9 @@ class MotionManager(object):
         if isinstance(self.device, VrepInterface):
             # timesteps to wait, rounded down to the nearest integer
             self.device.wait(1)
-        # if isinstance(self.device, DxlInterface):
-        #     # timesteps to wait, rounded down to the nearest integer
-        #     self.device.wait(dt)
+        if isinstance(self.device, DxlInterface):
+            # timesteps to wait, rounded down to the nearest integer
+            self.wait(self.dt)
 
     def read_gyro(self, **kwargs):
         """
@@ -278,7 +278,7 @@ def to_player_angle_offset(angles, player_offset):
     # rectify each of the joint axes.
     """
     :param angles: angles (radians)
-    :param player_offset: a class specifying player offsets that should be customized for each robote
+    :param player_offset: a class specifying player offsets that should be customized for each robot
     :return:
     """
 
@@ -351,28 +351,3 @@ def player_arg_parser(filename):
         quit()
 
     return args
-
-# if __name__ == "__main__":
-#     # test this with the vrep file L_Arm and the right arm of the Robotis Manipulator
-#     Devices = []
-#     dt = .01
-#     VI = VrepInterface(robot_name="", dt=dt, id_list=[9, 10, 11, 12, 13, 14, 15])
-#     Devices.append()
-#     Devices.append(DxlDevice([9, 10, 11, 12, 13, 14, 15]))
-#
-#     with MotionManager(Devices) as MM:
-#         MM.initialize()
-#         MM.set_all_goal_position([0, 0, 0, 0, 0, 0, 0])
-#         for i in xrange(100):
-#             print(MM.get_all_present_position())
-#             MM.wait(dt)
-#
-#         MM.set_all_goal_position([np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, np.pi / 10, ])
-#         for i in range(100):
-#             print(MM.get_all_present_position())
-#             MM.wait(dt)
-#
-#         MM.set_all_goal_position([0, 0, 0, 0, 0, 0, 0])
-#         for i in range(100):
-#             print(MM.get_all_present_position())
-#             MM.wait(dt)
