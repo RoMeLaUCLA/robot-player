@@ -22,6 +22,30 @@ class VrepOptions(object):
         self.ft_sensor_names = ft_sensor_names
         self.opmode = None
 
+def error_handler(return_code, function_name):
+    if return_code > 0:
+        error_list = []
+        if return_code & vrep.simx_return_novalue_flag:
+            error_list.append("simx_return_novalue_flag: There is no command reply in the input buffer. This should not always be considered as an error, depending on the selected operation mode)")
+        if return_code & vrep.simx_return_timeout_flag:
+            error_list.append("simx_return_timeout_flag: The function timed out (probably the network is down or too "
+                              "slow)")
+        if return_code & vrep.simx_return_illegal_opmode_flag:
+            error_list.append("simx_return_illegal_opmode_flag: The specified operation mode is not supported for the given function.")
+        if return_code & vrep.simx_return_remote_error_flag:
+            error_list.append("simx_return_remote_error_flag: The function caused an error on the server side (e.g. "
+                              "an invalid handle was specified) )")
+        if return_code & vrep.simx_return_split_progress_flag:
+            error_list.append("simx_return_split_progress_flag: The communication thread is still processing previous split command of the same type")
+        if return_code & vrep.simx_return_local_error_flag:
+            error_list.append("simx_return_local_error_flag: The function caused an error on the client side")
+        if return_code & vrep.simx_return_initialize_error_flag:
+            error_list.append("simx_return_initialize_error_flag: simxStart was not yet called")
+
+        for error in error_list:
+            print ("VREP function {} returned {}".format(function_name, error))
+
+
 class VrepInterface(object):
     """
     The VrepInterface is the main way of interacting with a simulation.
@@ -105,6 +129,11 @@ class VrepInterface(object):
         for i in range(timesteps_to_wait):
             self.send_command()
 
+    def get_ping_time(self):
+        _, ping_time = vrep.simxGetPingTime(self._sim_Client_ID)
+        error_handler(_, self.get_ping_time.__name__)
+        return ping_time
+
     def get_object_position(self, object_handle, base_handle=-1, **kwargs):
         if kwargs.get('streaming'):
             opmode = vrep.simx_opmode_streaming
@@ -112,7 +141,11 @@ class VrepInterface(object):
             opmode = vrep.simx_opmode_buffer
         else:
             opmode = vrep.simx_opmode_blocking
-        return vrep.simxGetObjectPosition(self._sim_Client_ID, object_handle, base_handle, opmode)[1]
+        _, data =  vrep.simxGetObjectPosition(self._sim_Client_ID, object_handle, base_handle, opmode)
+
+        if _ != 0:
+            error_handler(_, self.get_object_orientation.__name__)
+        return data
 
     def set_object_position(self, position, object_handle, base_handle=-1):
         return vrep.simxSetObjectPosition(
@@ -125,7 +158,11 @@ class VrepInterface(object):
             opmode = vrep.simx_opmode_buffer
         else:
             opmode = vrep.simx_opmode_blocking
-        return vrep.simxGetObjectOrientation(self._sim_Client_ID, object_handle, base_handle, opmode)[1]
+        _, data = vrep.simxGetObjectOrientation(self._sim_Client_ID, object_handle, base_handle, opmode)
+
+        if _ != 0:
+            error_handler(_, self.get_object_orientation.__name__)
+        return data
 
     def set_object_orientation(self, orientation, object_handle, base_handle=-1):
         return vrep.simxSetObjectOrientation(
@@ -220,14 +257,19 @@ class VrepInterface(object):
     ## Position ##
     def get_present_position(self, ids, **kwargs):
         if kwargs.get('streaming'):
-            opmode = vrep.simx_opmode_streaming
+            opmode = vrep.simx_opmode_streaming #+ int(self.dt*1000)
         elif kwargs.get('buffer'):
             opmode = vrep.simx_opmode_buffer
         else:
             opmode = vrep.simx_opmode_blocking
 
-        joint_angles = [vrep.simxGetJointPosition(self._sim_Client_ID, self.joint[i]['sim_handle'],
-                                                  operationMode=opmode)[1] for i in ids]
+        joint_angles = []
+        for i in ids:
+            _, data = vrep.simxGetJointPosition(self._sim_Client_ID, self.joint[i]['sim_handle'],
+                                  operationMode=opmode)
+            error_handler(_, __name__)
+            joint_angles.append(data)
+
         return joint_angles
 
     def get_all_present_position(self, **kwargs):
@@ -268,6 +310,7 @@ class VrepInterface(object):
             j = self.joint[i]
             _, vel = vrep.simxGetObjectFloatParameter(self._sim_Client_ID, j['sim_handle'], vrep.sim_jointfloatparam_velocity, opmode)
             if _ > 1:
+                error_handler(_,self.get_present_velocity.__name__ )
                 raise Exception("VREP Error {}".format(_))
             else:
                 joint_velocity.append(vel)
@@ -399,8 +442,8 @@ class VrepInterface(object):
                                                                      inputStrings="",
                                                                      inputBuffer="",
                                                                      operationMode=opmode)
-        # if returnCode != vrep.simx_return_ok:
-        #     raise Exception("ERROR in {}: returnCode = {}".format(__name__, returnCode))
+        if returnCode != vrep.simx_return_ok:
+            error_handler(returnCode, self.read_accelerometer.__name__)
         return outFloats
 
     def read_ft_sensor(self, sensor_id, **kwargs):

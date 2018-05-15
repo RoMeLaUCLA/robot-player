@@ -11,12 +11,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-ids = [0,1,2,3,4,5,6,7]
+ids = [1,2,3,4,5,6,7,8,9,10,11,12]
 dt = .01
-numtimesteps = 500
+numtimesteps = 25
 
-with MotionManager(ids, dt=dt, options=VrepOptions(joint_prefix='revolute_joint',
-                                                   gyroscope=True,
+with MotionManager(ids, dt=dt, options=VrepOptions(gyroscope=True,
                                                    accelerometer=True)) as mm:
     mm.initialize()
     mm.get_present_position(ids, streaming=True)
