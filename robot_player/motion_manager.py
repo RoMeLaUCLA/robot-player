@@ -263,13 +263,8 @@ class MotionManager(object):
         :param kwargs:
         :return:
         """
-        if isinstance(self.ft_device, VrepInterface):
-            if 'initialize' in kwargs:
-                initialize= kwargs['initialize']
-            else:
-                initialize = False
-            out = []
-            force, torque = self.ft_device.read_ft_sensor(sensor_id, initialize=initialize)
+        # if isinstance(self.ft_device, VrepInterface):
+        force, torque = self.ft_device.read_ft_sensor(sensor_id, **kwargs)
         return force, torque
 
 

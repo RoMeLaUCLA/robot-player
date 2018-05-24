@@ -396,7 +396,7 @@ class VrepInterface(object):
 
     def send_command(self):
         vrep.simxSynchronousTrigger(self._sim_Client_ID)
-        vrep.simxGetPingTime(self._sim_Client_ID)
+        # vrep.simxGetPingTime(self._sim_Client_ID)
 
     """
     Sensor Communication functions
@@ -456,8 +456,8 @@ class VrepInterface(object):
         returnCode, state, forceVector, torqueVector = vrep.simxReadForceSensor(self._sim_Client_ID,
                                                                                 self.ft_sensors[sensor_id],
                                                                                 opmode)
-        # if returnCode != vrep.simx_return_ok:
-        #     raise Exception("ERROR in {}: returnCode = {}".format(__name__, returnCode))
+        if returnCode != vrep.simx_return_ok:
+            error_handler(returnCode, self.read_ft_sensor.__name__)
         return forceVector, torqueVector
 
     """
