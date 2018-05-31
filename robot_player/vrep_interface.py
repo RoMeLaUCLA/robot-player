@@ -15,7 +15,7 @@ from collections import OrderedDict
 
 class VrepOptions(object):
     # options class to help with creating via MotionManager
-    def __init__(self, joint_prefix=None, gyroscope=False, accelerometer=False, ft_sensor_names=None):
+    def __init__(self, joint_prefix=None, gyroscope=False, accelerometer=False, ft_sensor_names=None, synchronous=True):
         self.joint_prefix = joint_prefix
         self.gyroscope = gyroscope
         self.accelerometer = accelerometer
@@ -67,7 +67,7 @@ class VrepInterface(object):
 
     # On initialization pass in the timestep that both the python script and V-REP will be synced to
     def __init__(self, motor_id, dt, joint_prefix=None, gyroscope=False, accelerometer=False, ft_sensor_names=None,
-                 opmode=vrep.simx_opmode_blocking):
+                 opmode=vrep.simx_opmode_blocking, synchronous=True):
         vrep.simxFinish(-1)
         self._sim_Client_ID = vrep.simxStart('127.0.0.1', 19997, True, True, 5000, 1)
         if joint_prefix is None:
@@ -96,7 +96,7 @@ class VrepInterface(object):
         if self._sim_Client_ID != -1:
             print("Connected to V-REP remote API server.")
             # Setup synchronized simulation
-            vrep.simxSynchronous(self._sim_Client_ID, True)
+            vrep.simxSynchronous(self._sim_Client_ID, synchronous)
 
         else:
             # Failed to connect to remote API server
@@ -503,8 +503,6 @@ class VrepInterface(object):
         args.append(opmode)
         func_to_call = getattr(vrep, fn_name)
         return func_to_call(self._sim_Client_ID, *args)
-
-
 
 def sign(x):
     if x > 0:
