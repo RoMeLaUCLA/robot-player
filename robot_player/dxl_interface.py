@@ -10,7 +10,7 @@ __status__ = "Prototype"
 
 import ctypes
 from .dxl import dynamixel_functions as dynamixel
-from .dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28, MX28_P1
+from .dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28, MX28_P1, XSERIES
 from collections import OrderedDict
 from math import pi
 
@@ -29,7 +29,9 @@ NUM2MODEL = {MX106.MX_106: MX106,
              DXLPRO.L54_50_S290_R: DXLPRO,
              DXLPRO.L54_30_S400_R: DXLPRO,
              MX28.MX_28: MX28,
-             MX28_P1.MX_28_P1: MX28_P1}
+             MX28_P1.MX_28_P1: MX28_P1,
+             XSERIES.XH430_W350: XSERIES,
+             XSERIES.XH430_V350: XSERIES}
 
 # DEVICENAME = "/dev/ttyUSB0".encode('utf-8')  # Check which port is being used on your controller
 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
@@ -92,6 +94,8 @@ class DxlPort(object):
             self.ctrl_table = MX106_P1
         elif self.motor_type == 'DXLPRO':
             self.ctrl_table = DXLPRO
+        elif self.motor_type == 'XSERIES':
+            self.ctrl_table = XSERIES
         else:
             raise ValueError("Control table {} did not match one of the supported types: MX28, MX106, MX106_P1, DXLPRO".format(self.motor_type))
 
