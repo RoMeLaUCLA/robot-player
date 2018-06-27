@@ -21,6 +21,7 @@ class VrepOptions(object):
         self.accelerometer = accelerometer
         self.ft_sensor_names = ft_sensor_names
         self.opmode = None
+        self.synchronous=synchronous
 
 def error_handler(return_code, function_name):
     if return_code > 0:

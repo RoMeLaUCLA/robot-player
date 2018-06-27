@@ -91,7 +91,8 @@ class MotionManager(object):
                            joint_prefix=options.joint_prefix,
                            gyroscope=options.gyroscope,
                            accelerometer=options.accelerometer,
-                           ft_sensor_names=options.ft_sensor_names)
+                           ft_sensor_names=options.ft_sensor_names,
+                           synchronous=options.synchronous)
         return vi
 
     ## Position ##
