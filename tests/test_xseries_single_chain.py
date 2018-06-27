@@ -6,6 +6,8 @@ from math import pi
 import numpy as np
 """
 test for chain of X series dynamixels, 3 on a single chain plugged into each port.
+Baudrate is 3000000
+ID is [1,2,3]
 """
 
 def allclose(l1, l2, tol=2.):
@@ -82,8 +84,9 @@ def test_velocity():
         sleep(1)
         allclose(mm.get_present_velocity(ids), [0] * 3, .1)  # test zero velocity
 
+        mm.device.set_torque_enable(ids, [0]*3)
         mm.device._write_data(ids, XSERIES.OPERATING_MODE, [3]*3, 1)  # set motors to be in position mode
-
+        print(mm.device._read_data(ids, XSERIES.OPERATING_MODE, 1))  # check that motors are in position mode
 if __name__ == '__main__':
     test_set_all_command_position()
     test_set_command_position()
