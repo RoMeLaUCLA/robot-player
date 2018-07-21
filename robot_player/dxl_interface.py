@@ -73,6 +73,7 @@ class DxlOptions(object):
 
         for port, ids, motor_type in zip(ports, motor_ids, motor_types):
             self.dxl_ports.append(DxlPort(ids, motor_type, port, baudrate, protocol_version))
+            set_serial_port_low_latency(port)
 
 
 class DxlPort(object):
