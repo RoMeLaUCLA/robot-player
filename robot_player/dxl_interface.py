@@ -13,6 +13,7 @@ from .dxl import dynamixel_functions as dynamixel
 from .dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28, MX28_P1, XSERIES
 from collections import OrderedDict
 from math import pi
+import subprocess
 
 # conversion table. pass in the motor model number, get the object
 NUM2MODEL = {MX106.MX_106: MX106,
@@ -38,6 +39,10 @@ NUM2MODEL = {MX106.MX_106: MX106,
 
 COMM_SUCCESS = 0  # Communication Success result value
 COMM_TX_FAIL = -1001  # Communication Tx Failed
+
+def set_serial_port_low_latency(port_name):
+    # sets serial port to be low latency
+    subprocess.call(['setserial', port_name, 'low_latency'])
 
 class DxlOptions(object):
     def __init__(self,
@@ -67,6 +72,7 @@ class DxlOptions(object):
 
         for port, ids, motor_type in zip(ports, motor_ids, motor_types):
             self.dxl_ports.append(DxlPort(ids, motor_type, port, baudrate, protocol_version))
+
 
 class DxlPort(object):
     def __init__(self,
@@ -98,6 +104,7 @@ class DxlPort(object):
             self.ctrl_table = XSERIES
         else:
             raise ValueError("Control table {} did not match one of the supported types: MX28, MX106, MX106_P1, DXLPRO".format(self.motor_type))
+
 
 class DxlInterface(object):
     """
@@ -132,10 +139,13 @@ class DxlInterface(object):
         self.baudrate = baudrate
         self.device = []
 
+
+
         # allocate ports
         for d in dxl_ports:
             d.port_num = dynamixel.portHandler(d.device_name)
             self.device.append(d)
+            set_serial_port_low_latency(d.device_name)
         print(self.device)
 
         # initialize packet handler
