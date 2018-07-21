@@ -672,7 +672,8 @@ class XSERIES:
         Relevant register values from the online manual.
         Reference:
         https://github.com/ROBOTIS-GIT/emanual/blob/master/docs/en/dxl/x/xh430-w350.md
-        """
+    """
+    XM540_W270 = 1120
     XH430_W350 = 1000
     XH430_V350 = 1040 # TODO: update with all X series model numbers
     resolution = 4096
@@ -711,6 +712,9 @@ class XSERIES:
     VELOCITY_LIMIT = 44
     MAX_POSITION_LIMIT = 48
     MIN_POSITION_LIMIT = 52
+    EXTERNAL_PORT_MODE_1 = 56
+    EXTERNAL_PORT_MODE_2 = 57
+    EXTERNAL_PORT_MODE_3 = 58
     SHUTDOWN = 63
 
     # =====================================================================

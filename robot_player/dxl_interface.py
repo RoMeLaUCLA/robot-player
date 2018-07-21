@@ -32,7 +32,8 @@ NUM2MODEL = {MX106.MX_106: MX106,
              MX28.MX_28: MX28,
              MX28_P1.MX_28_P1: MX28_P1,
              XSERIES.XH430_W350: XSERIES,
-             XSERIES.XH430_V350: XSERIES}
+             XSERIES.XH430_V350: XSERIES,
+             XSERIES.XM540_W270: XSERIES}
 
 # DEVICENAME = "/dev/ttyUSB0".encode('utf-8')  # Check which port is being used on your controller
 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
