@@ -191,14 +191,19 @@ class DxlInterface(object):
 
         :return:
         """
+        num_motors = 0
+        motors_not_found = 0
+
         for d in self.device:
             for m_id in d.motor_id:
+                num_motors += 1
                 motor_model_no = dynamixel.pingGetModelNum(d.port_num, d.protocol_version, m_id)
                 dxl_comm_result = dynamixel.getLastTxRxResult(d.port_num, d.protocol_version)
                 dxl_error = dynamixel.getLastRxPacketError(d.port_num, d.protocol_version)
                 if dxl_comm_result != COMM_SUCCESS:
                     print(dynamixel.getTxRxResult(d.protocol_version, dxl_comm_result))
                     print("Motor id " + str(m_id) + " was not found!")
+                    motors_not_found += 1
                     continue
                 elif dxl_error != 0:
                     print(dynamixel.getRxPacketError(d.protocol_version, dxl_error))
@@ -220,6 +225,14 @@ class DxlInterface(object):
 
                 d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution, "vel_unit": vel_unit}
                 print("motor_model_no:" + str(motor_model_no))
+
+        # check if all motors are not found:
+        if num_motors == motors_not_found:
+            raise Exception("Didn't find any dynamixel motors. Verify that all motors are plugged in and that you are using the correct port.")
+        # check if some motors are not found:
+        if motors_not_found > 0:
+            raise Exception("Not all dynamixel motors were found. Check that they are all connected and that there are no cable/wiring issues.")
+
 
     def setup_sync_functions(self):
         try:
