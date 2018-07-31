@@ -4,8 +4,8 @@ import argparse
 import time
 
 from numpy import matlib as np
-from .vrep_interface import VrepInterface, VrepOptions
-from .dxl_interface import DxlInterface, DxlOptions
+from robot_player.vrep_interface import VrepInterface, VrepOptions
+from robot_player.dxl_interface import DxlInterface, DxlOptions
 
 def wrap_between_pi_and_neg_pi(angle):
     return (angle + np.pi) % (2*np.pi) - np.pi

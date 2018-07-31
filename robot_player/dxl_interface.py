@@ -172,7 +172,8 @@ class DxlInterface(object):
                 self.id_to_port[m_id] = d
                 self.motor_id.append(m_id)
 
-        print(self.id_to_port)
+        # print(self.id_to_port)
+        print("=== Dxl_Interface initialized. ===")
 
     def initialize(self):
         # get ready for motion
