@@ -7,8 +7,10 @@ from numpy import matlib as np
 from robot_player.vrep_interface import VrepInterface, VrepOptions
 from robot_player.dxl_interface import DxlInterface, DxlOptions
 
+
 def wrap_between_pi_and_neg_pi(angle):
-    return (angle + np.pi) % (2*np.pi) - np.pi
+    return (angle + np.pi) % (2 * np.pi) - np.pi
+
 
 class MotionManager(object):
     """
@@ -26,6 +28,7 @@ class MotionManager(object):
     After that, passing the options class to the motion manager initializes
     it and the motion manager will take care of the rest.
     """
+
     def __init__(self, motor_ids, dt, options):
         """
 
@@ -47,16 +50,15 @@ class MotionManager(object):
         if self.player == "vrep":
             self.sim = True
             self.device = self.vrep_init(options)
-            self.imu_device = self.device # read sensors from VREP
+            self.imu_device = self.device  # read sensors from VREP
             self.ft_device = self.device
             self.ft_sensors = options.ft_sensor_names
 
         elif self.player == 'dxl':
             self.dxl = True
             self.device = self.dxl_init(options)
-            self.imu_device = None # TODO: add IMU interface when ready
-            self.ft_device = None # TODO: add F/T sensor interface when ready
-
+            self.imu_device = None  # TODO: add IMU interface when ready
+            self.ft_device = None  # TODO: add F/T sensor interface when ready
 
     def __enter__(self):
         self.initialize()
@@ -113,7 +115,7 @@ class MotionManager(object):
         # commands is a list of the values that you want to send to the actuators
 
         try:
-            assert(len(ids) == len(commands))
+            assert (len(ids) == len(commands))
         except AssertionError:
             raise ValueError('ERROR: ids and commands must be same length')
 
@@ -148,7 +150,7 @@ class MotionManager(object):
         # commands is a list of the values that you want to send to the actuators
 
         try:
-            assert(len(ids) == len(commands))
+            assert (len(ids) == len(commands))
         except AssertionError:
             raise ValueError('ERROR: ids and commands must be same length')
 
@@ -199,19 +201,19 @@ class MotionManager(object):
         # wait for a specified duration of time, in seconds. This command is blocking.
         if isinstance(self.device, VrepInterface):
             # timesteps to wait, rounded down to the nearest integer
-            self.device.wait(int(time_to_wait/self.device.dt))
+            self.device.wait(int(time_to_wait / self.device.dt))
         if isinstance(self.device, DxlInterface):
             time.sleep(time_to_wait)
 
     def torque_on(self, ids):
         # torque on all motors, dxl specific
         if isinstance(self.device, DxlInterface):
-            self.device.set_torque_enable(ids, [1]*len(ids))
+            self.device.set_torque_enable(ids, [1] * len(ids))
 
     def torque_off(self, ids):
         # torque off all motors, dxl specific
         if isinstance(self.device, DxlInterface):
-            self.device.set_torque_enable(ids, [0]*len(ids))
+            self.device.set_torque_enable(ids, [0] * len(ids))
 
     def set_joint_ctrl_loop(self, ids, commands):
         self.device.set_joint_ctrl_loop(ids, commands)
@@ -237,7 +239,6 @@ class MotionManager(object):
             return self.imu_device.read_gyro(**kwargs)
         else:
             print("WARNING! Non VREP interfaces aren't supported yet!")
-
 
     def read_accelerometer(self, **kwargs):
         """
@@ -281,7 +282,8 @@ def to_player_angle_offset(angles, player_offset):
     trans = player_offset.angle_trans
     offsets = player_offset.angle_offset
 
-    return [wrap_between_pi_and_neg_pi((q + q_o)*t) for q, q_o, t in zip(angles, offsets, trans)]
+    return [wrap_between_pi_and_neg_pi((q + q_o) * t) for q, q_o, t in zip(angles, offsets, trans)]
+
 
 def from_player_angle_offset(angles, player_offset):
     # flips joint axes around to match the kinematic representation.
@@ -298,8 +300,9 @@ def from_player_angle_offset(angles, player_offset):
     trans = player_offset.angle_trans
     offsets = player_offset.angle_offset
 
-    angles = np.asarray([q*t - q_o for q, q_o, t in zip(angles, offsets, trans)])
+    angles = np.asarray([q * t - q_o for q, q_o, t in zip(angles, offsets, trans)])
     return wrap_between_pi_and_neg_pi(angles)
+
 
 def to_and_from_player_effort(effort, player_offset):
     """
@@ -310,7 +313,8 @@ def to_and_from_player_effort(effort, player_offset):
     """
     trans = player_offset.angle_trans
 
-    return [e*tr for e, tr in zip(effort, trans)]
+    return [e * tr for e, tr in zip(effort, trans)]
+
 
 def player_arg_parser(filename):
     """
