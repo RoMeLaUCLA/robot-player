@@ -10,96 +10,30 @@ Each 'player' is a class designed to abstract the boilerplate and small details 
 ## Installation instructions
 
 ### Dependencies
-Currently robot-player is being tested with python 2.7. It might work with python 3 as well, but I haven't tested it.
+Currently robot-player is being developed with python 2.7. It is not completely supported in python 3 because of outdated code in the Dynamixel SDK, however the VREP functions will work fine.
 
 This tutorial assumes that you are using a python virtual environment. If you've installed virtualenv and virtualenvwrapper, you can set things up very easily with the following lines of code:
 ```
-mkvirtualenv -p /usr/bin/python2.7 --no-site-packages player2
+mkvirtualenv -p /usr/bin/python2.7 --no-site-packages robot-player
 ```
 
+Once your virtual environment is created and activated, clone and install the repository.
+```bash
+git clone https://github.com/RoMeLaUCLA/robot-player.git
+pip install -e robot-player
+```
 You'll also need numpy.
 ```python
 pip install numpy
 ```
 
-```bash
-git clone https://github.com/RoMeLaUCLA/robot-player.git
-cd robot-player
-pip install .
-```
-
 That's it!
 
 ## Tutorial
-Full examples of how to use the MotionManager class with the DxlInterface and VrepInterface will be provided in the tests directory.
+Examples of how to use the MotionManager class with the DxlInterface and VrepInterface are provided in the tests directory. The VREP tests also include scene files in the tests/vrep directory.
 
-Here's an annotated example from test_double_joint.py:
-```python
-from robot_player import MotionManager, VrepOptions
-import numpy as np
-from time import sleep
-
-motor_id = [1,2]
-dt = .01
-
-with MotionManager(motor_id, dt, VrepOptions(joint_prefix="joint")) as mm:
-
-    for i in range(100):
-        assert(mm.get_present_position([1,2]) == mm.get_all_present_position())
-        # send command to just one motor
-        mm.set_goal_position([1], [1])
-        mm.set_goal_position([2], [1])
-        mm.advance_timestep()
-    # check that motors got to right place
-    pos = mm.get_all_present_position()
-    assert(np.allclose(pos,[1,1]))
-
-    for i in range(100):
-        mm.set_all_goal_position([-1,-2])
-        mm.advance_timestep()
-    # check that motors got to right place
-    pos = mm.get_all_present_position()
-    assert(np.allclose(pos,[-1,-2]))
-
-    # joint velocity
-    print mm.get_joint_velocity([1,2])
-    assert(mm.get_joint_velocity([1,2]) == mm.get_all_joint_velocity())
-
-    # switch to force controlled tests
-    mm.set_joint_ctrl_loop([1,2],[False, True])
-    assert(mm.get_joint_ctrl_loop([1,2])== [0,1])
-
-
-
-    mm.set_joint_ctrl_loop([1, 2], [False, False])
-    print("set joint velocity")
-    for i in range(100):
-        mm.set_goal_velocity([1,2], [1,-1])
-        mm.advance_timestep()
-    print("set all joint velocity")
-    for i in range(100):
-        mm.set_all_goal_velocity([1,2], [2,-2])
-        mm.advance_timestep()
-
-    print("reset position")
-    mm.set_joint_ctrl_loop([1, 2], [True, True])
-    mm.set_all_goal_effort([100, 100], send=False)
-    for i in range(1000):
-        mm.set_all_goal_position([0,0])
-        mm.advance_timestep()
-
-    mm.set_joint_ctrl_loop([1, 2], [False, False])
-    print("test set_goal_effort")
-    for i in range(100):
-        # get joint effort is also run in the set_all_goal_effort part
-        mm.set_all_goal_effort([.25,0])
-        mm.advance_timestep()
-    for i in range(100):
-        mm.set_goal_effort([1,2], [0,0])
-        mm.advance_timestep()
-```
-
-We view robots as a collection of joints, with "devices" that allow us to command the joints and make them do various actions. These devices can be a simulator (eg. VREP) or a motor controller (USB2Dynamixel).
+### Setup
+We view robots as a collection of joints, with "devices" that allow us to command the joints and make them do various actions. These devices can be a simulator (e.g. VREP) or a motor controller (e.g. USB2Dynamixel).
 
 MotionManagers abstract the process of managing what could be a rapidly changing interface for the underlying devices by providing a clean, uniform interface. You just need to instantiate a device options class and pass it as an argument to the MotionManager. In the snippet below, we've done just that:
 
@@ -111,18 +45,14 @@ from robot_player import MotionManager, VrepOptions
 vi = VrepOptions(joint_prefix="joint")
 mm = MotionManager(motor_id, dt, vi)
 mm.initialize() # calls startup routines for all devices
-
 ```
 
-For quick setup, this is fine. However, most devices tend to have some setting up at the beginning and cleaning up to do once we're finished using them, eg. stopping the simulation or closing the port. We can make sure to do that even if there's an exception or we stop the program in the middle of debugging by using the a context manager and the with keyword:
+For quick setup, this is fine. However, most devices tend to have some setting up at the beginning and cleaning up to do once we're finished using them, e.g. stopping the simulation or closing the port. We can make sure to do that even if there's an exception or we stop the program in the middle of debugging by using a context manager and the `with` keyword:
 
 ```python
 from robot_player import MotionManager, VrepOptions
-import numpy as np
-from time import sleep
 
-motor_id = [1,2]
-dt = .01
+...
 
 with MotionManager(motor_id, dt, VrepOptions(joint_prefix="joint")) as mm:
 
@@ -131,18 +61,24 @@ with MotionManager(motor_id, dt, VrepOptions(joint_prefix="joint")) as mm:
 
 You can look up all of the options for the VrepOptions and DxlOptions in their respective files. When possible, they are keyword arguments with default values so that you don't have to remember everything. When using MotionManager and the `with` keyword, `initialize()` is automatically called for you.
 
- ### Joint Commands
+### Joint Commands
 
- All joint commands have a specific structure:
+All joint commands have a specific structure:
 
  ```python
  mm.get_present_position(ids)
  mm.set_goal_position(ids, commands)
 ```
 
-`ids` is a list or tuple of values that has the joint ids to send commands to. `commands` is a list or tuple that has the joint commands to send to the motors. The units for the commands are radians, rad/s or N-m for angular rotating joints, and meters, m/s or N for prismatic joints. Unit conversion to the appropriate units for the device is automatically handled by the player interfaces.
+`ids` is a list or tuple of values that has the joint ids to send commands to. `commands` is a list or tuple that has the joint commands to send to the motors. The units for the commands are shown in the table below. Unit conversion to the appropriate units for the device is automatically handled by the player interfaces.
 
-In addition to the per-id joint commands, there is also an "all" command that lets you leave out the ids command since we usually just command all of the joints anyways:
+command type | rotating joint | prismatic joint
+-------------|----------------|----------------
+position     | rad            | m
+velocity     | rad/s          | m/s
+effort       | N-m            | N
+
+In addition to the per-id joint commands, there is also an "all" command that lets you leave out the ids command since we usually just command all of the joints anyways
 
 ```python
 mm.get_all_present_position()
@@ -152,12 +88,12 @@ mm.set_all_goal_position(commands)
 In general, all of the getters have the syntax
 
 ```python
-get_<name of parameter>(list_of_motor_ids)
+get_<name of parameter>(motor_ids)
 get_all_<name of parameter>()
 ```
 and all of the setters have the syntax
 ```python
-set_<name of parameter>(list_of_motor_ids, list_of_commands)
+set_<name of parameter>(motor_ids, commands)
 set_all_<name of parameter>(commands)
 ```
 
