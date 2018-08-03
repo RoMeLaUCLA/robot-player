@@ -10,7 +10,7 @@ __status__ = "Prototype"
   This class is used to handle the communication between python and V-REP
 '''
 
-from robot_player.vrep import vrep
+from vrep import vrep
 from collections import OrderedDict
 
 class VrepOptions(object):
