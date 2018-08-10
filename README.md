@@ -114,7 +114,7 @@ nabi_offset = AngleOffset(trans=[1, -1, 1, -1], offset=[pi/2, pi/2, 0, 0])
 
 We can see from this example that the Nabi robot needs motor axes 2 and 4 to have their joint axes flipped and that there is an angle offset of -pi/2 for the first two motors, which correspond to the hips. This greatly simplifies writing the kinematics for the robot.
 
-Once defined, the `AngleOffset` can be used with the player angle offset functions
+Once created, the `AngleOffset` instance can be used with the player angle offset functions
 
 ```python
 qcurr = from_player_angle_offset(mm.get_all_present_position(), nabi_offset)
@@ -123,49 +123,45 @@ qcurr = from_player_angle_offset(mm.get_all_present_position(), nabi_offset)
 
 mm.set_all_present_position(to_player_angle_offset(qdes, nabi_offset)
 ```
-### Streaming initialization
+
+### VrepInterface
+
+#### Streaming initialization
 All of the setter commands have the opmode simx_opmode_oneshot, which sends a single command without waiting for a reply.
 We use this instead of using blocking commands because they make the simulation run much faster.
 
 Some of the getter commands might have the option to use either the opmode simx_opmode_streaming or simx_opmode_buffer. 
-Call all of the getter commands once at the beginning of your script with the keyword argument streaming=True 
-and then from then on you can leave it off and VREP will automatically prepare the data and put it into a queue.
-This speeds up the simulation speed dramatically.
+Calling the getter commands once at the beginning of your script with the keyword argument streaming=True sets VREP to automatically prepare the data and put it into a queue for all future calls.
+This dramatically increases the simulation speed.
 
+### DxlInterface
 
+The DxlInterface is a class to talk to multiple dynamixel chains, abstracted as DxlPorts. What follows is a more in-depth look at the way this device is implemented for those looking to extend it.
 
-## DxlInterface
-
-The DxlInterface is a class to talk to multiple dynamixel chains, abstracted as DxlPorts. What follows is a more in-depth look at the way this device is implemented, for those looking to extend it.
-
-
-### Initialization
+#### Initialization
 Specify the options for each usb port like this:
 ```python
-device_opts = DxlOptions(motor_ids =[(1,2,3,4,5,6), (7,8,9,10,11,12),(19,20)],
+device_opts = DxlOptions(motor_ids =[(1, 2, 3, 4, 5, 6), (7, 8, 9, 10, 11, 12), (19, 20)],
                          motor_types=['DXLPRO','DXLPRO','MX106')],
                          ports = ["/dev/ttyUSB0", "/dev/ttyUSB1", "/dev/ttyUSB2"],
                          baudrate=3000000,
-                         protocol_version=2
-                         )
+                         protocol_version=2)
 ```
+This specifies that there are three chains, the first one existing on port USB0 and having 6 DXLPROs. All motors on the same chain must be of the same type.
 
 This device automatically multiplexes calls to the individual ports to make it seem like multiple ports are one contiguous device.
 
-When you write to the motors, they will be written all at once, using the syncwrite or syncread commands.
-The order of the motors is implicit- the order that you initialized the motors in.
-First by device, then by the order that you listed the motors.
-
+When you write to the motors, they will be written all at once, using the `_sync_write` or `_sync_read` commands. The order of the commands must match the order in which the motors were initialized in `DxlOptions` above.
 
 ```python
-# device1 ids: [1,2,3,4,5]
-# device2 ids: [6,7,8,9,10]
-DI.set_all_goal_position([1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5])
+# device1 ids: [1, 2, 3, 4, 5]
+# device2 ids: [6, 7, 8, 9, 10]
+DI.set_all_goal_position([1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5])
 ```
 
-The above ordering corresponds to the id order 1,2,3,4,5,6,7,8,9,10 and writes the value 1.5 radians to all of the motors.
+The above ordering corresponds to the id order 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 and writes the value 1.5 radians to all the motors.
 
-### Dynamixel Control Table
+#### Dynamixel Control Table
 Each Dynamixel motor has a different control table based on which protocol (1.0 or 2.0) and which motor model (MX-28, DXLPRO, MX-106) you are using. To keep users from having to deal with this annoying difference between all of the motors, the motor model of each motor is determined at startup and an appropriate control table is selected for each motor.
 
 The file that holds all of these mappings is named dxl\_control\_table.py and is (currently as of 1-13-18) located in rf/player/dynamixel_sdk/dxl_control_table.
@@ -288,7 +284,7 @@ class DXLPRO:
 
 Here's some selected elements of the code:
 
-#### Model numbers
+##### Model numbers
 Model numbers can be found on the Robotis website. They are accessible using the dynamixel.pingGetModelNum method.
 ```
     H54_200_S500_R = 54024
@@ -297,7 +293,7 @@ Model numbers can be found on the Robotis website. They are accessible using the
     L54_30_S400_R = 37928
 ```
 
-#### Resolution
+##### Resolution
 
 All motors are commanded with radians and converted to dynamixel counts before writing commands.
 
@@ -310,7 +306,7 @@ All motors are commanded with radians and converted to dynamixel counts before w
                   }
 ```
 
-#### Byte length of important control table values
+##### Byte length of important control table values
 
 Certain control table values are accessed often with the sync write command, but they have differing byte lengths per motor model. Each control table class that wants to use sync write/sync read needs to have these.
 
