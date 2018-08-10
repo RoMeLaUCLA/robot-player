@@ -44,7 +44,8 @@ class MotionManager(object):
         elif isinstance(options, VrepOptions):
             self.player = 'vrep'
         else:
-            raise ValueError("Options class invalid or missing. Specify either VrepOptions or DxlOptions to use as input to options parameter when instantiating MotionManager.")
+            raise ValueError(
+                "Options class invalid or missing. Specify either VrepOptions or DxlOptions to use as input to options parameter when instantiating MotionManager.")
         self.motor_id = motor_ids
         self.dt = dt
         if self.player == "vrep":
@@ -268,6 +269,17 @@ class MotionManager(object):
         # if isinstance(self.ft_device, VrepInterface):
         force, torque = self.ft_device.read_ft_sensor(sensor_id, **kwargs)
         return force, torque
+
+
+class AngleOffset:
+    """
+    trans is a list of 1 or -1 depending on if the joint axis is flipped or not
+    offset is a list of angle offsets in radians
+    """
+
+    def __init__(self, trans, offset):
+        self.angle_trans = trans
+        self.angle_offset = offset
 
 
 def to_player_angle_offset(angles, player_offset):

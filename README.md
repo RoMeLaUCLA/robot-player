@@ -104,32 +104,24 @@ set_all_<name of parameter>(commands)
 ### Player offsets
 Occasionally, different players will have different joint offsets or the axes will be flipped. This might occur when it is conceptually easier to reason about joint angles being the same for two pairs of mirrored limbs, or when physical constraints require actuators to be flipped around.
 
-The motion manager does not do any angle conversion by default, so handling of the input and output data is completely handled by the individual player interfaces. Since this is usually a fairly last-minute calculation that may or may not be needed, we avoid the overhead of doing this on every call and simply provide some helper functions to do this: `to_player angle_offset` and `from_player_angle_offset`.
+The motion manager does not do any angle conversion by default, so handling of the input and output data is completely handled by the individual player interfaces. Since this is usually a fairly last-minute calculation that may or may not be needed, we avoid the overhead of doing this on every call and simply provide some helper functions to do this: `to_player_angle_offset` and `from_player_angle_offset`.
 
-To use them, define a class (anything will do, but I usually call it <name of player>AngleOffset)
+To use them, make an instance of the AngleOffset class
 
 ```python
-class VrepAngleOffset:
-    """
-    angle_trans is a list of 1 or -1 depending on if the joint axis is flipped or not
-    angle_offset is a list of angle offsets in radians
-    """
-    angle_trans = [1, -1, 1, -1]
-    angle_offset = [-math.pi/2, -math.pi/2, 0, 0]
+nabi_offset = AngleOffset(trans=[1, -1, 1, -1], offset=[pi/2, pi/2, 0, 0])
 ```
 
-We can see from this example that the Nabi_s robot needs motor axes 2 and 4 to have their joint axes flipped and that there is an angle offset of -pi/2 for the first two motors, which correspond to the hips. This greatly simplifies writing the kinematics for the robot.
+We can see from this example that the Nabi robot needs motor axes 2 and 4 to have their joint axes flipped and that there is an angle offset of -pi/2 for the first two motors, which correspond to the hips. This greatly simplifies writing the kinematics for the robot.
 
-After defining the AngleOffset class, import it and use it to convert angles.
+Once defined, the `AngleOffset` can be used with the player angle offset functions
 
 ```python
-player_offset = VrepAngleOffset
-qcurr = from_player_angle_offset(mm.get_all_present_position(), player_offset)
+qcurr = from_player_angle_offset(mm.get_all_present_position(), nabi_offset)
 
-# calculate desired joint angles...
+# calculate desired q for all joints...
 
-q = to_player_angle_offset(qdes, player_offset)
-mm.set_all_present_position(q)
+mm.set_all_present_position(to_player_angle_offset(qdes, nabi_offset)
 ```
 ### Streaming initialization
 All of the setter commands have the opmode simx_opmode_oneshot, which sends a single command without waiting for a reply.
