@@ -4,10 +4,14 @@ The Robot Player package is a small, self contained package that aims to simplif
 
 Each 'player' is a class designed to abstract the boilerplate and small details like port numbers and handles away from the user.
 
-** Currently, all that is needed is to build the C libraries **
-
-
 ## Installation instructions
+
+### C Libraries
+#### Windows
+Open the `dxl_x[86|64].sln` file in the dxl/c/build/win\[32|64] directory and build using Visual Studio.
+
+#### Mac and Linux
+Navigate to the dxl/c/build directory and run cmake in the correct directory for your system.
 
 ### Dependencies
 Currently robot-player is being developed with python 2.7. It is not completely supported in python 3 because of outdated code in the Dynamixel SDK, however the VREP functions will work fine.
@@ -100,11 +104,7 @@ set_all_<name of parameter>(commands)
 ### Player offsets
 Occasionally, different players will have different joint offsets or the axes will be flipped. This might occur when it is conceptually easier to reason about joint angles being the same for two pairs of mirrored limbs, or when physical constraints require actuators to be flipped around.
 
-Since this is usually a fairly last-minute calculation that may or may not be needed, we avoid the overhead of doing this on every call and simply provide some helper functions to do this: `to_player angle_offset` and `from_player_angle_offset`.
-
-The motion manager does not do any angle conversion by default, so handling of the input and output data is completely handled by the individual player interfaces.
-
-However, frequently different players will have different angles and offsets so the functions `to_player_angle_offset()` and `from_player_offset()` are provided to make this easier on the user.
+The motion manager does not do any angle conversion by default, so handling of the input and output data is completely handled by the individual player interfaces. Since this is usually a fairly last-minute calculation that may or may not be needed, we avoid the overhead of doing this on every call and simply provide some helper functions to do this: `to_player angle_offset` and `from_player_angle_offset`.
 
 To use them, define a class (anything will do, but I usually call it <name of player>AngleOffset)
 
@@ -128,7 +128,7 @@ qcurr = from_player_angle_offset(mm.get_all_present_position(), player_offset)
 
 # calculate desired joint angles...
 
-q = to_player_angle_offset(qdes,player_offset)
+q = to_player_angle_offset(qdes, player_offset)
 mm.set_all_present_position(q)
 ```
 ### Streaming initialization
