@@ -26,6 +26,7 @@ Once your virtual environment is created and activated, clone and install the re
 git clone https://github.com/RoMeLaUCLA/robot-player.git
 pip install -e robot-player
 ```
+
 You'll also need numpy.
 ```
 pip install numpy
