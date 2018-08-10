@@ -565,7 +565,7 @@ class DXLPRO:
     L54_30_S400_R = 37928
     # L42 Dynamixel has a different control table
 
-    # converts dynamixel counts to radians
+    # conversion factors for dynamixel counts to radians
     resolution = {H54_200_S500_R: 501922,
                   H54_100_S500_R: 501922,
                   H54_200_B500_R: 501922,
@@ -579,7 +579,7 @@ class DXLPRO:
                   L54_30_S500_R: 180692*2,
                   }
 
-    # converts velocity units to RPM
+    # conversion factors for velocity units to RPM
     VEL_UNIT = {H54_200_S500_R: 0.00199234,
                 H54_100_S500_R: 0.00199234,
                 H54_200_B500_R: 0.00199234,
@@ -593,7 +593,7 @@ class DXLPRO:
                 L54_30_S500_R: 0.00199234,
                 }
 
-    ## READ/WRITE COMMAND LENGTHS ##
+    # read/write command lengths
     LEN_GOAL_POSITION = 4
     LEN_PRESENT_POSITION = 4
     LEN_GOAL_VELOCITY = 4

@@ -27,7 +27,7 @@ git clone https://github.com/RoMeLaUCLA/robot-player.git
 pip install -e robot-player
 ```
 You'll also need numpy.
-```python
+```
 pip install numpy
 ```
 
@@ -44,7 +44,7 @@ MotionManagers abstract the process of managing what could be a rapidly changing
 ```python
 from robot_player import MotionManager, VrepOptions
 
-...
+# ...
 
 vi = VrepOptions(joint_prefix="joint")
 mm = MotionManager(motor_id, dt, vi)
@@ -56,10 +56,9 @@ For quick setup, this is fine. However, most devices tend to have some setting u
 ```python
 from robot_player import MotionManager, VrepOptions
 
-...
+# ...
 
 with MotionManager(motor_id, dt, VrepOptions(joint_prefix="joint")) as mm:
-
     # send commands to the device
 ```
 
@@ -70,8 +69,8 @@ You can look up all of the options for the VrepOptions and DxlOptions in their r
 All joint commands have a specific structure:
 
  ```python
- mm.get_present_position(ids)
- mm.set_goal_position(ids, commands)
+mm.get_present_position(ids)
+mm.set_goal_position(ids, commands)
 ```
 
 `ids` is a list or tuple of values that has the joint ids to send commands to. `commands` is a list or tuple that has the joint commands to send to the motors. The units for the commands are shown in the table below. Unit conversion to the appropriate units for the device is automatically handled by the player interfaces.
@@ -142,7 +141,7 @@ The DxlInterface is a class to talk to multiple dynamixel chains, abstracted as 
 Specify the options for each usb port like this:
 ```python
 device_opts = DxlOptions(motor_ids =[(1, 2, 3, 4, 5, 6), (7, 8, 9, 10, 11, 12), (19, 20)],
-                         motor_types=['DXLPRO','DXLPRO','MX106')],
+                         motor_types=['DXLPRO','DXLPRO','MX106'],
                          ports = ["/dev/ttyUSB0", "/dev/ttyUSB1", "/dev/ttyUSB2"],
                          baudrate=3000000,
                          protocol_version=2)
@@ -162,11 +161,9 @@ DI.set_all_goal_position([1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5])
 The above ordering corresponds to the id order 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 and writes the value 1.5 radians to all the motors.
 
 #### Dynamixel Control Table
-Each Dynamixel motor has a different control table based on which protocol (1.0 or 2.0) and which motor model (MX-28, DXLPRO, MX-106) you are using. To keep users from having to deal with this annoying difference between all of the motors, the motor model of each motor is determined at startup and an appropriate control table is selected for each motor.
+Each Dynamixel motor has a different control table based on which protocol (i.e. 1.0 or 2.0) and which motor model (e.g. DXLPRO H54_200_S500_R) you are using. To keep users from having to deal with this annoying difference between all of the motors, the model of each motor is determined at startup and an appropriate control table is selected for each motor.
 
-The file that holds all of these mappings is named dxl\_control\_table.py and is (currently as of 1-13-18) located in rf/player/dynamixel_sdk/dxl_control_table.
-
-Each control table class is implemented as a class. Here's an annotated snippet of the DXLPRO 2.0 class:
+Each control table is implemented as a class in [dxl_control_table.py](robot_player/dxl/dxl_control_table.py) Here's an annotated snippet of the DXLPRO 2.0 class:
 
 ```python
 
@@ -180,15 +177,15 @@ class DXLPRO:
     http://support.robotis.com/en/product/actuator/dynamixel_pro/dynamixelpro/control_table.htm
 
     """
-    # Model numbers can be found on the Robotis website. They are accessible using the dynamixel.pingGetModelNum method.
+    # Model numbers can be found on the Robotis website.
     H54_200_S500_R = 54024
     H54_200_B500_R = 54152
     ...
     L54_30_S400_R = 37928
     # L42 Dynamixel has a different control table
 
+    # conversion factors dynamixel counts to radians
     resolution = {H54_200_S500_R: 501922,
-
                   H54_100_S500_R: 501922,
                   H54_200_B500_R: 501922,
                   H42_20_S300_R: 303750,
@@ -201,16 +198,35 @@ class DXLPRO:
                   L54_30_S500_R: 180692*2,
                   }
 
+    # conversion factors for velocity units to RPM
+    VEL_UNIT = {H54_200_S500_R: 0.00199234,
+                H54_100_S500_R: 0.00199234,
+                H54_200_B500_R: 0.00199234,
+                H42_20_S300_R: 0.00329218,
+                M54_60_S250_R: 0.00397746,
+                M54_40_S250_R: 0.00397746,
+                M42_10_S260_R: 0.00389076,
+                L54_50_S290_R: 0.00346667,
+                L54_50_S500_R: 0.00199234,
+                L54_30_S400_R: 0.00249657,
+                L54_30_S500_R: 0.00199234,
+                }
+
+    # read/write command lengths
     LEN_GOAL_POSITION = 4
     LEN_PRESENT_POSITION = 4
+    LEN_GOAL_VELOCITY = 4
+    LEN_PRESENT_VELOCITY = 4
+    LEN_GOAL_EFFORT = 2
+    LEN_PRESENT_EFFORT = 2
 
     # =====================================================================
     # EEPROM
     # =====================================================================
     MODEL_NUMBER = 0
     MODEL_INFORMATION = 2
-    FIRMWARE_VERSION = 6
-    MOTOR_ID = 7
+    VERSION_OF_FIRMWARE = 6
+    ID = 7
     BAUD_RATE = 8
     RETURN_DELAY_TIME = 9
     OPERATING_MODE = 11
@@ -220,7 +236,7 @@ class DXLPRO:
     MAX_VOLTAGE_LIMIT = 22
     MIN_VOLTAGE_LIMIT = 24
     ACCELERATION_LIMIT = 26
-    TORQUE_LIMIT = 30
+    EFFORT_LIMIT = 30
     VELOCITY_LIMIT = 32
     MAX_POSITION_LIMIT = 36
     MIN_POSITION_LIMIT = 40
@@ -229,16 +245,12 @@ class DXLPRO:
     EXTERNAL_PORT_MODE_3 = 46
     EXTERNAL_PORT_MODE_4 = 47
     SHUTDOWN = 48
-    INDIRECT_ADDRESS = 49
-
-
+    INDIRECT_ADDRESS_1 = 49
     """
-    can do other indirect addresses by adding INDIRECT_ADDRESS + 2*(address_num-1)
-    eg. INDIRECT_ADDRESS_5 = INDIRECT_ADDRESS + 2*(5-1) = 57
+    can do other indirect addresses by adding INDIRECT_ADDRESS_1 + 2*(address_num-1)
+    e.g. INDIRECT_ADDRESS_5 = INDIRECT_ADDRESS_1 + 2*(5-1) = 57
 
     up to INDIRECT_ADDRESS_256 (569)
-
-
     """
 
     # =====================================================================
@@ -251,32 +263,27 @@ class DXLPRO:
     VELOCITY_I_GAIN = 586
     VELOCITY_P_GAIN = 588
     POSITION_P_GAIN = 594
-    FEEDFORWARD_2ND_GAIN = 88
-    FEEDFORWARD_1ST_GAIN = 90
     GOAL_POSITION = 596
     GOAL_VELOCITY = 600
-    GOAL_TORQUE = 604
+    GOAL_EFFORT = 604
     GOAL_ACCELERATION = 606
     MOVING = 610
     PRESENT_POSITION = 611
     PRESENT_VELOCITY = 615
-    PRESENT_CURRENT = 621
+    PRESENT_EFFORT = 621
     PRESENT_INPUT_VOLTAGE = 623
     PRESENT_TEMPERATURE = 625
     EXTERNAL_PORT_DATA_1 = 626
     EXTERNAL_PORT_DATA_2 = 628
     EXTERNAL_PORT_DATA_3 = 630
     EXTERNAL_PORT_DATA_4 = 632
-    INDIRECT_DATA = 634
-
+    INDIRECT_DATA_1 = 634
     """
-    can do other indirect data by adding INDIRECT_DATA + 2*(address_num-1)
-    eg. INDIRECT_DATA_5 = INDIRECT_DATA + 2*(5-1) = 57
+    can do other indirect data by adding INDIRECT_DATA_1 + 2*(address_num-1)
+    e.g. INDIRECT_DATA_5 = INDIRECT_DATA_1 + 2*(5-1) = 57
 
     up to INDIRECT_DATA_256 (889)
-
     """
-
     REGISTERED_INSTRUCTION = 890
     STATUS_RETURN_LEVEL = 891
     HARDWARE_ERROR_STATUS = 892
@@ -285,7 +292,7 @@ class DXLPRO:
 Here's some selected elements of the code:
 
 ##### Model numbers
-Model numbers can be found on the Robotis website. They are accessible using the dynamixel.pingGetModelNum method.
+Model numbers can be found on the Robotis website. They are accessible using the dynamixel.pingGetModelNum method. Example model numbers for DXLPRO:
 ```
     H54_200_S500_R = 54024
     H54_200_B500_R = 54152
@@ -294,76 +301,61 @@ Model numbers can be found on the Robotis website. They are accessible using the
 ```
 
 ##### Resolution
+All motors are commanded with radians and automatically converted to dynamixel counts before writing commands. The conversion factor is based on the model number and comes from a shift table defined at the top of `dxl_control_table.py`.
 
-All motors are commanded with radians and converted to dynamixel counts before writing commands.
-
-```python
-    resolution = {H54_200_S500_R: 501922,
-
-                  H54_100_S500_R: 501922,
-                  ...
-                  L54_30_S500_R: 180692*2,
-                  }
+```
+H54_200_S500_R: 501922
+H54_100_S500_R: 501922
+...
+L54_30_S500_R: 180692*2
 ```
 
 ##### Byte length of important control table values
+Certain control table values are accessed often with the `_sync_write` command, but they have differing byte lengths depending on motor model. Each control table class that wants to use read/write commands needs to have these.
 
-Certain control table values are accessed often with the sync write command, but they have differing byte lengths per motor model. Each control table class that wants to use sync write/sync read needs to have these.
-
-```python
-    LEN_GOAL_POSITION = 4
-    LEN_PRESENT_POSITION = 4
+```
+LEN_GOAL_POSITION = 4
+LEN_PRESENT_POSITION = 4
+...
 ```
 
 The rest of the class is just variables with a value assigned to them. Some of the older DXL models using protocol 1.0 had their values listed in hexadecimal but it's fine to just use decimal equivalents.
 
 ```python
-    # =====================================================================
-    # EEPROM
-    # =====================================================================
-    MODEL_NUMBER = 0
-    MODEL_INFORMATION = 2 # goes to 2 next because Model number has byte length 2
-    FIRMWARE_VERSION = 6
-    MOTOR_ID = 7
-    BAUD_RATE = 8
-   ....
-    SHUTDOWN = 48
-    INDIRECT_ADDRESS = 49
+# =====================================================================
+# EEPROM
+# =====================================================================
+MODEL_NUMBER = 0
+MODEL_INFORMATION = 2
 
+# ...
 
-    """
-    can do other indirect addresses by adding INDIRECT_ADDRESS + 2*(address_num-1)
-    eg. INDIRECT_ADDRESS_5 = INDIRECT_ADDRESS + 2*(5-1) = 57
+"""
+can do other indirect addresses by adding INDIRECT_ADDRESS_1 + 2*(address_num-1)
+e.g. INDIRECT_ADDRESS_5 = INDIRECT_ADDRESS_1 + 2*(5-1) = 57
 
-    up to INDIRECT_ADDRESS_256 (569)
-
-
-    """
+up to INDIRECT_ADDRESS_256 (569)
+"""
 ```
 
-There's difference in the code between the EEPROM and RAM functions, but the EEPROM values can only be written to when the motor torque is off. The RAM values can only be written to when the motor torque is on.
+There's difference in the code between the EEPROM and RAM functions, but the EEPROM values can only be written to when the motor torque is off, whereas the RAM values can only be written to when the motor torque is on.
 
 ```python
+# =====================================================================
+# RAM
+# =====================================================================
+TORQUE_ENABLE = 562
+LED_RED = 563
 
-    # =====================================================================
-    # RAM
-    # =====================================================================
-    TORQUE_ENABLE = 562
-    LED_RED = 563
-    LED_GREEN = 564
-    ...
-    EXTERNAL_PORT_DATA_4 = 632
-    INDIRECT_DATA = 634
+# ...
 
-    """
-    can do other indirect data by adding INDIRECT_DATA + 2*(address_num-1)
-    eg. INDIRECT_DATA_5 = INDIRECT_DATA + 2*(5-1) = 57
+"""
+can do other indirect data by adding INDIRECT_DATA_1 + 2*(address_num-1)
+e.g. INDIRECT_DATA_5 = INDIRECT_DATA_1 + 2*(5-1) = 57
 
-    up to INDIRECT_DATA_256 (889)
-
-    """
-
-    REGISTERED_INSTRUCTION = 890
-    STATUS_RETURN_LEVEL = 891
-    HARDWARE_ERROR_STATUS = 892
+up to INDIRECT_DATA_256 (889)
+"""
+REGISTERED_INSTRUCTION = 890
+STATUS_RETURN_LEVEL = 891
+HARDWARE_ERROR_STATUS = 892
 ```
