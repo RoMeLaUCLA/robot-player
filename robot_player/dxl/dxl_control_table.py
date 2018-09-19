@@ -593,6 +593,15 @@ class DXLPRO:
                 L54_30_S500_R: 0.00199234,
                 }
 
+    # conversion factors for current [A] units to N-m
+    # gotten by extrapolating table values from Maxon 4-pole EC motors
+    # H42_20_S300_R is a guess based on dividing max torque by max current
+    EFFORT_UNIT = {H54_200_S500_R: 6.87603,
+                H54_100_S500_R: 6.42432,
+                H54_200_B500_R: 6.87603,
+                H42_20_S300_R: 3.4,
+                }
+
     # read/write command lengths
     LEN_GOAL_POSITION = 4
     LEN_PRESENT_POSITION = 4
