@@ -73,7 +73,10 @@ class DxlOptions(object):
 
         for port, ids, motor_type in zip(ports, motor_ids, motor_types):
             self.dxl_ports.append(DxlPort(ids, motor_type, port, baudrate, protocol_version))
-            set_serial_port_low_latency(port)
+            try:
+                set_serial_port_low_latency(port)
+            except OSError:
+                print("Failed to set port {} to low latency.".format(port))
 
 
 class DxlPort(object):
@@ -140,8 +143,6 @@ class DxlInterface(object):
     def __init__(self, baudrate, dxl_ports):
         self.baudrate = baudrate
         self.device = []
-
-
 
         # allocate ports
         for d in dxl_ports:
@@ -220,11 +221,13 @@ class DxlInterface(object):
                 try:
                     resolution = ctrl_table.resolution[motor_model_no]
                     vel_unit = ctrl_table.VEL_UNIT[motor_model_no]
+                    torque_conversion = ctrl_table.TORQUE_CONVERSION[motor_model_no]
                 except TypeError:
                     resolution = ctrl_table.resolution
                     vel_unit = ctrl_table.VEL_UNIT
+                    torque_conversion = ctrl_table.TORQUE_CONVERSION
 
-                d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution, "vel_unit": vel_unit}
+                d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution, "vel_unit": vel_unit, 'torque_conversion': torque_conversion}
                 print("motor_model_no:" + str(motor_model_no))
 
         # check if all motors are not found:
@@ -256,16 +259,16 @@ class DxlInterface(object):
             print("setup success: PRESENT_VELOCITY")
         except AttributeError:
             print("setup failed: PRESENT_VELOCITY")
-        # try:
-        #     self.setup_group_sync_write('GOAL_EFFORT')
-        #     print("setup success: GOAL_EFFORT")
-        # except AttributeError:
-        #     print("setup failed: GOAL_EFFORT")
-        # try:
-        #     self.setup_group_sync_read('PRESENT_EFFORT')
-        #     print("setup success: PRESENT_EFFORT")
-        # except AttributeError:
-        #     print("setup failed: PRESENT_EFFORT")
+        try:
+            self.setup_group_sync_write('GOAL_EFFORT')
+            print("setup success: GOAL_EFFORT")
+        except AttributeError:
+            print("setup failed: GOAL_EFFORT")
+        try:
+            self.setup_group_sync_read('PRESENT_EFFORT')
+            print("setup success: PRESENT_EFFORT")
+        except AttributeError:
+            print("setup failed: PRESENT_EFFORT")
 
         for d in self.device:
             print("gw_GOAL_POSITION {}".format(d.gw_GOAL_POSITION))
@@ -559,10 +562,23 @@ class DxlInterface(object):
             self._sync_write(d, 'GOAL_VELOCITY', d.ctrl_table.LEN_GOAL_VELOCITY, id_list, commands)
 
     def get_present_effort(self, ids):
-        pass
+        data = []
+        for d in self.device:
+            id_list = self.filter_ids(ids, d)
+            data_list = self._sync_read(d, 'GOAL_EFFORT', d.ctrl_table.LEN_PRESENT_EFFORT, id_list)
+            for m_id, data in zip(d.motor_id, data_list):
+                unit = d.motor[m_id]['torque_conversion']
+                data.append(vel2radps(data, unit))
+
+        return data
 
     def set_goal_effort(self, ids, commands):
-        pass
+        for d in self.device:
+            id_list, velocity_list = self.filter_ids_and_commands(ids, velocities, d)
+            unit_list = [d.motor[m_id]['vel_unit'] for m_id in id_list]
+            # convert radians per sec to appropriate velocity unit
+            commands = [radps2vel(v, unit) for v, unit in zip(velocity_list, unit_list)]
+            self._sync_write(d, 'GOAL_EFFORT', d.ctrl_table.LEN_GOAL_VELOCITY, id_list, commands)
 
     def filter_ids(self, ids, device):
         # filters out ids based on which ids are on the device
@@ -598,6 +614,13 @@ def radps2vel(radps, conversion):
 def vel2radps(vel, conversion):
     # multiply by conversion to get rpm, then pi/30 radps per rpm
     return vel * conversion / (30 / pi)
+
+def dxl2nm(counts, conversion):
+
+    return counts*conversion
+
+def nm2dxl(torque, conversion):
+    return torque
 
 def get_parameter_data_len(d, parameter):
     """

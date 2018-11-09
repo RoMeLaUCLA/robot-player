@@ -180,7 +180,7 @@ class MotionManager(object):
         elif self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
-    def set_goal_effort(self, ids, commands, send=True):
+    def set_goal_effort(self, ids, commands, send=True, **kwargs):
 
         try:
             assert (len(ids) == len(commands))
@@ -188,9 +188,9 @@ class MotionManager(object):
             raise ValueError('ERROR: ids and commands must be same length')
 
         if self.player == 'vrep':
-            self.device.set_goal_effort(ids, commands, send)
+            self.device.set_goal_effort(ids, commands, send, kwargs)
         if self.player == 'dxl':
-            # self.device.set_goal_effort(ids, commands)
+            self.device.set_goal_effort(ids, commands, send, kwargs)
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
     def set_all_goal_effort(self, commands, send=True):
