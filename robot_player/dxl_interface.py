@@ -45,6 +45,12 @@ def set_serial_port_low_latency(port_name):
     # sets serial port to be low latency
     subprocess.call(['setserial', port_name, 'low_latency'])
 
+def twos_comp(val, bits):
+    """compute the 2's complement of int value val"""
+    if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
+        val = val - (1 << bits)        # compute negative value
+    return val
+
 class DxlOptions(object):
     def __init__(self,
                  motor_ids,
@@ -184,7 +190,7 @@ class DxlInterface(object):
 
     def close(self):
         for d in self.device:
-            d.port_handler.closePort(d.port_num)
+            d.port_handler.closePort()
 
     def setup_control_table(self):
         """
@@ -380,9 +386,9 @@ class DxlInterface(object):
                     # dxl_comm_result = d.packet_handler.getLastTxRxResult( d.protocol_version)
                     # dxl_error = d.packet_handler.getLastRxPacketError( d.protocol_version)
                     if dxl_comm_result != COMM_SUCCESS:
-                        print(dynamixel.getTxRxResult(d.protocol_version, dxl_comm_result))
+                        print(d.packet_handler.getTxRxResult(dxl_comm_result))
                     elif dxl_error != 0:
-                        print(dynamixel.getRxPacketError(d.protocol_version, dxl_error))
+                        print(d.packet_handler.getRxPacketError(dxl_error))
 
     def _read_data(self, ids, address, data_length):
         """
@@ -443,7 +449,7 @@ class DxlInterface(object):
                 write_fn(portno, protocol_version, m_id, address,  comm)
 
 
-    def _sync_write(self, device, parameter, parameter_data_length, ids, commands):
+    def _sync_write(self, device, parameter, parameter_data_length, ids, commands, twos_complement=False):
         """
         Uses sync write to write a string of data to a single port. Use this on every port.
 
@@ -456,9 +462,11 @@ class DxlInterface(object):
         """
         gsw = getattr(device, "gw_" + parameter)
         for m_id, command in zip(ids, commands):
-            parameter_data_len = get_parameter_data_len(device, parameter)
             # new Python API:
-            param_byte_list = create_byte_list(command, parameter_data_len)
+            # # TODO: DO WE NEED THIS
+            # if twos_complement:
+            #     parameter = twos_comp(parameter, 8*parameter_data_length)
+            param_byte_list = create_byte_list(command, parameter_data_length)
             dxl_addparam_result = gsw.addParam(m_id, param_byte_list)
 
 
@@ -482,7 +490,7 @@ class DxlInterface(object):
         # Clear syncwrite parameter storage
         gsw.clearParam()
 
-    def _sync_read(self, device, parameter, parameter_data_length, ids):
+    def _sync_read(self, device, parameter, parameter_data_length, ids, twos_complement=False):
         """
         Uses sync read and the name of a parameter to read data from ctrl table of multiple DXLs. Use this method on
         every device.
@@ -521,6 +529,11 @@ class DxlInterface(object):
 
                     # Get present position value for (m_id)
                 data = gsr.getData(m_id, getattr(device.ctrl_table, parameter), parameter_data_length)
+
+                # NEEDED TO ADD THIS HERE FOR NEW PYTHON API
+                if twos_complement:
+                    data = twos_comp(data, parameter_data_length*8)
+
                 data_list.append(data)
         else:
             # Bulkread present position and moving status
@@ -553,7 +566,7 @@ class DxlInterface(object):
             # filter out ids that are on this device
             id_list = self.filter_ids(ids, d)
 
-            data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, id_list)
+            data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, id_list, twos_complement=True)
             for m_id, data in zip(d.motor_id, data_list):
                 res = d.motor[m_id]["resolution"]
                 pos_data.append(pos2rad(data, res))
@@ -563,7 +576,7 @@ class DxlInterface(object):
     def get_all_present_position(self):
         pos_data = []
         for d in self.device:
-            data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, d.motor_id)
+            data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, d.motor_id, twos_complement=True)
             for m_id, data in zip(d.motor_id, data_list):
                 res = d.motor[m_id]["resolution"]
                 pos_data.append(pos2rad(data, res))
