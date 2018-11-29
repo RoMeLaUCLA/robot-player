@@ -32,6 +32,11 @@ You'll also need numpy.
 pip install numpy
 ```
 
+Accessing the serial ports requires being added to the dialout group.
+
+    sudo usermod -a -G dialout <username>
+
+
 That's it!
 
 ## Tutorial

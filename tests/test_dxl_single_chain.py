@@ -37,7 +37,7 @@ print(dxl_str)
 dxl_opts = DxlOptions([[1,2]],
             motor_types=[dxl_str],
             ports=ports,
-            baudrate=57600,
+            baudrate=3000000,
             protocol_version=2
            )
 
