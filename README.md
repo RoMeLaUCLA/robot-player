@@ -6,19 +6,13 @@ Each 'player' is a class designed to abstract the boilerplate and small details 
 
 ## Installation instructions
 
-### C Libraries
-#### Windows
-Open the `dxl_x[86|64].sln` file in the dxl/c/build/win\[32|64] directory and build using Visual Studio.
-
-#### Mac and Linux
-Navigate to the dxl/c/build directory and run cmake in the correct directory for your system.
 
 ### Dependencies
-Currently robot-player is being developed with python 2.7. It is not completely supported in python 3 because of outdated code in the Dynamixel SDK, however the VREP functions will work fine.
+Currently robot-player is being developed using Python 3.
 
 This tutorial assumes that you are using a python virtual environment. If you've installed virtualenv and virtualenvwrapper, you can set things up very easily with the following lines of code:
 ```
-mkvirtualenv -p /usr/bin/python2.7 --no-site-packages robot-player
+mkvirtualenv -p /usr/bin/python3 --no-site-packages robot-player
 ```
 
 Once your virtual environment is created and activated, clone and install the repository.
@@ -36,8 +30,27 @@ Accessing the serial ports requires being added to the dialout group.
 
     sudo usermod -a -G dialout <username>
 
+Log out after doing this command.
+    
+Clone the DynamixelSDK package from github and install it using pip.
+
+    git clone https://github.com/ROBOTIS-GIT/DynamixelSDK.git
+    pip install -e DynamixelSDK/python
+
 
 That's it!
+
+### Old instructions for use with Python 2.7 dxl libraries:
+Robot-player was originally developed with python 2.7. It was not completely supported in python 3 because of outdated code in the Dynamixel SDK causing the DxlInterface to not correctly allocate ports when using multiple ports, however the VREP functions will work fine. The current DynamixelSDK features drivers written in native Python which alleviates this issue.
+
+### C Libraries
+#### Windows
+Open the `dxl_x[86|64].sln` file in the dxl/c/build/win\[32|64] directory and build using Visual Studio.
+
+#### Mac and Linux
+Navigate to the dxl/c/build directory and run cmake in the correct directory for your system.
+
+
 
 ## Tutorial
 Examples of how to use the MotionManager class with the DxlInterface and VrepInterface are provided in the tests directory. The VREP tests also include scene files in the tests/vrep directory.
