@@ -354,7 +354,7 @@ class VrepInterface(object):
     def get_all_present_effort(self, **kwargs):
         return self.get_present_effort(self.joint, **kwargs)
 
-    def set_goal_effort(self, ids, commands, send=True):
+    def set_goal_effort(self, ids, commands, send=True, **kwargs):
         for i, c in zip(ids, commands):
             # set joint speed
             j = self.joint[i]

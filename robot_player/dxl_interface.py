@@ -399,24 +399,21 @@ class DxlInterface(object):
         :return: list of the data in the same order as the ids
         """
 
-        # choose a number of bytes to read based on data length
-        if data_length == 1:
-            read_fn = dynamixel.read1ByteTxRx
-        elif data_length == 2:
-            read_fn = dynamixel.read2ByteTxRx
-        elif data_length == 4:
-            read_fn = dynamixel.read4ByteTxRx
-        else:
-            print("Invalid data length: 1,2,4 bytes only")
-
         # choose protocol version
         result = {}
         for d in self.device:
+            # choose a number of bytes to read based on data length
+
             device_ids = self.filter_ids(ids, d)
-            portno = d.port_num
-            protocol_version = d.protocol_version
             for m_id in device_ids:
-                data = read_fn(portno, protocol_version, m_id, address)
+                if data_length == 1:
+                    data, _, _ = d.packet_handler.read1ByteTxRx(d.port_handler, m_id, address)
+                elif data_length == 2:
+                    data, _, _ = d.packet_handler.read2ByteTxRx(d.port_handler, m_id, address)
+                elif data_length == 4:
+                    data, _, _ = d.packet_handler.read4ByteTxRx(d.port_handler, m_id, address)
+                else:
+                    print("Invalid data length: 1,2,4 bytes only")
                 result[m_id] = data
 
         return [result[m_id] for m_id in ids] # reorder data to match original id order
@@ -432,21 +429,17 @@ class DxlInterface(object):
         :return:
         """
 
-        if data_length == 1:
-            write_fn = dynamixel.write1ByteTxRx
-        elif data_length == 2:
-            write_fn = dynamixel.write2ByteTxRx
-        elif data_length == 4:
-            write_fn = dynamixel.write4ByteTxRx
-        else:
-            print("Invalid data length: 1,2,4 bytes only")
-
         for d in self.device:
             device_ids, commands = self.filter_ids_and_commands(ids, data, d)
-            portno = d.port_num
-            protocol_version = d.protocol_version
             for m_id, comm in zip(device_ids, commands):
-                write_fn(portno, protocol_version, m_id, address,  comm)
+                if data_length == 1:
+                    d.packet_handler.write1ByteTxRx(d.port_handler, m_id, address,  comm)
+                elif data_length == 2:
+                    d.packet_handler.write2ByteTxRx(d.port_handler, m_id, address,  comm)
+                elif data_length == 4:
+                    d.packet_handler.write4ByteTxRx(d.port_handler, m_id, address,  comm)
+                else:
+                    print("Invalid data length: 1,2,4 bytes only")
 
 
     def _sync_write(self, device, parameter, parameter_data_length, ids, commands, twos_complement=False):
