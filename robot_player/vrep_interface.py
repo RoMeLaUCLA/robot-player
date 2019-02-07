@@ -103,6 +103,17 @@ class VrepInterface(object):
             # Failed to connect to remote API server
             raise SimulationConfigOffError("Please double check whether the simulator is running.")
 
+    def create_dummy(self, size, color, position):
+        #position is a 3 value list in the format [x,y,z]
+        #colors: 4*3 bytes (0-255) for ambient_diffuse RGB, 3 reserved values (set to zero), specular RGB and emissive RGB
+        errorCode, handle_dummy = vrep.simxCreateDummy(self._sim_Client_ID, size, color, vrep.simx_opmode_oneshot_wait)
+        vrep.simxSetObjectPosition(self._sim_Client_ID, handle_dummy, -1, position, vrep.simx_opmode_oneshot_wait)
+
+
+    def sendSignalFootstepPoints(self, position):
+        #position is of form [x,y,z]
+        position_string = vrep.simxPackFloats(position)
+        vrep.simxWriteStringStream(self._sim_Client_ID, 'FootstepPoint', position_string, vrep.simx_opmode_oneshot_wait)
 
     def set_dt(self, dt):
         self.dt = dt
