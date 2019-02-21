@@ -113,7 +113,55 @@ class VrepInterface(object):
     def sendSignalFootstepPoints(self, position):
         #position is of form [x,y,z]
         position_string = vrep.simxPackFloats(position)
-        vrep.simxWriteStringStream(self._sim_Client_ID, 'FootstepPoint', position_string, vrep.simx_opmode_oneshot_wait)
+        vrep.simxWriteStringStream(self._sim_Client_ID, 'FootstepPoint', position_string, vrep.simx_opmode_streaming)
+
+    def stopSignalFootstepPoints(self):
+        vrep.simxWriteStringStream(self._sim_Client_ID, 'FootstepPoint', "end", vrep.simx_opmode_discontinue)
+
+    def receiveGyroSignal(self, oneshot=False, firstTime=True):
+        if oneshot:
+            err, dat = vrep.simxGetStringSignal(self._sim_Client_ID, 'gyro_body', vrep.simx_opmode_oneshot_wait)
+            if err == 0:
+                vrep.simxClearStringSignal(self._sim_Client_ID, 'gyro_body', vrep.simx_opmode_oneshot_wait)
+                gyro_data = vrep.simxUnpackFloats(dat)
+                return gyro_data
+            else:
+                return "Empty"
+        else:
+            if firstTime == True:
+                err, dat = vrep.simxGetStringSignal(self._sim_Client_ID, 'gyro_body', vrep.simx_opmode_streaming)
+                if err==0:
+                    vrep.simxClearStringSignal(self._sim_Client_ID, 'gyro_body', vrep.simx_opmode_streaming)
+                    gyro_data = vrep.simxUnpackFloats(dat)
+                    return gyro_data
+                else:
+                    return "Empty"
+            else:
+                err, dat = vrep.simxGetStringSignal(self._sim_Client_ID, 'gyro_body', vrep.simx_opmode_buffer)
+                if err == 0:
+                    vrep.simxClearStringSignal(self._sim_Client_ID, 'gyro_body', vrep.simx_opmode_buffer)
+                    gyro_data = vrep.simxUnpackFloats(dat)
+                    return gyro_data
+                else:
+                    return "Empty"
+
+    def receiveToePosSignal(self):
+        err, dat = vrep.simxGetStringSignal(self._sim_Client_ID, 'toe_pos', vrep.simx_opmode_oneshot_wait)
+        if err == 0:
+            vrep.simxClearStringSignal(self._sim_Client_ID, 'toe_pos', vrep.simx_opmode_oneshot_wait)
+            toe_pos = vrep.simxUnpackFloats(dat)
+            return toe_pos
+        else:
+            return "Empty"
+
+    def receiveGPSSignal(self):
+        err, dat = vrep.simxGetStringSignal(self._sim_Client_ID, 'GPS', vrep.simx_opmode_oneshot_wait)
+        if err==0:
+            vrep.simxClearStringSignal(self._sim_Client_ID, 'GPS', vrep.simx_opmode_oneshot_wait)
+            GPS = vrep.simxUnpackFloats(dat)
+            return GPS
+        else:
+            return "Empty"
 
     def set_dt(self, dt):
         self.dt = dt
