@@ -289,6 +289,30 @@ class DxlInterface(object):
         except AttributeError:
             print("setup failed: PRESENT_EFFORT")
 
+        try:
+            self.setup_group_sync_read('EFFORT_LIMIT')
+            print("setup success: EFFORT_LIMIT")
+        except AttributeError:
+            print("setup failed: EFFORT_LIMIT")
+
+        try:
+            self.setup_group_sync_write('EFFORT_LIMIT')
+            print("setup success: EFFORT_LIMIT")
+        except AttributeError:
+            print("setup failed: EFFORT_LIMIT")
+
+        try:
+            self.setup_group_sync_read('PRESENT_INPUT_VOLTAGE')
+            print("setup success: PRESENT_INPUT_VOLTAGE")
+        except AttributeError:
+            print("setup failed: PRESENT_INPUT_VOLTAGE")
+
+        try:
+            self.setup_group_sync_write('PRESENT_INPUT_VOLTAGE')
+            print("setup success: PRESENT_INPUT_VOLTAGE")
+        except AttributeError:
+            print("setup failed: PRESENT_INPUT_VOLTAGE")
+
         for d in self.device:
             print("gw_GOAL_POSITION {}".format(d.gw_GOAL_POSITION))
             print("gr_PRESENT_POSITION {}".format(d.gr_PRESENT_POSITION))
@@ -591,7 +615,7 @@ class DxlInterface(object):
         vel_data = []
         for d in self.device:
             id_list = self.filter_ids(ids, d)
-            data_list = self._sync_read(d, 'PRESENT_VELOCITY', d.ctrl_table.LEN_PRESENT_VELOCITY, id_list)
+            data_list = self._sync_read(d, 'PRESENT_VELOCITY', d.ctrl_table.LEN_PRESENT_VELOCITY, id_list, twos_complement=True)
             for m_id, data in zip(d.motor_id, data_list):
                 unit = d.motor[m_id]['vel_unit']
                 vel_data.append(vel2radps(data, unit))
@@ -606,24 +630,53 @@ class DxlInterface(object):
             commands = [radps2vel(v, unit) for v, unit in zip(velocity_list, unit_list)]
             self._sync_write(d, 'GOAL_VELOCITY', d.ctrl_table.LEN_GOAL_VELOCITY, id_list, commands)
 
-    def get_present_effort(self, ids):
-        data = []
+
+    def set_goal_acceleration(self, ids, accelerations):
+        for d in self.device:
+            id_list, acceleration_list = self.filter_ids_and_commands(ids, accelerations, d)
+            #unit_list = [d.motor[m_id]['vel_unit'] for m_id in id_list]
+            # convert radians per sec to appropriate velocity unit
+            #commands = [radps2vel(v, unit) for v, unit in zip(velocity_list, unit_list)]
+            self._sync_write(d, 'GOAL_ACCELERATION', d.ctrl_table.LEN_GOAL_ACCELERATION, id_list, acceleration_list)
+
+
+    def get_present_effort(self, ids, stall, dxl):
+        effort_data = []
         for d in self.device:
             id_list = self.filter_ids(ids, d)
-            data_list = self._sync_read(d, 'GOAL_EFFORT', d.ctrl_table.LEN_PRESENT_EFFORT, id_list)
+            data_list = self._sync_read(d, 'PRESENT_EFFORT', d.ctrl_table.LEN_PRESENT_EFFORT, id_list, twos_complement=True)
             for m_id, data in zip(d.motor_id, data_list):
-                unit = d.motor[m_id]['torque_conversion']
-                data.append(vel2radps(data, unit))
+                ctrl_table = d.motor[m_id]['ctrl_table']
+                unit = torque_conversion_equation(data, d.motor[m_id]['model_no'], True, stall, dxl, ctrl_table)
+                effort_data.append(unit)
 
-        return data
+        return effort_data
 
-    def set_goal_effort(self, ids, commands):
+    def get_present_voltage(self, ids):
         for d in self.device:
-            id_list, velocity_list = self.filter_ids_and_commands(ids, velocities, d)
-            unit_list = [d.motor[m_id]['vel_unit'] for m_id in id_list]
-            # convert radians per sec to appropriate velocity unit
-            commands = [radps2vel(v, unit) for v, unit in zip(velocity_list, unit_list)]
-            self._sync_write(d, 'GOAL_EFFORT', d.ctrl_table.LEN_GOAL_VELOCITY, id_list, commands)
+            id_list = self.filter_ids(ids, d)
+            data_list = self._sync_read(d, 'PRESENT_INPUT_VOLTAGE', d.ctrl_table.LEN_PRESENT_INPUT_VOLTAGE, id_list, twos_complement=True)
+
+        return data_list
+
+    def get_effort_limit(self, ids, stall, dxl):
+        effort_limit_data = []
+        for d in self.device:
+            id_list = self.filter_ids(ids, d)
+            data_list = self._sync_read(d, 'EFFORT_LIMIT', d.ctrl_table.LEN_EFFORT_LIMIT, id_list)
+
+            for m_id, data in zip(d.motor_id, data_list):
+                ctrl_table = d.motor[m_id]['ctrl_table']
+                unit = torque_conversion_equation(data, d.motor[m_id]['model_no'], True, stall, dxl, ctrl_table)
+                effort_limit_data.append(unit)
+
+        return effort_limit_data
+
+    def set_goal_effort(self, ids, efforts, stall, dxl):
+        for d in self.device:
+            id_list, effort_list = self.filter_ids_and_commands(ids, efforts, d)
+            commands = [torque_conversion_equation(data, d.motor[m_id]['model_no'], False, stall, dxl, d.motor[m_id]['ctrl_table']) for m_id, data in zip(id_list, effort_list)]
+            self._sync_write(d, 'GOAL_EFFORT', d.ctrl_table.LEN_GOAL_EFFORT, id_list, commands)
 
     def filter_ids(self, ids, device):
         # filters out ids based on which ids are on the device
@@ -660,12 +713,45 @@ def vel2radps(vel, conversion):
     # multiply by conversion to get rpm, then pi/30 radps per rpm
     return vel * conversion / (30 / pi)
 
-def dxl2nm(counts, conversion):
+def torque_conversion_equation(value, model_number, dxl_to_nm, stall, dxl, control_table):
 
-    return counts*conversion
+    """
+    :param value: input value from present or goal effort
+    :param model_number: model number based on robotis website
+    :param dxl_to_nm: True if converting from dxl units to Nm, False, if converting from Nm to dxl units
+    :param stall: True if the motor is currently in stalling state, False, if the motor is currently in dynamic state
+    :param dxl: True if only the direct dxl values from the motor are desired (no conversions are made)
+    :param control_table: Uses the dictionary variable that contains the linear regression torque equations
+    :return:
 
-def nm2dxl(torque, conversion):
-    return torque
+    """
+
+    try:
+        torque_equation_val = control_table.torque_equation_dict[model_number]
+    except:
+        pass
+
+    if dxl:
+        return value
+
+    elif dxl_to_nm and stall:
+        current = value * torque_equation_val[4]
+        return torque_equation_val[0] * current - torque_equation_val[1]
+
+    elif not dxl_to_nm and stall:
+        current = (value + torque_equation_val[1]) / torque_equation_val[0]
+        return current * torque_equation_val[5]
+
+    elif dxl_to_nm and not stall:
+        current = value * torque_equation_val[4]
+        return torque_equation_val[2] * current - torque_equation_val[3]
+
+    elif not dxl_to_nm and not stall:
+        current = (value + torque_equation_val[3]) / torque_equation_val[2]
+        return current * torque_equation_val[5]
+
+    else:
+        raise Exception("Model number has not yet been verified for its torque/current conversion experimentally. Only dxl values may be received or returned.")
 
 def get_parameter_data_len(d, parameter):
     """
@@ -706,9 +792,12 @@ def create_byte_list(param, byte_len):
                       DXL_LOBYTE(DXL_HIWORD(param)),
                       DXL_HIBYTE(DXL_HIWORD(param))]
     elif byte_len == 2:
-        raise ValueError("Not implemented yet!")
+        param_list = [DXL_LOBYTE(param), DXL_HIBYTE(param)]
+
     elif byte_len == 1:
-        raise ValueError("Not implemented yet!")
+        param_list = [param]
+
     else:
         raise ValueError("byte list must be 1, 2 or 4 bytes!")
+
     return param_list

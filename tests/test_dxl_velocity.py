@@ -30,15 +30,15 @@ with MotionManager(ids, dt=.005, options=dopts) as mm:
     allclose(mm.get_present_velocity(ids), [pi / 2] * 4, .1)
     mm.set_goal_velocity(ids, [0] * 4)
 
-    mm.set_goal_velocity(ids, [-pi / 2] * 4)  # test negative velocity
-    sleep(4)
-    mm.set_goal_velocity(ids, [0] * 4)
-    allclose(mm.get_present_velocity(ids), [-pi / 2] * 4, .1)
+    #mm.set_goal_velocity(ids, [-pi / 2] * 4)  # test negative velocity
+    #sleep(4)
+    #mm.set_goal_velocity(ids, [0] * 4)
+    #allclose(mm.get_present_velocity(ids), [-pi / 2] * 4, .1)
 
-    mm.set_goal_velocity(ids, [pi, pi / 2, pi / 3, pi / 4])  # test different velocities
-    sleep(4)
-    allclose(mm.get_present_velocity(ids), [pi, pi / 2, pi / 3, pi / 4], .1)
-    mm.set_goal_velocity(ids, [0] * 4)
+    #mm.set_goal_velocity(ids, [pi, pi / 2, pi / 3, pi / 4])  # test different velocities
+    #sleep(4)
+    #allclose(mm.get_present_velocity(ids), [pi, pi / 2, pi / 3, pi / 4], .1)
+    #mm.set_goal_velocity(ids, [0] * 4)
 
-    sleep(1)
-    allclose(mm.get_present_velocity(ids), [0] * 4, .1)  # test zero velocity
+    #sleep(1)
+    #allclose(mm.get_present_velocity(ids), [0] * 4, .1)  # test zero velocity

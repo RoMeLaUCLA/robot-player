@@ -124,6 +124,7 @@ class MotionManager(object):
         if self.player == 'vrep':
             self.device.set_goal_position(ids, commands, send)
         if self.player == 'dxl':
+
             self.device.set_goal_position(ids, commands)
 
     def set_all_goal_position(self, command, send=False):
@@ -161,26 +162,9 @@ class MotionManager(object):
         if self.player == 'dxl':
             self.device.set_goal_velocity(ids, commands)
 
-    def set_all_goal_velocity(self, commands, send=True):
-        if self.player == 'vrep':
-            self.device.set_all_goal_velocity(commands, send)
-        if self.player == 'dxl':
-            self.set_goal_velocity(self.motor_id, commands, send)
-
-    ## Effort (force/torque/PWM/current) ##
-    def get_present_effort(self, ids, **kwargs):
-        if self.player == 'vrep':
-            return self.device.get_present_effort(ids, **kwargs)
-        elif self.player == 'dxl':
-            self.device.get_present_effort(ids)
-
-    def get_all_present_effort(self, **kwargs):
-        if self.player == 'vrep':
-            return self.device.get_all_present_effort(**kwargs)
-        elif self.player == 'dxl':
-            raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
-
-    def set_goal_effort(self, ids, commands, send=True, **kwargs):
+    def set_goal_acceleration(self, ids, commands, send=True):
+        # ids is a list of the ids that you want to command
+        # commands is a list of the values that you want to send to the actuators
 
         try:
             assert (len(ids) == len(commands))
@@ -188,10 +172,66 @@ class MotionManager(object):
             raise ValueError('ERROR: ids and commands must be same length')
 
         if self.player == 'vrep':
-            self.device.set_goal_effort(ids, commands, send, kwargs)
+            self.device.set_goal_acceleration(ids, commands, send)
         if self.player == 'dxl':
-            self.device.set_goal_effort(ids, commands, send, kwargs)
+            self.device.set_goal_acceleration(ids, commands)
+
+    def set_all_goal_velocity(self, commands, send=True):
+        if self.player == 'vrep':
+            self.device.set_all_goal_velocity(commands, send)
+        if self.player == 'dxl':
+            self.set_goal_velocity(self.motor_id, commands, send) # TODO: fix this
+
+    ## Effort (force/torque/PWM/current) ##
+    def get_present_effort(self, ids, stall, dxl, **kwargs):
+        if self.player == 'vrep':
+            return self.device.get_present_effort(ids, **kwargs)
+        elif self.player == 'dxl':
+            #return self.device.get_present_effort(ids, **kwargs)
+            return self.device.get_present_effort(ids, stall, dxl, **kwargs)
+
+    def get_present_voltage(self, ids, **kwargs):
+        #if self.player == 'vrep':
+        #    return self.device.get_present_effort(ids, **kwargs)
+        if self.player == 'dxl':
+            return self.device.get_present_voltage(ids, **kwargs)
+
+    def get_effort_limit(self, ids, stall, dxl, **kwargs):
+        if self.player == 'vrep':
+            return self.device.get_effort_limit(ids, **kwargs)
+        elif self.player == 'dxl':
+            return self.device.get_effort_limit(ids, stall, dxl, **kwargs)
+
+    def get_all_present_effort(self, **kwargs):
+        if self.player == 'vrep':
+            return self.device.get_all_present_effort(**kwargs)
+        elif self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
+
+    def set_goal_effort(self, ids, commands, stall, dxl, send=True, **kwargs):
+
+        try:
+            assert (len(ids) == len(commands))
+        except AssertionError:
+            raise ValueError('ERROR: ids and commands must be same length')
+
+        if self.player == 'vrep':
+            self.device.set_goal_effort(ids, commands, send, **kwargs)
+
+        if self.player == 'dxl':
+            self.device.set_goal_effort(ids, commands, stall, dxl)
+
+    #ids1 are correlated with the motor ids to the position commands, and ids2 are correlated with the motor ids
+    #to the effort commands
+    def torque_control(self, ids1, pos_commands, ids2, effort_commands, stall, dxl):
+        try:
+            assert (len(ids1) == len(pos_commands) and len(ids2) == len(effort_commands))
+        except AssertionError:
+            raise ValueError('Error: ids and commands must be the same length')
+
+        if self.player == 'dxl':
+            self.device.set_goal_position(ids1, pos_commands)
+            self.device.set_goal_effort(ids2, effort_commands, stall, dxl)
 
     def set_all_goal_effort(self, commands, send=True):
         if self.player == 'vrep':
@@ -270,6 +310,8 @@ class MotionManager(object):
         # if isinstance(self.ft_device, VrepInterface):
         force, torque = self.ft_device.read_ft_sensor(sensor_id, **kwargs)
         return force, torque
+
+
 
 
 class AngleOffset:
