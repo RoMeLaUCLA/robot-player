@@ -607,7 +607,7 @@ class DXLPRO:
     #dxl counts to Amps, Amps to dxl counts].Where Method 1 - linear relationship between torque and
     #current when the motor is stalled at increasing weight; Method 2 - linear relationship between torque and
     #current when the motor is moving dynamically at increasing weight
-    torque_equation_dict = {
+    TORQUE_EQUATION_DICT = {
         54024: [4.5954, 1.5934, 4.0126, 1.5875, 0.01611328, 62.060610875],
         53768: [4.5966, 2.1291, 4.1904, 1.5086, 0.01611328, 62.060610875]
     }

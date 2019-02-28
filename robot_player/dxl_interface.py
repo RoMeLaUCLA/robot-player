@@ -727,7 +727,7 @@ def torque_conversion_equation(value, model_number, dxl_to_nm, stall, dxl, contr
     """
 
     try:
-        torque_equation_val = control_table.torque_equation_dict[model_number]
+        torque_equation_val = control_table.TORQUE_EQUATION_DICT[model_number]
     except:
         pass
 
