@@ -740,7 +740,7 @@ def torque_conversion_equation(value, model_number, dxl_to_nm, stall, dxl, contr
 
     elif not dxl_to_nm and stall:
         current = (value + torque_equation_val[1]) / torque_equation_val[0]
-        return current * torque_equation_val[5]
+        return int(round((current * torque_equation_val[5])))
 
     elif dxl_to_nm and not stall:
         current = value * torque_equation_val[4]
@@ -748,7 +748,7 @@ def torque_conversion_equation(value, model_number, dxl_to_nm, stall, dxl, contr
 
     elif not dxl_to_nm and not stall:
         current = (value + torque_equation_val[3]) / torque_equation_val[2]
-        return current * torque_equation_val[5]
+        return int(round(current * torque_equation_val[5]))
 
     else:
         raise Exception("Model number has not yet been verified for its torque/current conversion experimentally. Only dxl values may be received or returned.")

@@ -1,5 +1,4 @@
 from robot_player import MotionManager, DxlOptions
-import numpy as np
 import platform
 import time
 
