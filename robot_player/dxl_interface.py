@@ -725,9 +725,12 @@ def torque_conversion_equation(value, model_number, dxl_to_nm, stall, dxl, contr
     :return:
 
     """
-
+    value_negative = False
     try:
         torque_equation_val = control_table.TORQUE_EQUATION_DICT[model_number]
+        if value < 0:
+            value = value * -1
+            value_negative = True
     except:
         pass
 
@@ -736,22 +739,27 @@ def torque_conversion_equation(value, model_number, dxl_to_nm, stall, dxl, contr
 
     elif dxl_to_nm and stall:
         current = value * torque_equation_val[4]
-        return torque_equation_val[0] * current - torque_equation_val[1]
+        final_torque = torque_equation_val[0] * current - torque_equation_val[1]
 
     elif not dxl_to_nm and stall:
         current = (value + torque_equation_val[1]) / torque_equation_val[0]
-        return int(round((current * torque_equation_val[5])))
+        final_torque = int(round((current * torque_equation_val[5])))
 
     elif dxl_to_nm and not stall:
         current = value * torque_equation_val[4]
-        return torque_equation_val[2] * current - torque_equation_val[3]
+        final_torque = torque_equation_val[2] * current - torque_equation_val[3]
 
     elif not dxl_to_nm and not stall:
         current = (value + torque_equation_val[3]) / torque_equation_val[2]
-        return int(round(current * torque_equation_val[5]))
+        final_torque = int(round(current * torque_equation_val[5]))
 
     else:
         raise Exception("Model number has not yet been verified for its torque/current conversion experimentally. Only dxl values may be received or returned.")
+
+    if not value_negative:
+        return final_torque
+    else:
+        return final_torque*-1
 
 def get_parameter_data_len(d, parameter):
     """

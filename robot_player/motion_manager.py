@@ -221,18 +221,6 @@ class MotionManager(object):
         if self.player == 'dxl':
             self.device.set_goal_effort(ids, commands, stall, dxl)
 
-    #ids1 are correlated with the motor ids to the position commands, and ids2 are correlated with the motor ids
-    #to the effort commands
-    def torque_control(self, ids1, pos_commands, ids2, effort_commands, stall, dxl):
-        try:
-            assert (len(ids1) == len(pos_commands) and len(ids2) == len(effort_commands))
-        except AssertionError:
-            raise ValueError('Error: ids and commands must be the same length')
-
-        if self.player == 'dxl':
-            self.device.set_goal_position(ids1, pos_commands)
-            self.device.set_goal_effort(ids2, effort_commands, stall, dxl)
-
     def set_all_goal_effort(self, commands, send=True):
         if self.player == 'vrep':
             self.device.set_all_goal_effort(commands, send)
