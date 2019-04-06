@@ -602,13 +602,27 @@ class DXLPRO:
                        H42_20_S300_R: 3.4*8250.0/2048.0000,
                       }
 
+    #torque_equation_dict format:
+    #Model number of motor: [slope of method 1,y-intercept of method 1, slope of method 2, y-intercept of method 2
+    #dxl counts to Amps, Amps to dxl counts].Where Method 1 - linear relationship between torque and
+    #current when the motor is stalled at increasing weight; Method 2 - linear relationship between torque and
+    #current when the motor is moving dynamically at increasing weight
+    TORQUE_EQUATION_DICT = {
+        54024: [4.5954, 1.5934, 4.0126, 1.5875, 0.01611328, 62.060610875],
+        53768: [4.5966, 2.1291, 4.1904, 1.5086, 0.01611328, 62.060610875]
+    }
+
     # read/write command lengths
     LEN_GOAL_POSITION = 4
     LEN_PRESENT_POSITION = 4
     LEN_GOAL_VELOCITY = 4
     LEN_PRESENT_VELOCITY = 4
+    LEN_GOAL_ACCELERATION = 4
     LEN_GOAL_EFFORT = 2
     LEN_PRESENT_EFFORT = 2
+    LEN_EFFORT_LIMIT = 2
+    LEN_PRESENT_INPUT_VOLTAGE = 2
+    LEN_OPERATION_MODE = 1
 
     # =====================================================================
     # EEPROM
@@ -834,3 +848,5 @@ DXL_STATUS_RETURN = 0x55
 DXL_SYNC_READ = 0x82
 DXL_BULK_WRITE = 0x92
 DXL_BROADCAST_ID = 0xFE
+
+

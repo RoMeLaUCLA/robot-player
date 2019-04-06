@@ -1,5 +1,4 @@
 from robot_player import MotionManager, DxlOptions
-from time import sleep
 import platform
 from math import pi
 import numpy as np
