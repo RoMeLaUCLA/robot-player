@@ -9,12 +9,12 @@ __status__ = "Prototype"
 
 
 import ctypes
-from .dxl import dynamixel_functions as dynamixel
-from .dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28, MX28_P1, XSERIES
+import dynamixel_sdk as dynamixel
+from dynamixel_sdk import DXL_LOBYTE, DXL_HIBYTE, DXL_LOWORD, DXL_HIWORD, DXL_MAKEDWORD, DXL_MAKEWORD
+from robot_player.dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28, MX28_P1, XSERIES
 from collections import OrderedDict
 from math import pi
 import subprocess
-
 # conversion table. pass in the motor model number, get the object
 NUM2MODEL = {MX106.MX_106: MX106,
              MX106_P1.MX_106_P1: MX106_P1,
@@ -44,6 +44,12 @@ COMM_TX_FAIL = -1001  # Communication Tx Failed
 def set_serial_port_low_latency(port_name):
     # sets serial port to be low latency
     subprocess.call(['setserial', port_name, 'low_latency'])
+
+def twos_comp(val, bits):
+    """compute the 2's complement of int value val"""
+    if (val & (1 << (bits - 1))) != 0: # if sign bit is set e.g., 8bit: 128-255
+        val = val - (1 << bits)        # compute negative value
+    return val
 
 class DxlOptions(object):
     def __init__(self,
@@ -146,17 +152,18 @@ class DxlInterface(object):
 
         # allocate ports
         for d in dxl_ports:
-            d.port_num = dynamixel.portHandler(d.device_name)
+            d.port_handler = dynamixel.PortHandler(d.device_name)
+            # initialize packet handler
+            d.packet_handler = dynamixel.PacketHandler(d.protocol_version)
             self.device.append(d)
             set_serial_port_low_latency(d.device_name)
         print(self.device)
 
-        # initialize packet handler
-        dynamixel.packetHandler()
+
 
         for d in self.device:
             # Open port
-            if dynamixel.openPort(d.port_num) and dynamixel.setBaudRate(d.port_num, self.baudrate):
+            if d.port_handler.openPort() and d.port_handler.setBaudRate(self.baudrate):
                 print("Succeeded to open the port and set baudrate to {} for {}!".format(self.baudrate, d.device_name))
             else:
                 print("Failed to open the port!")
@@ -183,7 +190,7 @@ class DxlInterface(object):
 
     def close(self):
         for d in self.device:
-            dynamixel.closePort(d.port_num)
+            d.port_handler.closePort()
 
     def setup_control_table(self):
         """
@@ -199,18 +206,30 @@ class DxlInterface(object):
         for d in self.device:
             for m_id in d.motor_id:
                 num_motors += 1
-                motor_model_no = dynamixel.pingGetModelNum(d.port_num, d.protocol_version, m_id)
-                dxl_comm_result = dynamixel.getLastTxRxResult(d.port_num, d.protocol_version)
-                dxl_error = dynamixel.getLastRxPacketError(d.port_num, d.protocol_version)
+                motor_model_no, dxl_comm_result, dxl_comm_error  = d.packet_handler.ping(d.port_handler, m_id)
+                # dxl_comm_result = d.packet_handler.getLastTxRxResult( d.protocol_version)
+                # dxl_error = d.packet_handler.getLastRxPacketError( d.protocol_version)
+
                 if dxl_comm_result != COMM_SUCCESS:
-                    print(dynamixel.getTxRxResult(d.protocol_version, dxl_comm_result))
+                    print("%s" % d.packet_handler.getTxRxResult(dxl_comm_result))
                     print("Motor id " + str(m_id) + " was not found!")
                     motors_not_found += 1
                     continue
-                elif dxl_error != 0:
-                    print(dynamixel.getRxPacketError(d.protocol_version, dxl_error))
+                elif dxl_comm_error != 0:
+                    print("%s" % d.packet_handler.getRxPacketError(dxl_comm_error))
+                else:
+                    print("[ID:%03d] ping Succeeded. Dynamixel model number : %d" % (m_id, motor_model_no))
 
-                print("[ID:%03d] ping Succeeded. Dynamixel model number : %d" % (m_id, motor_model_no))
+
+                # if dxl_comm_result != COMM_SUCCESS:
+                #     print(dynamixel.getTxRxResult(d.protocol_version, dxl_comm_result))
+                #     print("Motor id " + str(m_id) + " was not found!")
+                #     motors_not_found += 1
+                #     continue
+                # elif dxl_error != 0:
+                #     print(dynamixel.getRxPacketError(d.protocol_version, dxl_error))
+                #
+                # print("[ID:%03d] ping Succeeded. Dynamixel model number : %d" % (m_id, motor_model_no))
 
                 # use model number to get motor object
                 try:
@@ -270,6 +289,30 @@ class DxlInterface(object):
         except AttributeError:
             print("setup failed: PRESENT_EFFORT")
 
+        try:
+            self.setup_group_sync_read('EFFORT_LIMIT')
+            print("setup success: EFFORT_LIMIT")
+        except AttributeError:
+            print("setup failed: EFFORT_LIMIT")
+
+        try:
+            self.setup_group_sync_write('EFFORT_LIMIT')
+            print("setup success: EFFORT_LIMIT")
+        except AttributeError:
+            print("setup failed: EFFORT_LIMIT")
+
+        try:
+            self.setup_group_sync_read('PRESENT_INPUT_VOLTAGE')
+            print("setup success: PRESENT_INPUT_VOLTAGE")
+        except AttributeError:
+            print("setup failed: PRESENT_INPUT_VOLTAGE")
+
+        try:
+            self.setup_group_sync_write('PRESENT_INPUT_VOLTAGE')
+            print("setup success: PRESENT_INPUT_VOLTAGE")
+        except AttributeError:
+            print("setup failed: PRESENT_INPUT_VOLTAGE")
+
         for d in self.device:
             print("gw_GOAL_POSITION {}".format(d.gw_GOAL_POSITION))
             print("gr_PRESENT_POSITION {}".format(d.gr_PRESENT_POSITION))
@@ -283,15 +326,20 @@ class DxlInterface(object):
         """
         for d in self.device:
             parameter_data_len = get_parameter_data_len(d, parameter)
-            print("d.port_num {}".format(d.port_num))
-            gw_id = dynamixel.groupSyncWrite(d.port_num,
-                                             d.protocol_version,
-                                             getattr(d.ctrl_table, parameter),
-                                             parameter_data_len
-                                             )
+            print("Configuring {} group sync write for: {}".format(parameter, d.device_name))
+
+            # new python API way
+            gsw = dynamixel.GroupSyncWrite(d.port_handler, d.packet_handler, getattr(d.ctrl_table, parameter), parameter_data_len)
+
+            # old way
+            # gw_id = d.packet_handler.groupSyncWrite(
+            #                                  d.protocol_version,
+            #                                  getattr(d.ctrl_table, parameter),
+            #                                  parameter_data_len
+            #                                  )
 
             # set device to have .gw_<name of parameter> attached to it for further reference
-            setattr(d, "gw_" + parameter, gw_id)
+            setattr(d, "gw_" + parameter, gsw)
 
             for m_id in d.motor_id:
                 d.motor[m_id]['LEN_{}'.format(parameter)] = parameter_data_len  # TODO needs testing
@@ -309,13 +357,22 @@ class DxlInterface(object):
 
             # Protocol 2.0 has sync read
             if d.protocol_version == 2:
-                gr_id = dynamixel.groupSyncRead(d.port_num,
-                                                d.protocol_version,
-                                                getattr(d.ctrl_table, parameter),
-                                                parameter_data_len)
+                # new python API
+                gsr = dynamixel.GroupSyncRead(d.port_handler, d.packet_handler, getattr(d.ctrl_table, parameter), parameter_data_len)
+
+                # old way
+                # gr_id = d.packet_handler.groupSyncRead(
+                #                                 d.protocol_version,
+                #                                 getattr(d.ctrl_table, parameter),
+                #                                 parameter_data_len)
                 for m_id in d.motor_id:
                     # Add parameter storage for each Dynamixel's present position value to the Syncread storage
-                    dxl_addparam_result = ctypes.c_ubyte(dynamixel.groupSyncReadAddParam(gr_id, m_id)).value
+
+                    # new Python API:
+                    dxl_addparam_result = gsr.addParam(m_id)
+
+                    # old way
+                    # dxl_addparam_result = ctypes.c_ubyte(dynamixel.groupSyncReadAddParam(gr_id, m_id)).value
                     if dxl_addparam_result != 1:
                         print("[ID:%03d] groupSyncRead addparam failed" % m_id)
 
@@ -323,7 +380,7 @@ class DxlInterface(object):
 
             # Protocol 1.0 doesn't have sync read, so use bulk read instead
             else:
-                gr_id = dynamixel.groupBulkRead(d.port_num,
+                gr_id = d.packet_handler.groupBulkRead(
                                                 d.protocol_version,
                                                 getattr(d.ctrl_table, parameter),
                                                 parameter_data_len)
@@ -341,7 +398,7 @@ class DxlInterface(object):
                     d.motor[m_id]['LEN_{}'.format(parameter)] = parameter_data_len  # TODO needs testing
 
             # set device to have .gw_<name of parameter> attached to it for further reference
-            setattr(d, "gr_" + parameter, gr_id)
+            setattr(d, "gr_" + parameter, gsr)
 
     def set_torque_enable(self, ids, commands):
         # for each device, if an id in the table matches, set torque
@@ -349,13 +406,13 @@ class DxlInterface(object):
             ctrl_table_value = getattr(d.ctrl_table, "TORQUE_ENABLE")
             for m_id, val in zip(ids, commands):
                 if m_id in d.motor_id:
-                    dynamixel.write1ByteTxRx(d.port_num, d.protocol_version, m_id, ctrl_table_value, val)
-                    dxl_comm_result = dynamixel.getLastTxRxResult(d.port_num, d.protocol_version)
-                    dxl_error = dynamixel.getLastRxPacketError(d.port_num, d.protocol_version)
+                    dxl_comm_result, dxl_error = d.packet_handler.write1ByteTxRx(d.port_handler, m_id, ctrl_table_value, val)
+                    # dxl_comm_result = d.packet_handler.getLastTxRxResult( d.protocol_version)
+                    # dxl_error = d.packet_handler.getLastRxPacketError( d.protocol_version)
                     if dxl_comm_result != COMM_SUCCESS:
-                        print(dynamixel.getTxRxResult(d.protocol_version, dxl_comm_result))
+                        print(d.packet_handler.getTxRxResult(dxl_comm_result))
                     elif dxl_error != 0:
-                        print(dynamixel.getRxPacketError(d.protocol_version, dxl_error))
+                        print(d.packet_handler.getRxPacketError(dxl_error))
 
     def _read_data(self, ids, address, data_length):
         """
@@ -366,24 +423,21 @@ class DxlInterface(object):
         :return: list of the data in the same order as the ids
         """
 
-        # choose a number of bytes to read based on data length
-        if data_length == 1:
-            read_fn = dynamixel.read1ByteTxRx
-        elif data_length == 2:
-            read_fn = dynamixel.read2ByteTxRx
-        elif data_length == 4:
-            read_fn = dynamixel.read4ByteTxRx
-        else:
-            print("Invalid data length: 1,2,4 bytes only")
-
         # choose protocol version
         result = {}
         for d in self.device:
+            # choose a number of bytes to read based on data length
+
             device_ids = self.filter_ids(ids, d)
-            portno = d.port_num
-            protocol_version = d.protocol_version
             for m_id in device_ids:
-                data = read_fn(portno, protocol_version, m_id, address)
+                if data_length == 1:
+                    data, _, _ = d.packet_handler.read1ByteTxRx(d.port_handler, m_id, address)
+                elif data_length == 2:
+                    data, _, _ = d.packet_handler.read2ByteTxRx(d.port_handler, m_id, address)
+                elif data_length == 4:
+                    data, _, _ = d.packet_handler.read4ByteTxRx(d.port_handler, m_id, address)
+                else:
+                    print("Invalid data length: 1,2,4 bytes only")
                 result[m_id] = data
 
         return [result[m_id] for m_id in ids] # reorder data to match original id order
@@ -399,24 +453,20 @@ class DxlInterface(object):
         :return:
         """
 
-        if data_length == 1:
-            write_fn = dynamixel.write1ByteTxRx
-        elif data_length == 2:
-            write_fn = dynamixel.write2ByteTxRx
-        elif data_length == 4:
-            write_fn = dynamixel.write4ByteTxRx
-        else:
-            print("Invalid data length: 1,2,4 bytes only")
-
         for d in self.device:
             device_ids, commands = self.filter_ids_and_commands(ids, data, d)
-            portno = d.port_num
-            protocol_version = d.protocol_version
             for m_id, comm in zip(device_ids, commands):
-                write_fn(portno, protocol_version, m_id, address,  comm)
+                if data_length == 1:
+                    d.packet_handler.write1ByteTxRx(d.port_handler, m_id, address,  comm)
+                elif data_length == 2:
+                    d.packet_handler.write2ByteTxRx(d.port_handler, m_id, address,  comm)
+                elif data_length == 4:
+                    d.packet_handler.write4ByteTxRx(d.port_handler, m_id, address,  comm)
+                else:
+                    print("Invalid data length: 1,2,4 bytes only")
 
 
-    def _sync_write(self, device, parameter, parameter_data_length, ids, commands):
+    def _sync_write(self, device, parameter, parameter_data_length, ids, commands, twos_complement=False):
         """
         Uses sync write to write a string of data to a single port. Use this on every port.
 
@@ -427,25 +477,37 @@ class DxlInterface(object):
         :param commands: commands to send to device. Does no type conversion beyond Python -> C
         :return:
         """
+        gsw = getattr(device, "gw_" + parameter)
         for m_id, command in zip(ids, commands):
-            dxl_addparam_result = ctypes.c_ubyte(
-                dynamixel.groupSyncWriteAddParam(getattr(device, "gw_" + parameter),
-                                                 m_id,
-                                                 command,
-                                                 parameter_data_length)).value
+            # new Python API:
+            # # TODO: DO WE NEED THIS
+            # if twos_complement:
+            #     parameter = twos_comp(parameter, 8*parameter_data_length)
+            param_byte_list = create_byte_list(command, parameter_data_length)
+            dxl_addparam_result = gsw.addParam(m_id, param_byte_list)
+
+
+            # old API:
+            # dxl_addparam_result = ctypes.c_ubyte(
+            #     dynamixel.groupSyncWriteAddParam(getattr(device, "gw_" + parameter),
+            #                                      m_id,
+            #                                      command,
+            #                                      parameter_data_length)).value
             if dxl_addparam_result != 1:
                 print("[ID:%03d] groupSyncWrite addparam failed" % m_id)
                 quit()
         # Syncwrite command
-        dynamixel.groupSyncWriteTxPacket(getattr(device, "gw_" + parameter))
-        dxl_comm_result = dynamixel.getLastTxRxResult(device.port_num, device.protocol_version)
+        dxl_comm_result = gsw.txPacket()
+
+        # old way
+        # dxl_comm_result = dynamixel.getLastTxRxResult(device.port_num, device.protocol_version)
         if dxl_comm_result != COMM_SUCCESS:
-            print(dynamixel.getTxRxResult(device.protocol_version, dxl_comm_result))
+            print(device.packet_handler.getTxRxResult(dxl_comm_result))
 
         # Clear syncwrite parameter storage
-        dynamixel.groupSyncWriteClearParam(getattr(device, "gw_" + parameter))
+        gsw.clearParam()
 
-    def _sync_read(self, device, parameter, parameter_data_length, ids):
+    def _sync_read(self, device, parameter, parameter_data_length, ids, twos_complement=False):
         """
         Uses sync read and the name of a parameter to read data from ctrl table of multiple DXLs. Use this method on
         every device.
@@ -460,28 +522,35 @@ class DxlInterface(object):
         data_list = []
         if device.protocol_version == 2:
             # Syncread present position
-            dynamixel.groupSyncReadTxRxPacket(getattr(device, "gr_" + parameter))
-            dxl_comm_result = dynamixel.getLastTxRxResult(device.port_num, device.protocol_version)
+            gsr = getattr(device, "gr_" + parameter)
+            dxl_comm_result = gsr.txRxPacket()
+            # dxl_comm_result = dynamixel.getLastTxRxResult(device.port_num, device.protocol_version)
             if dxl_comm_result != COMM_SUCCESS:
-                print(dynamixel.getTxRxResult(device.protocol_version, dxl_comm_result))
+                print(device.packet_handler.getTxRxResult(dxl_comm_result))
                 return None
 
             # Check if groupsyncread data of all dynamixels are available:
             for m_id in ids:
-                dxl_getdata_result = ctypes.c_ubyte(
-                    dynamixel.groupSyncReadIsAvailable(getattr(device, "gr_" + parameter),
-                                                       m_id,
-                                                       getattr(device.ctrl_table, parameter),
-                                                       parameter_data_length)).value
+                # new Python API:
+                dxl_getdata_result = gsr.isAvailable(m_id, getattr(device.ctrl_table, parameter), parameter_data_length)
+
+                # old way
+                # dxl_getdata_result = ctypes.c_ubyte(
+                #     gsr.groupSyncReadIsAvailable(getattr(device, "gr_" + parameter),
+                #                                        m_id,
+                #                                        getattr(device.ctrl_table, parameter),
+                #                                        parameter_data_length)).value
                 if dxl_getdata_result != 1:
                     print("[ID:%03d] groupSyncRead getdata failed" % m_id)
                     quit()
 
                     # Get present position value for (m_id)
-                data = dynamixel.groupSyncReadGetData(getattr(device, "gr_" + parameter),
-                                                      m_id,
-                                                      getattr(device.ctrl_table, parameter),
-                                                      parameter_data_length)
+                data = gsr.getData(m_id, getattr(device.ctrl_table, parameter), parameter_data_length)
+
+                # NEEDED TO ADD THIS HERE FOR NEW PYTHON API
+                if twos_complement:
+                    data = twos_comp(data, parameter_data_length*8)
+
                 data_list.append(data)
         else:
             # Bulkread present position and moving status
@@ -514,7 +583,7 @@ class DxlInterface(object):
             # filter out ids that are on this device
             id_list = self.filter_ids(ids, d)
 
-            data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, id_list)
+            data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, id_list, twos_complement=True)
             for m_id, data in zip(d.motor_id, data_list):
                 res = d.motor[m_id]["resolution"]
                 pos_data.append(pos2rad(data, res))
@@ -524,7 +593,7 @@ class DxlInterface(object):
     def get_all_present_position(self):
         pos_data = []
         for d in self.device:
-            data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, d.motor_id)
+            data_list = self._sync_read(d, 'PRESENT_POSITION', d.ctrl_table.LEN_PRESENT_POSITION, d.motor_id, twos_complement=True)
             for m_id, data in zip(d.motor_id, data_list):
                 res = d.motor[m_id]["resolution"]
                 pos_data.append(pos2rad(data, res))
@@ -546,7 +615,7 @@ class DxlInterface(object):
         vel_data = []
         for d in self.device:
             id_list = self.filter_ids(ids, d)
-            data_list = self._sync_read(d, 'PRESENT_VELOCITY', d.ctrl_table.LEN_PRESENT_VELOCITY, id_list)
+            data_list = self._sync_read(d, 'PRESENT_VELOCITY', d.ctrl_table.LEN_PRESENT_VELOCITY, id_list, twos_complement=True)
             for m_id, data in zip(d.motor_id, data_list):
                 unit = d.motor[m_id]['vel_unit']
                 vel_data.append(vel2radps(data, unit))
@@ -561,24 +630,53 @@ class DxlInterface(object):
             commands = [radps2vel(v, unit) for v, unit in zip(velocity_list, unit_list)]
             self._sync_write(d, 'GOAL_VELOCITY', d.ctrl_table.LEN_GOAL_VELOCITY, id_list, commands)
 
-    def get_present_effort(self, ids):
-        data = []
+
+    def set_goal_acceleration(self, ids, accelerations):
+        for d in self.device:
+            id_list, acceleration_list = self.filter_ids_and_commands(ids, accelerations, d)
+            #unit_list = [d.motor[m_id]['vel_unit'] for m_id in id_list]
+            # convert radians per sec to appropriate velocity unit
+            #commands = [radps2vel(v, unit) for v, unit in zip(velocity_list, unit_list)]
+            self._sync_write(d, 'GOAL_ACCELERATION', d.ctrl_table.LEN_GOAL_ACCELERATION, id_list, acceleration_list)
+
+
+    def get_present_effort(self, ids, stall, dxl):
+        effort_data = []
         for d in self.device:
             id_list = self.filter_ids(ids, d)
-            data_list = self._sync_read(d, 'GOAL_EFFORT', d.ctrl_table.LEN_PRESENT_EFFORT, id_list)
+            data_list = self._sync_read(d, 'PRESENT_EFFORT', d.ctrl_table.LEN_PRESENT_EFFORT, id_list, twos_complement=True)
             for m_id, data in zip(d.motor_id, data_list):
-                unit = d.motor[m_id]['torque_conversion']
-                data.append(vel2radps(data, unit))
+                ctrl_table = d.motor[m_id]['ctrl_table']
+                unit = torque_conversion_equation(data, d.motor[m_id]['model_no'], True, stall, dxl, ctrl_table)
+                effort_data.append(unit)
 
-        return data
+        return effort_data
 
-    def set_goal_effort(self, ids, commands):
+    def get_present_voltage(self, ids):
         for d in self.device:
-            id_list, velocity_list = self.filter_ids_and_commands(ids, velocities, d)
-            unit_list = [d.motor[m_id]['vel_unit'] for m_id in id_list]
-            # convert radians per sec to appropriate velocity unit
-            commands = [radps2vel(v, unit) for v, unit in zip(velocity_list, unit_list)]
-            self._sync_write(d, 'GOAL_EFFORT', d.ctrl_table.LEN_GOAL_VELOCITY, id_list, commands)
+            id_list = self.filter_ids(ids, d)
+            data_list = self._sync_read(d, 'PRESENT_INPUT_VOLTAGE', d.ctrl_table.LEN_PRESENT_INPUT_VOLTAGE, id_list, twos_complement=True)
+
+        return data_list
+
+    def get_effort_limit(self, ids, stall, dxl):
+        effort_limit_data = []
+        for d in self.device:
+            id_list = self.filter_ids(ids, d)
+            data_list = self._sync_read(d, 'EFFORT_LIMIT', d.ctrl_table.LEN_EFFORT_LIMIT, id_list)
+
+            for m_id, data in zip(d.motor_id, data_list):
+                ctrl_table = d.motor[m_id]['ctrl_table']
+                unit = torque_conversion_equation(data, d.motor[m_id]['model_no'], True, stall, dxl, ctrl_table)
+                effort_limit_data.append(unit)
+
+        return effort_limit_data
+
+    def set_goal_effort(self, ids, efforts, stall, dxl):
+        for d in self.device:
+            id_list, effort_list = self.filter_ids_and_commands(ids, efforts, d)
+            commands = [torque_conversion_equation(data, d.motor[m_id]['model_no'], False, stall, dxl, d.motor[m_id]['ctrl_table']) for m_id, data in zip(id_list, effort_list)]
+            self._sync_write(d, 'GOAL_EFFORT', d.ctrl_table.LEN_GOAL_EFFORT, id_list, commands)
 
     def filter_ids(self, ids, device):
         # filters out ids based on which ids are on the device
@@ -615,12 +713,53 @@ def vel2radps(vel, conversion):
     # multiply by conversion to get rpm, then pi/30 radps per rpm
     return vel * conversion / (30 / pi)
 
-def dxl2nm(counts, conversion):
+def torque_conversion_equation(value, model_number, dxl_to_nm, stall, dxl, control_table):
 
-    return counts*conversion
+    """
+    :param value: input value from present or goal effort
+    :param model_number: model number based on robotis website
+    :param dxl_to_nm: True if converting from dxl units to Nm, False, if converting from Nm to dxl units
+    :param stall: True if the motor is currently in stalling state, False, if the motor is currently in dynamic state
+    :param dxl: True if only the direct dxl values from the motor are desired (no conversions are made)
+    :param control_table: Uses the dictionary variable that contains the linear regression torque equations
+    :return:
 
-def nm2dxl(torque, conversion):
-    return torque
+    """
+    value_negative = False
+    try:
+        torque_equation_val = control_table.TORQUE_EQUATION_DICT[model_number]
+        if value < 0:
+            value = value * -1
+            value_negative = True
+    except:
+        pass
+
+    if dxl:
+        return value
+
+    elif dxl_to_nm and stall:
+        current = value * torque_equation_val[4]
+        final_torque = torque_equation_val[0] * current - torque_equation_val[1]
+
+    elif not dxl_to_nm and stall:
+        current = (value + torque_equation_val[1]) / torque_equation_val[0]
+        final_torque = int(round((current * torque_equation_val[5])))
+
+    elif dxl_to_nm and not stall:
+        current = value * torque_equation_val[4]
+        final_torque = torque_equation_val[2] * current - torque_equation_val[3]
+
+    elif not dxl_to_nm and not stall:
+        current = (value + torque_equation_val[3]) / torque_equation_val[2]
+        final_torque = int(round(current * torque_equation_val[5]))
+
+    else:
+        raise Exception("Model number has not yet been verified for its torque/current conversion experimentally. Only dxl values may be received or returned.")
+
+    if not value_negative:
+        return final_torque
+    else:
+        return final_torque*-1
 
 def get_parameter_data_len(d, parameter):
     """
@@ -632,7 +771,7 @@ def get_parameter_data_len(d, parameter):
     :return: command length of the parameter
     """
     # enforce assumption that all motors on one port are the same model
-    motor_model_no = dynamixel.pingGetModelNum(d.port_num, d.protocol_version, d.motor_id[0])
+    motor_model_no, dxl_comm_result, dxl_comm_error = d.packet_handler.ping( d.port_handler, d.motor_id[0])
 
     try:  # to get motor model
         motor = NUM2MODEL[motor_model_no]
@@ -645,3 +784,28 @@ def get_parameter_data_len(d, parameter):
         raise AttributeError('Error: motor_model {} does not have parameter {}'.format(motor_model_no, parameter))
 
     return parameter_data_len
+
+
+def create_byte_list(param, byte_len):
+    """
+    Break down a parameter into a list of either 1, 2 or 4 bytes
+    :param param: the data to be broken down
+    :param byte_len: number of bytes
+    :return: a list containing the broken down bytes.
+    """
+
+    if byte_len == 4:
+        param_list = [DXL_LOBYTE(DXL_LOWORD(param)),
+                      DXL_HIBYTE(DXL_LOWORD(param)),
+                      DXL_LOBYTE(DXL_HIWORD(param)),
+                      DXL_HIBYTE(DXL_HIWORD(param))]
+    elif byte_len == 2:
+        param_list = [DXL_LOBYTE(param), DXL_HIBYTE(param)]
+
+    elif byte_len == 1:
+        param_list = [param]
+
+    else:
+        raise ValueError("byte list must be 1, 2 or 4 bytes!")
+
+    return param_list
