@@ -1,5 +1,10 @@
 # Daniel Sun 11 Apr 2019 
 # robot-player
+"""
+Test reading from PEBLE with all 12 motors using PEBLE while plugged in.
+
+"""
+
 
 from robot_player.motion_manager import MotionManager
 from robot_player.dxl_interface import DxlOptions
