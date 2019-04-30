@@ -320,7 +320,7 @@ class MX28:
     http://support.robotis.com/en/product/actuator/dynamixel/mx_series/mx-28(2.0).htm
     """
 
-    MX_28 = 31
+    MX_28 = 30
     resolution = 4096
     VEL_UNIT = .229  # RPM
 
@@ -682,7 +682,7 @@ class DXLPRO:
     EXTERNAL_PORT_DATA_3 = 630
     EXTERNAL_PORT_DATA_4 = 632
     INDIRECT_DATA_1 = 634
-    """ 
+    """
     can do other indirect data by adding INDIRECT_DATA_1 + 2*(address_num-1)
     e.g. INDIRECT_DATA_5 = INDIRECT_DATA_1 + 2*(5-1) = 57
 
@@ -848,5 +848,3 @@ DXL_STATUS_RETURN = 0x55
 DXL_SYNC_READ = 0x82
 DXL_BULK_WRITE = 0x92
 DXL_BROADCAST_ID = 0xFE
-
-

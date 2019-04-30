@@ -30,7 +30,6 @@ NUM2MODEL = {MX106.MX_106: MX106,
              DXLPRO.L54_50_S290_R: DXLPRO,
              DXLPRO.L54_30_S400_R: DXLPRO,
              MX28.MX_28: MX28,
-             MX28_P1.MX_28_P1: MX28_P1,
              XSERIES.XH430_W350: XSERIES,
              XSERIES.XH430_V350: XSERIES,
              XSERIES.XM540_W270: XSERIES}
@@ -241,12 +240,21 @@ class DxlInterface(object):
                     resolution = ctrl_table.resolution[motor_model_no]
                     vel_unit = ctrl_table.VEL_UNIT[motor_model_no]
                     torque_conversion = ctrl_table.TORQUE_CONVERSION[motor_model_no]
+                    TORQUECONVERSION = True
                 except TypeError:
                     resolution = ctrl_table.resolution
                     vel_unit = ctrl_table.VEL_UNIT
-                    torque_conversion = ctrl_table.TORQUE_CONVERSION
+                    try:
+                        torque_conversion = ctrl_table.TORQUE_CONVERSION
+                    except AttributeError:
+                        TORQUECONVERSION = False
+                        print("torque conversion not implemented for {}".format(ctrl_table))
 
-                d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution, "vel_unit": vel_unit, 'torque_conversion': torque_conversion}
+                if TORQUECONVERSION:
+                    d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution, "vel_unit": vel_unit, "torque_conversion":torque_conversion,}
+                else:
+                    d.motor[m_id] = {"model_no": motor_model_no, "ctrl_table": ctrl_table, "resolution": resolution,
+                                     "vel_unit": vel_unit}
                 print("motor_model_no:" + str(motor_model_no))
 
         # check if all motors are not found:
