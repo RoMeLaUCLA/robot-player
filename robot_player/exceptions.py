@@ -16,11 +16,14 @@ def read_data():
 
     print('ending function')
 
-try:
-    read_data()
-except DxlReadDataError:
-    print("catching exception here")
-finally:
-    print('ending script')
 
-print('script is over')
+
+if __name__ == '__main__':
+    try:
+        read_data()
+    except DxlReadDataError:
+        print("catching exception here")
+    finally:
+        print('ending script')
+
+    print('script is over')
