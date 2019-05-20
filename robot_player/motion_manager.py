@@ -183,7 +183,7 @@ class MotionManager(object):
             self.set_goal_velocity(self.motor_id, commands, send) # TODO: fix this
 
     ## Effort (force/torque/PWM/current) ##
-    def get_present_effort(self, ids, stall, dxl, **kwargs):
+    def get_present_effort(self, ids, stall=True, dxl=False, **kwargs):
         if self.player == 'vrep':
             return self.device.get_present_effort(ids, **kwargs)
         elif self.player == 'dxl':
@@ -208,7 +208,7 @@ class MotionManager(object):
         elif self.player == 'dxl':
             raise ValueError("this function hasn't been implemented for DXL yet")  # TODO: fix this
 
-    def set_goal_effort(self, ids, commands, stall, dxl, send=True, **kwargs):
+    def set_goal_effort(self, ids, commands, stall=True, dxl=False, send=True, **kwargs):
 
         try:
             assert (len(ids) == len(commands))
