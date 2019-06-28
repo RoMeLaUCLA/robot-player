@@ -9,12 +9,14 @@ __status__ = "Prototype"
 
 
 import ctypes
+import subprocess
+from math import pi
+from collections import OrderedDict
 import dynamixel_sdk as dynamixel
 from dynamixel_sdk import DXL_LOBYTE, DXL_HIBYTE, DXL_LOWORD, DXL_HIWORD, DXL_MAKEDWORD, DXL_MAKEWORD
 from robot_player.dxl.dxl_control_table import DXLPRO, MX106, MX106_P1, MX28, MX28_P1, XSERIES
-from collections import OrderedDict
-from math import pi
-import subprocess
+from robot_player.exceptions import DxlReadDataError
+
 # conversion table. pass in the motor model number, get the object
 NUM2MODEL = {MX106.MX_106: MX106,
              MX106_P1.MX_106_P1: MX106_P1,
@@ -39,6 +41,9 @@ NUM2MODEL = {MX106.MX_106: MX106,
 
 COMM_SUCCESS = 0  # Communication Success result value
 COMM_TX_FAIL = -1001  # Communication Tx Failed
+
+
+
 
 def set_serial_port_low_latency(port_name):
     # sets serial port to be low latency
@@ -535,7 +540,8 @@ class DxlInterface(object):
             # dxl_comm_result = dynamixel.getLastTxRxResult(device.port_num, device.protocol_version)
             if dxl_comm_result != COMM_SUCCESS:
                 print(device.packet_handler.getTxRxResult(dxl_comm_result))
-                return None
+                raise DxlReadDataError
+
 
             # Check if groupsyncread data of all dynamixels are available:
             for m_id in ids:
