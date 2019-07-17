@@ -12,6 +12,7 @@ __status__ = "Prototype"
 
 from . vrep import vrep
 from collections import OrderedDict
+import logging
 
 class VrepOptions(object):
     # options class to help with creating via MotionManager
@@ -44,7 +45,7 @@ def error_handler(return_code, function_name):
             error_list.append("simx_return_initialize_error_flag: simxStart was not yet called")
 
         for error in error_list:
-            print ("VREP function {} returned {}".format(function_name, error))
+            logging.debug("VREP function {} returned {}".format(function_name, error))
 
 
 class VrepInterface(object):
@@ -67,8 +68,15 @@ class VrepInterface(object):
     JOINT_TYPE_PRISMATIC = 11
 
     # On initialization pass in the timestep that both the python script and V-REP will be synced to
-    def __init__(self, motor_id, dt, joint_prefix=None, gyroscope=False, accelerometer=False, ft_sensor_names=None,
-                 opmode=vrep.simx_opmode_blocking, synchronous=True):
+    def __init__(self,
+                 motor_id,
+                 dt,
+                 joint_prefix=None,
+                 gyroscope=False,
+                 accelerometer=False,
+                 ft_sensor_names=None,
+                 opmode=vrep.simx_opmode_blocking,
+                 synchronous=True):
         vrep.simxFinish(-1)
         self._sim_Client_ID = vrep.simxStart('127.0.0.1', 19997, True, True, 5000, 1)
         if joint_prefix is None:
@@ -95,7 +103,7 @@ class VrepInterface(object):
                 self.ft_sensors[ft] = ft_handle
 
         if self._sim_Client_ID != -1:
-            print("Connected to V-REP remote API server.")
+            logging.debug("Connected to V-REP remote API server.")
             # Setup synchronized simulation
             vrep.simxSynchronous(self._sim_Client_ID, synchronous)
 
@@ -118,7 +126,7 @@ class VrepInterface(object):
             self.read_accelerometer(initialize=True)  # (operationMode=vrep.simx_opmode_blocking)
 
     def stop(self):
-        print("Ending communication with VREP...")
+        logging.debug("Ending communication with VREP...")
         self.print_to_statusbar("Ending communication with client " + str(self._sim_Client_ID))
         vrep.simxStopSimulation(self._sim_Client_ID, vrep.simx_opmode_blocking)
         vrep.simxFinish(-1)
@@ -240,10 +248,8 @@ class VrepInterface(object):
         # setup joint velocities
         for j in new_joint:
             if j['joint_type'] == VrepInterface.JOINT_TYPE_REVOLUTE:
-                print("revolute_joint")
                 j['joint_target_velocity'] = self.revolute_joint_torque_control_max_speed
             elif j['joint_type'] == VrepInterface.JOINT_TYPE_PRISMATIC:
-                print("prismatic_joint")
                 j['joint_target_velocity'] = self.prismatic_joint_torque_control_max_speed
             else:
                 raise Exception("can't control a joint that isn't revolute or prismatic")
@@ -371,7 +377,7 @@ class VrepInterface(object):
             self.send_command()
 
     def set_all_goal_effort(self, commands, send=True):
-        # print("setting joint effort")
+        # logging.debug("setting joint effort")
         self.set_goal_effort(self.motor_id, commands, send)
 
     ## Control Loop ##
