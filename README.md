@@ -88,8 +88,9 @@ You can look up all of the options for the VrepOptions and DxlOptions in their r
 All joint commands have a specific structure:
 
  ```python
-mm.get_present_position(ids)
-mm.set_goal_position(ids, commands)
+import pebl.core.containers
+pebl.core.containers.get_present_position(ids)
+pebl.core.containers.set_goal_position(ids, commands)
 ```
 
 `ids` is a list or tuple of values that has the joint ids to send commands to. `commands` is a list or tuple that has the joint commands to send to the motors. The units for the commands are shown in the table below. Unit conversion to the appropriate units for the device is automatically handled by the player interfaces.
