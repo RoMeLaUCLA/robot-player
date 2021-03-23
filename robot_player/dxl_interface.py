@@ -357,8 +357,6 @@ class DxlPort(object):
         # set device to have .gw_<name of parameter> attached to it for further reference
         setattr(self, "gr_" + parameter, gsr)
 
-
-
     def get_present_position(self, ids):
         pos_data = []
 
@@ -366,17 +364,28 @@ class DxlPort(object):
         # TODO: don't think we need this
         # id_list = self.filter_ids(ids, d)
 
-        data_list = self._sync_read(self, 'PRESENT_POSITION',
-                                    self.ctrl_table.LEN_PRESENT_POSITION,
-                                    ids, twos_complement=True)
+        data_list = self.sync_read('PRESENT_POSITION',
+                                   self.ctrl_table.LEN_PRESENT_POSITION,
+                                   ids, twos_complement=True)
         for m_id, data in zip(self.motor_id, data_list):
             res = self.motor[m_id]["resolution"]
             pos_data.append(pos2rad(data, res))
 
         return pos_data
 
-    def _sync_read(self, device, parameter, parameter_data_length, ids,
-                   twos_complement=False):
+    def get_present_velocity(self, ids):
+        vel_data = []
+        data_list = self.sync_read('PRESENT_VELOCITY',
+                                    self.ctrl_table.LEN_PRESENT_VELOCITY,
+                                    ids, twos_complement=True)
+        for m_id, data in zip(ids, data_list):
+            unit = self.motor[m_id]['vel_unit']
+            vel_data.append(vel2radps(data, unit))
+
+        return vel_data
+
+    def sync_read(self, parameter, parameter_data_length, ids,
+                  twos_complement=False):
         """
         Uses sync read and the name of a parameter to read data from ctrl table of multiple DXLs. Use this method on
         every device.
@@ -391,16 +400,16 @@ class DxlPort(object):
         data_list = []
         # only protocol 2!
         # Syncread present position
-        gsr = getattr(device, "gr_" + parameter)
+        gsr = getattr(self, "gr_" + parameter)
         dxl_comm_result = gsr.txRxPacket()
         if dxl_comm_result != COMM_SUCCESS:
-            print(device.packet_handler.getTxRxResult(dxl_comm_result))
+            print(self.packet_handler.getTxRxResult(dxl_comm_result))
             raise DxlReadDataError
 
         # Check if groupsyncread data of all dynamixels are available:
         for m_id in ids:
             dxl_getdata_result = gsr.isAvailable(m_id,
-                                                 getattr(device.ctrl_table,
+                                                 getattr(self.ctrl_table,
                                                          parameter),
                                                  parameter_data_length)
             if dxl_getdata_result != 1:
@@ -408,13 +417,57 @@ class DxlPort(object):
                 quit()
 
                 # Get present position value for (m_id)
-            data = gsr.getData(m_id, getattr(device.ctrl_table, parameter),
+            data = gsr.getData(m_id, getattr(self.ctrl_table, parameter),
                                parameter_data_length)
             if twos_complement:
                 data = twos_comp(data, parameter_data_length * 8)
 
             data_list.append(data)
         return data_list
+
+
+    def sync_write(self, parameter, parameter_data_length, ids,
+                    commands, twos_complement=False):
+        """
+        Uses sync write to write a string of data to a single port. Use this on every port.
+
+        :param device: one of the devices (DxlPort)
+        :param parameter: string, name of ctrl table parameter
+        :param parameter_data_length: length of parameter data (bytes)
+        :param ids: which ids to do this for. Does no error checking to ensure ids are on the device.
+        :param commands: commands to send to device. Does no type conversion beyond Python -> C
+        :return:
+        """
+        gsw = getattr(self, "gw_" + parameter)
+        for m_id, command in zip(ids, commands):
+            # new Python API:
+            # # TODO: DO WE NEED THIS
+            # if twos_complement:
+            #     parameter = twos_comp(parameter, 8*parameter_data_length)
+            param_byte_list = create_byte_list(command, parameter_data_length)
+            dxl_addparam_result = gsw.addParam(m_id, param_byte_list)
+
+            if dxl_addparam_result != 1:
+                print("[ID:%03d] groupSyncWrite addparam failed" % m_id)
+                quit()
+        # Syncwrite command
+        dxl_comm_result = gsw.txPacket()
+
+        # old way
+        if dxl_comm_result != COMM_SUCCESS:
+            print(self.packet_handler.getTxRxResult(dxl_comm_result))
+
+        # Clear syncwrite parameter storage
+        gsw.clearParam()
+
+    def set_goal_position(self, ids, angles):
+        # id_list, angle_list = self.filter_ids_and_commands(ids, angles, d)
+        # convert radians to encoder counts
+        res_list = [self.motor[m_id]["resolution"] for m_id in ids]
+        commands = [rad2pos(a, res) for a, res in zip(angles, res_list)]
+        self.sync_write('GOAL_POSITION',
+                        self.ctrl_table.LEN_GOAL_POSITION,
+                        ids, commands)
 
 
 
@@ -618,11 +671,6 @@ class DxlInterface(object):
                                               getattr(d.ctrl_table, parameter),
                                               parameter_data_len)
 
-                # old way
-                # gr_id = d.packet_handler.groupSyncRead(
-                #                                 d.protocol_version,
-                #                                 getattr(d.ctrl_table, parameter),
-                #                                 parameter_data_len)
                 for m_id in d.motor_id:
                     # Add parameter storage for each Dynamixel's present position value to the Syncread storage
 
@@ -753,13 +801,6 @@ class DxlInterface(object):
             #     parameter = twos_comp(parameter, 8*parameter_data_length)
             param_byte_list = create_byte_list(command, parameter_data_length)
             dxl_addparam_result = gsw.addParam(m_id, param_byte_list)
-
-            # old API:
-            # dxl_addparam_result = ctypes.c_ubyte(
-            #     dynamixel.groupSyncWriteAddParam(getattr(device, "gw_" + parameter),
-            #                                      m_id,
-            #                                      command,
-            #                                      parameter_data_length)).value
             if dxl_addparam_result != 1:
                 print("[ID:%03d] groupSyncWrite addparam failed" % m_id)
                 quit()
@@ -804,13 +845,6 @@ class DxlInterface(object):
                                                      getattr(device.ctrl_table,
                                                              parameter),
                                                      parameter_data_length)
-
-                # old way
-                # dxl_getdata_result = ctypes.c_ubyte(
-                #     gsr.groupSyncReadIsAvailable(getattr(device, "gr_" + parameter),
-                #                                        m_id,
-                #                                        getattr(device.ctrl_table, parameter),
-                #                                        parameter_data_length)).value
                 if dxl_getdata_result != 1:
                     print("[ID:%03d] groupSyncRead getdata failed" % m_id)
                     quit()
@@ -1002,6 +1036,13 @@ class DxlInterface(object):
             *[(m_id, comm) for m_id, comm in zip(ids, commands) if
               self.id_to_port[m_id] == device])
         return id_list, comm_list
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for d in self.device:
+            d.close()
 
 
 def rad2pos(rad, resolution):
